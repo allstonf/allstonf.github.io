@@ -15,9 +15,38 @@
 // JSON-LD below is additive, never the only place "Apple" appears.
 import '../styles/tokens.css'
 import profile from '../../content/profile.json'
+import { validateUrl } from '../lib/url'
 
 const { site, person, about, projects, experience } = profile
 const currentRole = person.current_role
+
+// Every URL sink on this page runs through validateUrl() before it
+// reaches an href or a JSON-LD block - ported from build.py's
+// validate_url()/esc_url() split after a v1 code-review MUST FIX:
+// html.escape() (and Astro's equivalent automatic attribute escaping)
+// neutralizes quotes and angle brackets, but performs no scheme
+// validation, so a "javascript:" or "data:" URL survives escaping
+// intact and executes on click. validateUrl() throws and aborts the
+// build on a disallowed scheme rather than silently defanging the
+// link - see src/lib/url.ts.
+//
+// Computed once up front so the SAME normalized string is used
+// everywhere a value appears twice (e.g. site.url in both the
+// canonical link and JSON-LD's "url" field; person.profiles[].url in
+// both the visible social nav and JSON-LD's "sameAs").
+const siteUrl = validateUrl(site.url, 'site.url')
+const resumeUrl = validateUrl(person.resume.url, 'person.resume.url')
+const validatedProfiles = (person.profiles ?? []).map((profileLink) => ({
+  ...profileLink,
+  url: validateUrl(profileLink.url, 'person.profiles[].url'),
+}))
+const validatedProjects = (projects ?? []).map((project) => ({
+  ...project,
+  links: (project.links ?? []).map((link) => ({
+    ...link,
+    url: validateUrl(link.url, 'projects[].links[].url'),
+  })),
+}))
 
 /**
  * Format an experience entry's date range the same way v1 does:
@@ -40,12 +69,18 @@ const jsonLd: Record<string, unknown> = {
   worksFor: {
     '@type': 'Organization',
     name: currentRole.employer,
-    ...(currentRole.employer_url ? { url: currentRole.employer_url } : {}),
+    // Not an href, but an agent following worksFor.url deserves the
+    // same scheme guarantee a human clicking a link gets. Validated
+    // WITHOUT HTML-escaping here (this object is JSON.stringify'd
+    // below, never rendered as markup), per the controller amendment.
+    ...(currentRole.employer_url
+      ? { url: validateUrl(currentRole.employer_url, 'person.current_role.employer_url') }
+      : {}),
   },
   knowsAbout: person.knows_about ?? [],
   email: person.email,
-  url: site.url,
-  sameAs: (person.profiles ?? []).map((p) => p.url),
+  url: siteUrl,
+  sameAs: validatedProfiles.map((p) => p.url),
 }
 if (person.education) {
   jsonLd.alumniOf = {
@@ -75,7 +110,15 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
     <meta name="description" content={site.description} />
     <meta name="author" content={person.name} />
     <meta name="theme-color" content={site.theme_color} />
-    <link rel="canonical" href={site.url} />
+    <link rel="canonical" href={siteUrl} />
+    <!--
+      The markdown twin of this page (src/pages/index.md.ts), built
+      from the same content/profile.json content model. A markdown page
+      costs roughly 80% fewer tokens for an agent to read than this
+      rendered HTML page, and outperforms llms.txt alone for a question
+      answered by this specific page's content.
+    -->
+    <link rel="alternate" type="text/markdown" href="/index.md" />
     <!--
       Root-relative because this is a GitHub Pages USER site served from
       the domain root (base: '/', not a repo-name subpath). The file
@@ -88,7 +131,7 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
     <meta property="og:type" content="profile" />
     <meta property="og:title" content={site.title} />
     <meta property="og:description" content={site.description} />
-    <meta property="og:url" content={site.url} />
+    <meta property="og:url" content={siteUrl} />
     <meta property="og:site_name" content={site.title} />
 
     <meta name="twitter:card" content="summary" />
@@ -117,13 +160,13 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
           <a href={`mailto:${person.email}`}>{person.email}</a>
         </p>
         <nav class="hero__social" aria-label="Social profiles">
-          {person.profiles?.map((profileLink) => (
+          {validatedProfiles.map((profileLink) => (
             <a href={profileLink.url} rel="me noopener" target="_blank">
               {profileLink.label}
             </a>
           ))}
         </nav>
-        <a class="topbar__resume" href={person.resume.url} rel="noopener" target="_blank">
+        <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
           {person.resume.label}
         </a>
       </div>
@@ -147,7 +190,7 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
           <p class="section__kicker">02</p>
           <h2 id="projects-heading">Projects</h2>
           <div class="projects-grid">
-            {projects.map((project) => (
+            {validatedProjects.map((project) => (
               <article
                 class="project-card"
                 id={`project-${project.slug}`}
