@@ -26,13 +26,17 @@ describe('agent surface endpoints build to real files under dist/', () => {
     expect(lines[0]).toBe(`# ${profile.person.name}`)
 
     // The blockquote directly under the H1 is a plain third-person
-    // "[Name] is [role] at [organization], focused on ..." sentence -
-    // third person even though the site body is first person, because
+    // "[Name] is a [role], at [organization], focused on ..." sentence
+    // - third person even though the site body is first person, because
     // llms.txt is machine-facing. Exact-match, not toContain, so a
-    // future edit that quietly drops a clause still fails loudly.
+    // future edit that quietly drops a clause (or reintroduces the
+    // missing-article grammar bug from fix round 1) still fails loudly.
+    // The title itself ("Systems Software Engineer, Power and
+    // Performance") carries an internal comma, so it is bracketed by
+    // commas on both sides rather than glued directly to "at".
     const focusAreas = profile.person.knows_about.slice(0, 2).join(' and ')
     const expectedBlockquote =
-      `> ${profile.person.name} is ${profile.person.current_role.title} at ` +
+      `> ${profile.person.name} is a ${profile.person.current_role.title}, at ` +
       `${profile.person.current_role.employer}, focused on ${focusAreas}.`
     expect(lines[2]).toBe(expectedBlockquote)
 
@@ -52,13 +56,47 @@ describe('agent surface endpoints build to real files under dist/', () => {
     expect(docsEntries[0]).toContain(`${profile.site.url}/index.md`)
 
     // ## Optional carries GitHub + LinkedIn, per spec semantics ("can
-    // be skipped if a shorter context is needed").
-    expect(text.slice(optionalStart)).toContain('github.com/allstoncodes')
-    expect(text.slice(optionalStart)).toContain('linkedin.com/in/allston-fojas')
+    // be skipped if a shorter context is needed"). Fix round 1: no
+    // trailing ": handle" description, since repeating the handle after
+    // a link whose text is already the profile label added nothing.
+    const optionalEntries = text
+      .slice(optionalStart)
+      .split('\n')
+      .filter((line) => line.startsWith('- ['))
+    expect(optionalEntries).toContain('- [GitHub](https://github.com/allstoncodes)')
+    expect(optionalEntries).toContain('- [LinkedIn](https://www.linkedin.com/in/allston-fojas)')
 
     // The retired, empty GitHub handle must never resurface - it is
     // the exact broken link this rebuild fixed.
     expect(text).not.toContain('github.com/allstonf')
+  })
+
+  it('carries the stale-employer disambiguation paragraph naming both employers and the current GitHub handle', () => {
+    // Fix round 1: this paragraph was dropped in the first pass because
+    // it is not part of the llmstxt.org spec's REQUIRED sections - but
+    // the spec explicitly allows free-prose sections between the
+    // blockquote and the first "##" heading, and this paragraph is the
+    // deliberate mechanism that resolves a stale "still at Cisco"
+    // answer for an agent whose training data or a cached copy of the
+    // pre-rebuild site disagrees with the current content model. A
+    // positive assertion ("is at Apple") does not itself contradict a
+    // stale claim the way an explicit correction does.
+    expect(existsSync('dist/llms.txt')).toBe(true)
+    const text = readFileSync('dist/llms.txt', 'utf8')
+
+    const currentEmployer = profile.person.current_role.employer
+    const priorEmployer = profile.experience.find((job) => job.employer !== currentEmployer)!.employer
+    const currentGithubHandle = profile.person.profiles.find((p) => p.label === 'GitHub')!.handle
+
+    expect(text).toContain(currentEmployer)
+    expect(text).toContain(priorEmployer)
+    expect(text).toContain(currentGithubHandle)
+
+    // The guidance sentence itself must be present verbatim, not just
+    // an incidental employer mention elsewhere in the file (the
+    // blockquote already names the current employer on its own) - this
+    // is what a future refactor could silently drop again.
+    expect(text).toContain(profile.agent_surface.llms_txt_guidance)
   })
 
   it('api/profile.json exists, parses, and matches the allowlisted shape exactly', () => {
@@ -136,7 +174,7 @@ describe('agent surface endpoints build to real files under dist/', () => {
 })
 
 describe('llms-full.txt is mechanically derived from index.md, never hand-authored', () => {
-  it('exists, carries a generated-file warning, and starts with the same H1/blockquote header as llms.txt', () => {
+  it('exists, carries a generated-file warning, and starts with the same H1/blockquote/disambiguation header as llms.txt', () => {
     expect(existsSync('dist/llms-full.txt')).toBe(true)
     const text = readFileSync('dist/llms-full.txt', 'utf8')
 
@@ -146,9 +184,14 @@ describe('llms-full.txt is mechanically derived from index.md, never hand-author
 
     const focusAreas = profile.person.knows_about.slice(0, 2).join(' and ')
     const expectedBlockquote =
-      `> ${profile.person.name} is ${profile.person.current_role.title} at ` +
+      `> ${profile.person.name} is a ${profile.person.current_role.title}, at ` +
       `${profile.person.current_role.employer}, focused on ${focusAreas}.`
     expect(text).toContain(expectedBlockquote)
+
+    // The full-text surface carries the same disambiguation paragraph
+    // as llms.txt - this is the "full" agent surface, so it should be
+    // at least as self-correcting as the lean index, not less.
+    expect(text).toContain(profile.agent_surface.llms_txt_guidance)
   })
 
   it('contains the exact same body text as dist/index.md, so the two files cannot silently diverge', () => {
