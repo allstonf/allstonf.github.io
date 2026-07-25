@@ -43,21 +43,69 @@ export const N_THRESHOLD = 8
 
 export type ArmShape = 'single' | 'multiple'
 
+export type VerdictKind = 'ADMITTED' | 'DECLINED' | 'NO_CHANGE_PROPOSED'
+
 export interface VerdictInput {
   n: number
   arm: ArmShape
+  /**
+   * The attempted change, in points, to the selected weight. Required
+   * (not optional) on purpose: a code-reviewer pass caught that this
+   * field did not exist at all in an earlier version of this function,
+   * so the caller (Perturb, below) evaluated n and arm without ever
+   * telling the guard rule whether a change had actually been proposed
+   * - which meant the verdict could read ADMITTED while the weight
+   * slider still sat at 0 pts. Making delta a required argument means a
+   * caller cannot repeat that mistake by omission.
+   */
+  delta: number
 }
 
 export interface Verdict {
-  verdict: 'ADMITTED' | 'DECLINED'
+  verdict: VerdictKind
   reason: string
+}
+
+/** Display text for each verdict kind - the single source Perturb reads
+ * from, so the rendered label can never drift from the computed verdict
+ * kind (the earlier bug was exactly this kind of drift, just one layer
+ * up: the STATE was wrong, not the label mapping - but keeping the
+ * mapping itself as data rather than an inline ternary chain is what
+ * makes it testable as a unit on its own). */
+export const VERDICT_LABELS: Record<VerdictKind, string> = {
+  ADMITTED: 'CHANGE ADMITTED',
+  DECLINED: 'CHANGE DECLINED',
+  NO_CHANGE_PROPOSED: 'NO CHANGE PROPOSED',
 }
 
 const SINGLE_ORG_REASON = loop.whyNoTuning.reasons[0]
 
+// loop.whyNoTuning.reasons has three entries. Only reasons[0] (the
+// single-organisation confound) is reachable through Mode B's controls,
+// via the arm toggle - reasons[1] ("confounded by application channel")
+// and reasons[2] ("channel data was never recorded") describe historical
+// context that the static record above renders in full, but neither has
+// an interactive control here, so evaluateChange() can never surface
+// them. They are not dead code; they are read-only history.
+const NO_CHANGE_REASON =
+  'No change has been proposed yet. Move the weight slider above to attempt one - the guard rule only has something to evaluate once a change is actually on the table.'
+
 /**
- * The Mode B guard rule. Two independent gates, both of which must
- * clear for a weight change to be admitted:
+ * The Mode B guard rule. A change is only evaluated at all once one has
+ * actually been proposed (delta !== 0); a delta of 0 is a distinct third
+ * state, NO_CHANGE_PROPOSED, checked before either gate below. Treating
+ * "nothing proposed" as an implicit pass-through into the two-gate logic
+ * is exactly the bug a code-reviewer pass caught: with delta ignored,
+ * n=8 and arm='multiple' alone read as ADMITTED even though no change
+ * was on the table - a verdict announcing a change was admitted when
+ * zero change was attempted, which is self-contradictory in precisely
+ * the dimension this component exists to demonstrate. Declining a
+ * no-op would be equally wrong in the other direction (it would read as
+ * the rule refusing something nobody asked for), so this is a genuine
+ * third outcome, not a fold-in to ADMITTED or DECLINED.
+ *
+ * Once a change is proposed, two independent gates, both of which must
+ * clear for it to be admitted:
  *
  *   1. n (observed outcomes) must reach N_THRESHOLD. Below it, there
  *      is not enough evidence for a change to move the weight one way
@@ -68,11 +116,22 @@ const SINGLE_ORG_REASON = loop.whyNoTuning.reasons[0]
  *      point, not a contrast group - the exact confound
  *      loop-data.json's whyNoTuning.reasons[0] describes.
  *
- * Either gate failing alone is enough to decline, so the two failure
- * reasons stay distinguishable rather than collapsing into one
- * generic "not enough evidence" message.
+ * Either gate failing alone is enough to decline. When BOTH gates fail,
+ * the arm reason is surfaced (checked first, deliberately) rather than
+ * a compound message - a visitor raising n while the arm is still
+ * single sees the same arm-confound reason regardless of n, since the
+ * arm gate is what is actually blocking them at that point; the n gate
+ * only becomes the visible blocker once the arm gate has already
+ * cleared. This priority is a readability choice (one reason at a time
+ * beats a run-on sentence citing both), not a claim that n is being
+ * ignored - the n-only decline case immediately below still cites n
+ * specifically.
  */
-export function evaluateChange({ n, arm }: VerdictInput): Verdict {
+export function evaluateChange({ n, arm, delta }: VerdictInput): Verdict {
+  if (delta === 0) {
+    return { verdict: 'NO_CHANGE_PROPOSED', reason: NO_CHANGE_REASON }
+  }
+
   const nClears = n >= N_THRESHOLD
   const armClears = arm === 'multiple'
 
@@ -186,13 +245,24 @@ function Walkthrough() {
   )
 }
 
-function Perturb() {
+// Exported (not just default-exported via LoopExplainer below) so
+// tests/loopPerturbRender.test.tsx can mount this component directly
+// and drive its actual DOM controls - a pure-function test on
+// evaluateChange() alone cannot catch a bug in how THIS component wires
+// its own state into that function, which is exactly where the
+// Critical bug in fix round 1 lived (delta was never passed at all).
+export function Perturb() {
   const [weightIndex, setWeightIndex] = useState(0)
   const [delta, setDelta] = useState(0)
   const [n, setN] = useState(loop.whyNoTuning.outcomeCount)
   const [arm, setArm] = useState<ArmShape>('single')
 
-  const verdict = useMemo(() => evaluateChange({ n, arm }), [n, arm])
+  // delta is now part of the dependency array AND part of the call
+  // itself - both were missing before the fix. evaluateChange requiring
+  // `delta` as a non-optional field (see its definition above) means a
+  // future edit that drops it from this call is a type error, not a
+  // silent runtime bug.
+  const verdict = useMemo(() => evaluateChange({ n, arm, delta }), [n, arm, delta])
   const targetComponent = loop.weights[weightIndex].component
 
   return (
@@ -271,24 +341,38 @@ function Perturb() {
         </fieldset>
       </div>
 
+      {/*
+        Three distinct visual states, mirroring the three VerdictKind
+        values - not two. Folding NO_CHANGE_PROPOSED into either the
+        admitted or declined styling would misrepresent it the same way
+        the Critical bug misrepresented it as data: this box must never
+        wear "admitted" styling (amber, the single accent reserved for
+        a real cleared-both-gates outcome) when nothing was proposed.
+      */}
       <div
         className={
           verdict.verdict === 'ADMITTED'
             ? 'loop-verdict loop-verdict--admitted'
-            : 'loop-verdict loop-verdict--declined'
+            : verdict.verdict === 'DECLINED'
+              ? 'loop-verdict loop-verdict--declined'
+              : 'loop-verdict loop-verdict--neutral'
         }
         role="status"
         aria-live="polite"
       >
-        <p className="loop-verdict__label">
-          {verdict.verdict === 'ADMITTED' ? 'CHANGE ADMITTED' : 'CHANGE DECLINED'}
-        </p>
+        <p className="loop-verdict__label">{VERDICT_LABELS[verdict.verdict]}</p>
         <p className="loop-verdict__reason">{verdict.reason}</p>
       </div>
 
-      <WeightBars
-        highlightIndex={verdict.verdict === 'ADMITTED' && delta !== 0 ? weightIndex : undefined}
-      />
+      {/*
+        evaluateChange() guarantees ADMITTED is only ever returned when
+        delta !== 0 (see its delta===0 short-circuit above), so
+        verdict.verdict === 'ADMITTED' alone is sufficient here - no
+        second "&& delta !== 0" check duplicating that invariant in the
+        UI layer, which is exactly the kind of two-places-agree-by-
+        coincidence setup that let the original bug hide.
+      */}
+      <WeightBars highlightIndex={verdict.verdict === 'ADMITTED' ? weightIndex : undefined} />
     </div>
   )
 }

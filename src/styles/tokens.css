@@ -1010,6 +1010,24 @@ time {
   background: color-mix(in srgb, var(--color-accent) 8%, transparent);
 }
 
+/* The third verdict state - nothing proposed yet, so nothing to admit or
+   decline. Deliberately the quietest of the three: a dashed border reads
+   as "not yet a real outcome" without borrowing the accent colour (which
+   would misread as ADMITTED) or a solid border (which would misread as
+   an actual DECLINED verdict rather than an absence of one). */
+.loop-verdict--neutral {
+  border-style: dashed;
+  border-color: var(--color-text-muted);
+}
+
+.loop-verdict--neutral .loop-verdict__label {
+  color: var(--color-text-muted);
+}
+
+.loop-verdict--neutral .loop-verdict__reason {
+  font-style: italic;
+}
+
 .loop-verdict__label {
   margin: 0 0 0.3rem;
   font-weight: 700;
