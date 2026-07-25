@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>${title}</title>
+  <meta name="description" content="${meta_description}">
+  <meta name="author" content="${author}">
+  <meta name="theme-color" content="${theme_color}">
+  <link rel="canonical" href="${canonical_url}">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <meta property="og:type" content="${og_type}">
+  <meta property="og:title" content="${og_title}">
+  <meta property="og:description" content="${og_description}">
+  <meta property="og:url" content="${og_url}">
+  <meta property="og:site_name" content="${og_title}">
+
+  <meta name="twitter:card" content="${twitter_card}">
+  <meta name="twitter:title" content="${twitter_title}">
+  <meta name="twitter:description" content="${twitter_description}">
+
+  <link rel="stylesheet" href="assets/site.css">
+
+  <script type="application/ld+json">
+${json_ld_script}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <header class="site-header">
+    <div class="topbar">
+      <div class="topbar__inner">
+        <a class="topbar__wordmark" href="#top">${person_name}</a>
+        <nav class="topbar__nav" aria-label="Section">
+          <a href="#about">About</a>
+          <a href="#projects">Projects</a>
+          <a href="#experience">Experience</a>
+        </nav>
+        <a class="topbar__resume" href="${resume_url}" rel="noopener" target="_blank">${resume_label}</a>
+      </div>
+    </div>
+
+    <div class="hero" id="top">
+      <div class="hero__inner">
+        <h1 class="hero__name">${person_name}</h1>
+        ${current_role_line_html}
+        <p class="hero__tagline">${person_tagline}</p>
+        <div class="hero__meta">
+          <p class="hero__contact">
+            <a href="mailto:${email_href}">${email_display}</a>
+          </p>
+          <nav class="hero__social" aria-label="Social profiles">
+${social_links_html}
+          </nav>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="main-content">
+    <section id="about" class="section" aria-labelledby="about-heading">
+      <div class="section__inner section__inner--article">
+        <p class="section__kicker">01</p>
+        <h2 id="about-heading" class="section__title">About</h2>
+        <div class="about-body">
+${about_html}
+        </div>
+      </div>
+    </section>
+
+    <section id="projects" class="section" aria-labelledby="projects-heading">
+      <div class="section__inner section__inner--wide">
+        <p class="section__kicker">02</p>
+        <h2 id="projects-heading" class="section__title">Projects</h2>
+        <div class="projects-grid">
+${projects_html}
+        </div>
+      </div>
+    </section>
+
+    <section id="experience" class="section" aria-labelledby="experience-heading">
+      <div class="section__inner section__inner--article">
+        <p class="section__kicker">03</p>
+        <h2 id="experience-heading" class="section__title">Experience</h2>
+        <div class="timeline">
+${experience_html}
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <p class="site-footer__name">${footer_name}</p>
+      <p class="site-footer__contact">
+        <a href="mailto:${footer_email}">${footer_email}</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

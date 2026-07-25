@@ -1,0 +1,771 @@
+/*
+  assets/site.css - allstonf.github.io visual design.
+
+  Token source: personal-vault DESIGN.md ("Expedition Log" OLED dark
+  system - near-black surfaces, amber primary accent, teal secondary,
+  12px/16px radii, 4px spacing scale, restrained glow-on-hover only).
+
+  Two deliberate departures from DESIGN.md, both required by this
+  project's own constraints (see templates/index.html + the build spec):
+
+  1. Typography. DESIGN.md specifies Syne/Outfit/DM Mono via Google
+     Fonts CDN. This page ships zero web-font requests by design (the
+     performance budget is <100 KB total and a font hop is a
+     render-blocking cost DESIGN.md's own dashboard use case does not
+     have to pay). System font stacks stand in for each role: a heavy,
+     tight-tracked system sans for the Syne display role, the same
+     stack at regular weight for the Outfit body role, and a system
+     monospace stack for the DM Mono timestamp/code role. The visual
+     intent (geometric display + humanist body + precise mono for
+     data) survives; the network request does not.
+
+  2. Light mode. DESIGN.md only defines the dark palette. A resume-like
+     page reviewed by recruiters defaults to light (matching most
+     corporate laptops) with the dark theme as the prefers-color-scheme
+     variant. Light-mode hexes below are the closest AA-safe light
+     counterparts to DESIGN.md's slate/amber/teal families, not new
+     brand colors - see the accent-text values, which trade the raw
+     brand hex (used for fills/borders/icons) for a darker, text-safe
+     shade (used anywhere the color sits under body text), because
+     amber-500 and teal-600 both fail WCAG AA as text on white.
+*/
+
+/* ---------- Tokens ---------- */
+
+:root {
+  /* Light mode (default) */
+  --color-bg: #ffffff;
+  --color-surface: #f8fafc;
+  --color-card: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+
+  --color-accent: #f59e0b;
+  --color-accent-text: #92400e;
+  --color-accent-soft: rgba(245, 158, 11, 0.1);
+  --color-accent-border: rgba(245, 158, 11, 0.35);
+
+  --color-teal: #0d9488;
+  --color-teal-text: #0f766e;
+  --color-teal-soft: rgba(13, 148, 136, 0.1);
+
+  --color-success: #16a34a;
+
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --glow-accent: 0 0 0 3px var(--color-accent-soft);
+  --bg-translucent: rgba(255, 255, 255, 0.86);
+
+  /* Shared tokens (both modes) - straight from DESIGN.md */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 9999px;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+
+  --max-article: 46.5rem;   /* ~820px, DESIGN.md max-width-article */
+  --max-dashboard: 80rem;   /* 1280px, DESIGN.md max-width-dashboard */
+  --max-card-grid: 68.75rem; /* 1100px, DESIGN.md max-width-card-grid */
+
+  --transition: all 0.2s ease;
+
+  /* System stacks standing in for Syne / Outfit / DM Mono - see header note */
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #020617;
+    --color-surface: #0f172a;
+    --color-card: #1e293b;
+    --color-border: #334155;
+    --color-border-strong: #475569;
+    --color-text-primary: #f8fafc;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #94a3b8;
+
+    --color-accent: #f59e0b;
+    --color-accent-text: #f59e0b;
+    --color-accent-soft: rgba(245, 158, 11, 0.12);
+    --color-accent-border: rgba(245, 158, 11, 0.4);
+
+    --color-teal: #14b8a6;
+    --color-teal-text: #2dd4bf;
+    --color-teal-soft: rgba(45, 212, 191, 0.14);
+
+    --color-success: #22c55e;
+
+    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+    --glow-accent: 0 0 12px rgba(245, 158, 11, 0.25);
+    --bg-translucent: rgba(2, 6, 23, 0.82);
+  }
+}
+
+/* ---------- Reset ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+svg {
+  max-width: 100%;
+  display: block;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--color-border-strong);
+  text-underline-offset: 0.15em;
+}
+
+/* External-link affordance: a small CSS-drawn corner arrow, no glyph,
+   no image request - see DESIGN.md's "CSS shapes" icon guidance. */
+a[target="_blank"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+a[target="_blank"]::after {
+  content: "";
+  width: 0.55em;
+  height: 0.55em;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.6;
+  flex: none;
+}
+
+/* ---------- Accessibility ---------- */
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: var(--space-sm);
+  top: var(--space-sm);
+  background: var(--color-accent);
+  color: #1a1200;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Topbar ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-translucent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.topbar__inner {
+  max-width: var(--max-dashboard);
+  margin-inline: auto;
+  padding: var(--space-sm) var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.topbar__wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.topbar__wordmark::after {
+  content: none;
+}
+
+.topbar__nav {
+  display: flex;
+  gap: var(--space-lg);
+  margin-right: auto;
+}
+
+.topbar__nav a {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.topbar__nav a:hover {
+  color: var(--color-text-primary);
+}
+
+.topbar__resume {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  padding: 0.4rem 0.9rem;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.topbar__resume::after {
+  opacity: 0.5;
+}
+
+.topbar__resume:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+  box-shadow: var(--glow-accent);
+}
+
+@media (max-width: 640px) {
+  .topbar__nav {
+    display: none;
+  }
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%);
+  border-bottom: 1px solid var(--color-border);
+  background-image:
+    radial-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(180deg, var(--color-surface) 0%, var(--color-bg) 100%);
+  background-size: 22px 22px, auto;
+  background-position: -11px -11px, 0 0;
+}
+
+.hero__inner {
+  max-width: var(--max-article);
+  margin-inline: auto;
+  padding: clamp(var(--space-xl), 8vw, var(--space-xxl)) var(--space-lg) clamp(var(--space-xl), 6vw, var(--space-xxl));
+  scroll-margin-top: 4rem;
+}
+
+.hero__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-teal-text);
+  margin-bottom: var(--space-sm);
+}
+
+.hero__name {
+  font-size: clamp(2.25rem, 5vw + 1rem, 3.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-sm);
+}
+
+.hero__headline {
+  font-size: clamp(1.0625rem, 1.4vw + 0.8rem, 1.3125rem);
+  color: var(--color-text-secondary);
+  max-width: 34rem;
+  margin-bottom: var(--space-md);
+}
+
+/* Server-generated element (build.py), class name is fixed - see
+   build/build.py::render_index_html. This is the single most
+   important line on the page: it must read as an unambiguous,
+   prominent "currently at Apple" badge. */
+/* position:relative + an absolutely-positioned dot (rather than flex)
+   deliberately: build.py emits this as one <p> containing a plain
+   text node followed by a bare <strong>Apple</strong>, with no
+   wrapping span around either. A flex container would treat the text
+   node and the <strong> as two SEPARATE flex items, so on a narrow
+   viewport the text wraps while "Apple" detaches and floats to the
+   far right - a real bug caught in the mobile screenshot pass. Normal
+   block/inline flow keeps the text and the employer name wrapping
+   together as one run, which is what a badge like this needs. */
+.site-header__current-role {
+  position: relative;
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent-border);
+  border-radius: var(--radius-pill);
+  padding: 0.5rem 1.05rem 0.5rem 1.7rem;
+  margin-bottom: var(--space-lg);
+}
+
+.site-header__current-role::before {
+  content: "";
+  position: absolute;
+  left: 0.85rem;
+  top: 0.95rem;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-success) 25%, transparent);
+}
+
+.site-header__current-role strong {
+  color: var(--color-accent-text);
+  font-weight: 700;
+}
+
+.hero__tagline {
+  font-size: 1.0625rem;
+  color: var(--color-text-secondary);
+  max-width: 34rem;
+  margin-bottom: var(--space-lg);
+}
+
+.hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.hero__contact a {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border-strong);
+}
+
+.hero__contact a:hover {
+  color: var(--color-accent-text);
+  border-color: var(--color-accent);
+}
+
+.hero__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+/* render_social_links() emits bare <a> tags with no class - scope via
+   the parent nav. */
+.hero__social a {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+}
+
+.hero__social a:hover {
+  color: var(--color-accent-text);
+}
+
+/* ---------- Sections ---------- */
+
+.section {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.section:last-of-type {
+  border-bottom: none;
+}
+
+.section__inner {
+  margin-inline: auto;
+  padding: var(--space-xxl) var(--space-lg);
+  scroll-margin-top: 4rem;
+}
+
+.section__inner--article {
+  max-width: var(--max-article);
+}
+
+.section__inner--wide {
+  max-width: var(--max-dashboard);
+}
+
+.section__kicker {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-xs);
+}
+
+.section__title {
+  font-size: clamp(1.5rem, 2vw + 1rem, 1.875rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--space-lg);
+}
+
+/* ---------- About ---------- */
+
+.about-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  max-width: 40rem;
+}
+
+.about-body p {
+  color: var(--color-text-secondary);
+  font-size: 1.0625rem;
+}
+
+.about-body p:first-child {
+  color: var(--color-text-primary);
+  font-size: 1.1875rem;
+}
+
+/* ---------- Projects ---------- */
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+@media (min-width: 641px) {
+  .projects-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .projects-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* A project earns extra width by carrying a measured outcome - no
+     extra data needed from build.py, the layout reads it straight off
+     the rendered markup. Falls back gracefully to a normal-width card
+     wherever :has() isn't supported. */
+  .project-card:has(.project-card__outcome) {
+    grid-column: span 2;
+  }
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-card);
+  transition: var(--transition);
+}
+
+.project-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: var(--glow-accent);
+}
+
+.project-card__name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.project-card__summary {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.project-card__outcome {
+  background: var(--color-teal-soft);
+  border-left: 3px solid var(--color-teal);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+.project-card__outcome::before {
+  content: "Outcome";
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-teal-text);
+  margin-bottom: 0.25em;
+}
+
+.project-card__bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: var(--space-xs);
+}
+
+.project-card__bullets li {
+  position: relative;
+  padding-left: 1.1em;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.project-card__bullets li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+}
+
+.project-card__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+  padding-top: var(--space-sm);
+}
+
+/* render_stack_html() emits <li class="stack-item"> - fixed class. */
+.stack-item {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-accent-text);
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.6rem;
+}
+
+.project-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-top: var(--space-xs);
+}
+
+.project-card__links a {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-accent-text);
+}
+
+.project-card__links a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Experience ---------- */
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  border-left: 1px solid var(--color-border);
+  padding-left: var(--space-lg);
+}
+
+/* build.py-generated <article class="experience-entry[ experience-entry--current]">
+   with fixed inner class names - see render_experience_html(). */
+.experience-entry {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.experience-entry::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--space-lg) - 5px);
+  top: 0.35em;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 2px solid var(--color-border-strong);
+}
+
+.experience-entry--current::before {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-accent-soft);
+}
+
+.experience-entry h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.experience-entry__title {
+  font-size: 0.9375rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.experience-entry__meta {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.3rem;
+}
+
+.experience-entry ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.experience-entry ul li {
+  position: relative;
+  padding-left: 1.1em;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+.experience-entry ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-border-strong);
+}
+
+/* ---------- Footer ---------- */
+
+.site-footer {
+  border-top: 1px solid var(--color-border);
+}
+
+.site-footer__inner {
+  max-width: var(--max-article);
+  margin-inline: auto;
+  padding: var(--space-xl) var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.site-footer__name {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.site-footer__contact a {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+.site-footer__contact a:hover {
+  color: var(--color-accent-text);
+}
+
+/* ---------- Small-screen tightening ---------- */
+
+@media (max-width: 640px) {
+  .hero__inner,
+  .section__inner {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  .topbar__inner {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  .timeline {
+    padding-left: var(--space-md);
+  }
+
+  .experience-entry::before {
+    left: calc(-1 * var(--space-md) - 5px);
+  }
+}
