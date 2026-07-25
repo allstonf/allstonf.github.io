@@ -62,6 +62,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Not strictly required by deploy-pages@v5 (it can resolve the
+      # Pages environment on its own), but this is GitHub's own
+      # recommended pattern: it fails the job here, immediately and
+      # with a clear message, if repo Settings > Pages > Build and
+      # deployment > Source has not yet been switched from "Deploy
+      # from a branch" to "GitHub Actions" - instead of failing much
+      # later at the actual deploy step with a less obvious error.
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
       # No `continue-on-error` and no `if: always()` guard anywhere
       # below this step, deliberately. A GitHub Actions job stops at
       # the first non-zero-exit step by default - that default is what

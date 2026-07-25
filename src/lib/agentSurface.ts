@@ -258,9 +258,18 @@ export function renderSitemapXml(profile: any): string {
 
 /**
  * Render index.md: a markdown twin of the human index.astro page
- * (name, current role, tagline, About, Projects, Experience), for the
- * <link rel="alternate" type="text/markdown"> affordance. New in v2;
- * v1 has no equivalent.
+ * (name, current role, tagline, education, About, Projects,
+ * Experience), for the <link rel="alternate" type="text/markdown">
+ * affordance. New in v2; v1 has no equivalent.
+ *
+ * The education line was missing entirely until the review that
+ * closed this gap: index.astro's header <dd> (fix round: visible
+ * education text) added person.education to the HUMAN page, but this
+ * function was never updated to match, so BOTH machine-readable
+ * surfaces - this file and llms-full.txt, which is mechanically
+ * derived from it - silently carried role/tagline/About/Projects/
+ * Experience with no education. See the regression test in
+ * tests/agentSurface.test.ts.
  */
 export function renderIndexMd(profile: any): string {
   const { person, about, projects, experience } = profile
@@ -275,9 +284,24 @@ export function renderIndexMd(profile: any): string {
     '',
     `Contact: ${person.email}`,
     '',
-    '## About',
-    '',
   ]
+
+  // Mirror index.astro's own "only if the content model actually
+  // carries one" guard (that page's `{person.education && (...)}`
+  // block) - never fabricate an education line for a profile that
+  // doesn't have one. A plain "Education: credential, institution
+  // (detail)" line matches the surrounding "Currently: ..." / "Contact:
+  // ..." plain-line style already used above, rather than inventing a
+  // new heading convention for a single field.
+  if (person.education) {
+    const detailSuffix = person.education.detail ? ` (${person.education.detail})` : ''
+    lines.push(
+      `Education: ${person.education.credential}, ${person.education.institution}${detailSuffix}`,
+      '',
+    )
+  }
+
+  lines.push('## About', '')
 
   for (const paragraph of about ?? []) {
     lines.push(paragraph, '')

@@ -171,6 +171,22 @@ describe('agent surface endpoints build to real files under dist/', () => {
       expect(text).toContain(paragraph.slice(0, 40))
     }
   })
+
+  it('index.md contains the education institution, read from the content model', () => {
+    // Regression guard for the exact bug class this whole rebuild
+    // exists to eliminate. index.astro's header <dd> renders
+    // person.education as VISIBLE text (see the matching test in
+    // tests/parity.test.ts), but renderIndexMd() never read
+    // person.education at all - and since llms-full.txt is
+    // mechanically derived from renderIndexMd() (see the "mechanically
+    // derived" describe block below), both machine-readable surfaces
+    // silently omitted education while the human page had it. Confirmed
+    // live pre-fix via `curl http://127.0.0.1:8908/index.md`, which
+    // showed role/tagline/About/Projects/Experience with no education.
+    expect(existsSync('dist/index.md')).toBe(true)
+    const text = readFileSync('dist/index.md', 'utf8')
+    expect(text).toContain(profile.person.education.institution)
+  })
 })
 
 describe('llms-full.txt is mechanically derived from index.md, never hand-authored', () => {

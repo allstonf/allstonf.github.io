@@ -29,7 +29,7 @@
 // evaluateChange() and N_THRESHOLD are exported as named exports
 // specifically so tests/loopVerdict.test.ts can exercise the guard
 // rule directly, without rendering React or touching a DOM.
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import loop from '../../content/loop-data.json'
 
 /**
@@ -153,28 +153,6 @@ export function evaluateChange({ n, arm, delta }: VerdictInput): Verdict {
 }
 
 type Mode = 'walkthrough' | 'perturb'
-
-/**
- * Reads prefers-reduced-motion once on mount and keeps it in sync with
- * live changes, so bar transitions and any other CSS motion in this
- * component can be switched off without a page reload. Motion is
- * suppressed at the CSS layer (see the .loop-bar__fill rule below);
- * this hook only needs to exist so JS-driven state changes (mode
- * switches, step changes) never themselves animate.
- */
-function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false)
-
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setReduced(query.matches)
-    const listener = (event: MediaQueryListEvent) => setReduced(event.matches)
-    query.addEventListener('change', listener)
-    return () => query.removeEventListener('change', listener)
-  }, [])
-
-  return reduced
-}
 
 function WeightBars({ highlightIndex }: { highlightIndex?: number }) {
   const maxWeight = Math.max(...loop.weights.map((w) => w.weight))
@@ -379,12 +357,12 @@ export function Perturb() {
 
 export default function LoopExplainer() {
   const [mode, setMode] = useState<Mode>('walkthrough')
-  // Read but not directly branched on below: the class this hook
-  // returns drives the CSS motion guard (.loop-bar__fill's transition
-  // is suppressed under prefers-reduced-motion in the stylesheet), so
-  // the hook's only job here is to keep the component subscribed to
-  // live changes to the media query for the lifetime of the island.
-  usePrefersReducedMotion()
+  // Motion is suppressed entirely at the CSS layer: the
+  // `@media (prefers-reduced-motion: reduce)` rule on .loop-bar__fill
+  // (src/styles/tokens.css) removes the width transition, so a bar
+  // change is instant rather than animated. No JS-side motion guard is
+  // needed here - see that rule's own comment for why it is
+  // implemented alongside the animation rather than retrofitted.
 
   return (
     <div className="loop-explainer">
