@@ -1,66 +1,151 @@
 /*
- * tokens.css - baseline design tokens for the v2 Astro shell.
+ * tokens.css - design layer for the v2 Astro shell.
  *
- * This is deliberately a minimal placeholder, not the final visual
- * design. Task 3 of the rebuild plan replaces this file wholesale with
- * self-hosted Syne + DM Mono woff2 subsets and the full DESIGN.md token
- * set, dispatched through the ui-ux-designer agent. Task 1's only job
- * is a structurally correct, readable static shell that works with
- * JavaScript disabled, so these tokens cover just enough to make the
- * page presentable without pre-empting that later design pass.
+ * Direction: monospace-forward, near-monochrome, terminal-and-systems-code
+ * vernacular, without simulating a terminal window. The page is styled as
+ * a rendered VIEW OF A RECORD (field labels in mono next to values), which
+ * is literally what it is - content/profile.json is the single content
+ * model this page and the agent surfaces both render. That framing is the
+ * signature element: bracketed section labels, a definition-list header,
+ * and a status-log treatment for the experience timeline all come from
+ * the same idea rather than being decoration bolted onto separate parts.
  *
- * Font stack note: the global constraint forbids Inter, Roboto, Arial,
- * or a bare system-font stack as the PRIMARY face. This stack leads
- * with a local serif (Charter/Georgia) for body text and a local
- * monospace for headings and metadata, which is both distinctive and
- * zero-network - no font file is fetched, self-hosted or otherwise,
- * until Task 3 adds one.
+ * Two font families, both self-hosted as woff2 (zero external requests):
+ * Syne for a small number of restrained display moments (the name, the
+ * three section headings), DM Mono for everything else, including body
+ * copy - a deliberate "monospace-forward" choice rather than reaching for
+ * a third, unlisted body face. Prose measure is set in "ch" units, which
+ * map to an exact glyph width in a monospace font and read as a small,
+ * on-brand technique rather than an arbitrary px value.
+ *
+ * Color is near-monochrome slate (the same Tailwind Slate family
+ * DESIGN.md's dark palette already draws from) with amber (#F59E0B) as
+ * the single accent, never diluted onto secondary UI (no teal, no
+ * purple, no per-tag rainbow). Light mode is a derived, AA-checked
+ * mapping across that same slate scale, not an unrelated palette: amber
+ * text specifically needs a darker step (amber-700, #B45309) in light
+ * mode to clear 4.5:1 against a light background - #F59E0B itself is
+ * only AA-safe as body/link text against a DARK background, so it stays
+ * reserved for fills-with-dark-text, borders, and glows once the page is
+ * in light mode. See the accent-text token split below.
  */
 
+/* ---------------------------------------------------------------------
+   Fonts - self-hosted woff2 subsets under public/fonts/, extracted from
+   @fontsource-variable/syne and @fontsource/dm-mono (both MIT/OFL,
+   npm-installed once to source the exact, already-subsetted files, then
+   copied here so the build has no runtime dependency on either package
+   and ships nothing over the network at request time).
+   ------------------------------------------------------------------ */
+
+@font-face {
+  font-family: 'Syne';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 800;
+  src: url('/fonts/syne-variable-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/dm-mono-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/dm-mono-latin-400-italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/dm-mono-latin-500-normal.woff2') format('woff2');
+}
+
+/* ---------------------------------------------------------------------
+   Tokens - dark is the default palette (DESIGN.md's "OLED Dark -
+   Expedition Log" values, used as-is), light is a derived override
+   under prefers-color-scheme, mapped across the same Slate family.
+   ------------------------------------------------------------------ */
+
 :root {
-  /* Color - matches content/profile.json's site.theme_color (#0B0C0E),
-     so the page chrome and the theme-color meta tag agree. */
-  --color-bg: #0b0c0e;
-  --color-bg-raised: #16181c;
-  --color-text: #e8e6e1;
-  --color-text-muted: #9a9da4;
-  --color-border: #2a2d33;
-  --color-link: #e8e6e1;
+  color-scheme: light dark;
+
+  /* Surfaces - dark default, straight from DESIGN.md. */
+  --color-bg: #020617;
+  --color-surface: #0f172a;
+  --color-card: #1e293b;
+  --color-border: #334155;
+  --color-text: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  /* Amber - the single accent. --color-accent is for fills, borders,
+     and glows; --color-accent-text is the AA-safe variant for amber
+     used AS TEXT (links, labels, the current-employer highlight). They
+     are the same hex in dark mode, because raw amber already clears
+     4.5:1 against every dark surface above. */
   --color-accent: #f59e0b;
+  --color-accent-text: #f59e0b;
+  --ink-on-accent: #0b0c0e; /* fixed: dark text placed ON an amber fill, either mode */
 
-  /* Type - serif body, monospace for headings/labels/metadata. Neither
-     is Inter, Roboto, Arial, or a bare system-ui sans stack. */
-  --font-body: Charter, "Iowan Old Style", Georgia, "Times New Roman", serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+  --font-display: 'Syne', ui-sans-serif, sans-serif;
+  --font-body: 'DM Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  --font-size-base: 1rem;
-  --font-size-sm: 0.875rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.75rem;
-  --font-size-2xl: 2.5rem;
+  --measure: 68ch;
+  --measure-wide: 1100px;
+  --rail-width: 7rem;
 
-  --line-height-body: 1.6;
-  --line-height-tight: 1.25;
-
-  /* Spacing scale, used for section/article rhythm. */
   --space-1: 0.5rem;
   --space-2: 1rem;
   --space-3: 1.5rem;
   --space-4: 2.5rem;
   --space-5: 4rem;
 
-  --content-max-width: 42rem;
-  --content-max-width-wide: 64rem;
-
   --radius: 4px;
+  --radius-pill: 999px;
+
+  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent);
 }
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-bg: #f8fafc;
+    --color-surface: #f1f5f9;
+    --color-card: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-muted: #64748b;
+
+    /* Raw amber fails AA as text against a light background (~2.1:1).
+       amber-700 (#b45309) is the same family, darkened, and clears
+       5:1 against both #ffffff and #f8fafc. */
+    --color-accent-text: #b45309;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Reset and base
+   ------------------------------------------------------------------ */
 
 * {
   box-sizing: border-box;
 }
 
 html {
-  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -68,43 +153,77 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-body);
+  font-size: 1rem;
+  line-height: 1.7;
 }
 
 h1,
 h2,
 h3 {
-  font-family: var(--font-mono);
-  line-height: var(--line-height-tight);
   margin: 0 0 var(--space-2);
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1.0625rem;
+  letter-spacing: -0.01em;
 }
 
 p {
   margin: 0 0 var(--space-2);
 }
 
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 a {
-  color: var(--color-link);
+  color: var(--color-text);
+  text-decoration-color: var(--color-border);
+  text-underline-offset: 0.2em;
 }
 
-a:hover,
-a:focus-visible {
-  color: var(--color-accent);
+a:hover {
+  color: var(--color-accent-text);
+  text-decoration-color: currentColor;
 }
 
-/* Skip link - hidden until keyboard-focused, per the accessibility
-   requirement that the static shell works fully without JavaScript. */
+a:focus-visible,
+button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 2px;
+}
+
+time {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Skip link - hidden until keyboard-focused; unchanged behavior from
+   Task 1, restyled to the new tokens. */
 .skip-link {
   position: absolute;
   top: -3rem;
   left: var(--space-2);
+  z-index: 100;
   background: var(--color-accent);
-  color: var(--color-bg);
+  color: var(--ink-on-accent);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius);
-  font-family: var(--font-mono);
-  z-index: 100;
+  font-family: var(--font-body);
+  font-weight: 500;
   transition: top 0.15s ease-out;
 }
 
@@ -117,6 +236,14 @@ a:focus-visible {
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------------
+   Layout scaffold - a label rail beside a content column, used for
+   every major section instead of a centered single column or a
+   symmetric card grid. The label stays in view via position: sticky as
+   you scroll a long section - not an animation, so it needs no
+   reduced-motion guard.
+   ------------------------------------------------------------------ */
 
 .site-header,
 .section,
@@ -132,64 +259,496 @@ a:focus-visible {
 .site-header__inner,
 .section__inner,
 .site-footer__inner {
-  max-width: var(--content-max-width);
+  max-width: var(--measure-wide);
   margin: 0 auto;
 }
 
-.section__inner--wide {
-  max-width: var(--content-max-width-wide);
+.section__inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2) var(--space-3);
 }
 
-.site-header__current-role {
-  font-family: var(--font-mono);
-  color: var(--color-accent);
-  font-size: var(--font-size-lg);
+@media (min-width: 760px) {
+  .section__inner {
+    grid-template-columns: var(--rail-width) 1fr;
+    column-gap: var(--space-4);
+  }
+
+  .section__kicker {
+    position: sticky;
+    top: var(--space-3);
+  }
 }
 
-.hero__name {
-  font-size: var(--font-size-2xl);
-}
-
-.hero__tagline {
-  font-size: var(--font-size-lg);
+.section__kicker {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
   color: var(--color-text-muted);
 }
 
-.projects-grid {
+.section__kicker::before {
+  content: '[';
+  color: var(--color-border);
+}
+
+.section__kicker::after {
+  content: ']';
+  color: var(--color-border);
+}
+
+.section-divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+/* ---------------------------------------------------------------------
+   Header / hero
+   ------------------------------------------------------------------ */
+
+.site-header__top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 0.8125rem;
+}
+
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.25rem;
+}
+
+.topbar__resume {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.25rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.8125rem;
+}
+
+.topbar__resume:hover {
+  border-color: var(--color-accent);
+}
+
+.hero__eyebrow {
+  margin: 0 0 var(--space-1);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}
+
+.hero__name {
+  font-size: clamp(2.25rem, 5vw + 1rem, 3.5rem);
+  font-weight: 800;
+}
+
+.hero__tagline {
+  max-width: var(--measure);
+  font-size: 1.0625rem;
+  color: var(--color-text-secondary);
+}
+
+/* The header meta record - role, location, education as field: value
+   rows. dl > div > dt+dd is valid HTML5 (div wrappers are explicitly
+   permitted to group a dt/dd pair), and it is the same "record" idiom
+   the rest of the page uses. */
+.meta-record {
   display: grid;
-  gap: var(--space-3);
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.6rem;
+  margin: var(--space-3) 0;
+  max-width: var(--measure-wide);
+}
+
+.meta-record__row {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 0.4rem var(--space-2);
+  align-items: baseline;
+}
+
+.meta-record dt {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.meta-record dd {
+  margin: 0;
+}
+
+.meta-record__employer {
+  color: var(--color-accent-text);
+}
+
+.meta-record__detail {
+  color: var(--color-text-muted);
+  font-size: 0.9em;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-left: 0.6em;
+  padding: 0.1em 0.6em;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-text);
+}
+
+.status-pill::before {
+  content: '';
+  width: 0.4em;
+  height: 0.4em;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+
+.hero__contact {
+  margin-top: var(--space-3);
+}
+
+.hero__social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+}
+
+.hero__social a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+/* ---------------------------------------------------------------------
+   About
+   ------------------------------------------------------------------ */
+
+.about-body {
+  max-width: var(--measure);
+  color: var(--color-text-secondary);
+}
+
+.about-body p {
+  margin-bottom: var(--space-3);
+}
+
+/* ---------------------------------------------------------------------
+   Projects - featured projects get a wide, prose-forward treatment;
+   everything else is a dense list. The split reads real project data
+   (project.featured), not a decorative grid of equal cards.
+   ------------------------------------------------------------------ */
+
+.projects-featured {
+  display: grid;
+  gap: var(--space-4);
 }
 
 .project-card {
-  border: 1px solid var(--color-border);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.project-card:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.project-card__name {
+  font-size: 1.25rem;
+}
+
+.project-card__summary {
+  max-width: var(--measure);
+  color: var(--color-text-secondary);
+}
+
+.project-card__outcome {
+  max-width: var(--measure);
+  padding: 0.6rem var(--space-2);
+  margin: var(--space-2) 0;
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  border-left: 3px solid var(--color-accent);
   border-radius: var(--radius);
-  padding: var(--space-3);
-  background: var(--color-bg-raised);
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+.project-card__bullets {
+  max-width: var(--measure);
+  margin-bottom: var(--space-2);
+}
+
+.project-card__bullets li {
+  position: relative;
+  padding-left: 1.1em;
+  margin-bottom: 0.4em;
+  color: var(--color-text-secondary);
+}
+
+.project-card__bullets li::before {
+  content: '-';
+  position: absolute;
+  left: 0;
+  color: var(--color-text-muted);
 }
 
 .project-card__stack {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1);
-  list-style: none;
-  padding: 0;
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
+  gap: 0.4rem;
+  margin-bottom: var(--space-1);
+}
+
+.stack-item {
+  padding: 0.15em 0.5em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
-.experience-entry {
+.project-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+}
+
+.project-card__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.projects-other {
+  margin-top: var(--space-4);
+}
+
+.projects-other__label {
+  margin: 0 0 var(--space-2);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}
+
+.projects-other-list {
+  display: grid;
+  gap: 0;
+}
+
+.project-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem 1.5rem;
   padding: var(--space-2) 0;
   border-top: 1px solid var(--color-border);
 }
 
-.experience-entry:first-child {
-  border-top: none;
+@media (min-width: 640px) {
+  .project-row {
+    grid-template-columns: minmax(0, 14rem) 1fr;
+    align-items: baseline;
+  }
+}
+
+.project-row__name {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.project-row__summary {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.project-row__meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+.project-row__links {
+  font-size: 0.8125rem;
+}
+
+/* ---------------------------------------------------------------------
+   Experience - a status-log treatment: a rail line connecting entries,
+   a filled dot for the current role and a hollow one for past roles,
+   dates set in tabular mono. This mirrors the versioned, append-only
+   log architecture described in the About copy - not a fake terminal,
+   no simulated prompt or command.
+   ------------------------------------------------------------------ */
+
+.timeline {
+  position: relative;
+}
+
+.experience-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25rem 1fr;
+  column-gap: var(--space-2);
+  padding-bottom: var(--space-4);
+}
+
+.experience-entry:last-child {
+  padding-bottom: 0;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0.6em;
+  bottom: 1.5em;
+  left: 0.625rem;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.experience-entry__marker {
+  position: relative;
+  z-index: 1;
+  grid-column: 1;
+  justify-self: center;
+  margin-top: 0.45em;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 2px solid var(--color-text-muted);
+}
+
+.experience-entry--current .experience-entry__marker {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
 }
 
 .experience-entry__meta {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
+  margin: 0 0 0.2rem;
+  font-size: 0.8125rem;
   color: var(--color-text-muted);
+}
+
+.experience-entry h3 {
+  margin-bottom: 0.15rem;
+}
+
+.experience-entry__employer {
+  margin: 0 0 0.6rem;
+  color: var(--color-text-secondary);
+}
+
+.experience-entry ul {
+  max-width: var(--measure);
+}
+
+.experience-entry li {
+  position: relative;
+  padding-left: 1.1em;
+  margin-bottom: 0.4em;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.experience-entry li::before {
+  content: '-';
+  position: absolute;
+  left: 0;
+  color: var(--color-text-muted);
+}
+
+/* ---------------------------------------------------------------------
+   Footer
+   ------------------------------------------------------------------ */
+
+.site-footer {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.site-footer__name {
+  color: var(--color-text-secondary);
+  margin-bottom: 0.2rem;
+}
+
+/* ---------------------------------------------------------------------
+   Motion - CSS only, zero animation JS.
+   ------------------------------------------------------------------ */
+
+/* View Transitions API. The site has one HTML page today, so this has
+   no visible effect yet, but it is the correct declarative, JS-free way
+   to opt future navigations into the browser's default cross-fade -
+   consistent with the brief's "View Transitions API" requirement
+   without inventing a same-document transition this page has no second
+   state to transition to. Guarded the same way any other motion on
+   this page is guarded. */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* Scroll-driven reveals for section content, project rows, and
+   experience entries, using an element-scoped view-progress timeline
+   (animation-timeline: view()) rather than the document-scoped
+   scroll() timeline: view() ties the animation to when THIS element
+   enters the viewport, which is what "reveal as you scroll to it"
+   means; scroll() reports whole-scroller progress and would need every
+   element to know its own absolute scroll offset to reveal correctly,
+   which defeats the point without JS. Both are part of the same CSS
+   Scroll-Driven Animations spec the brief names.
+   Entirely opt-in behind @supports, and only when the user has not
+   asked for reduced motion, so an unsupported or motion-sensitive
+   browser sees the static, fully-visible default with no animation
+   applied at all - never a hidden state waiting on an animation that
+   will not run. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: reveal-in linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 30%;
+    }
+
+    @keyframes reveal-in {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
 }

@@ -48,6 +48,21 @@ const validatedProjects = (projects ?? []).map((project) => ({
     url: validateUrl(link.url, 'projects[].links[].url'),
   })),
 }))
+const featuredProjects = validatedProjects.filter((project) => project.featured)
+const otherProjects = validatedProjects.filter((project) => !project.featured)
+
+// person.education was, until this task, consumed ONLY by the JSON-LD
+// alumniOf block below and never rendered as visible text - the exact
+// failure shape the visible-current-role-line rule above exists to
+// prevent, just for a different field. A controlled test found five
+// major AI agents (ChatGPT, Claude, Perplexity, Gemini, Copilot) all
+// missed data that existed only inside JSON-LD, so it is rendered in
+// the header meta record below, sourced from profile.json rather than
+// hardcoded, and its URL runs through the same validateUrl() gate as
+// every other href on this page.
+const educationUrl = person.education?.institution_url
+  ? validateUrl(person.education.institution_url, 'person.education.institution_url')
+  : null
 
 /**
  * Format an experience entry's date range the same way v1 does:
@@ -86,11 +101,20 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="light dark" />
     <title>{site.title}</title>
     <meta name="description" content={site.description} />
     <meta name="author" content={person.name} />
-    <meta name="theme-color" content={site.theme_color} />
+    <!--
+      Two theme-color tags, split by media query, so the browser chrome
+      matches whichever palette prefers-color-scheme actually renders.
+      The dark value is site.theme_color from profile.json (the single
+      content model); the light value is presentation-only, so it is
+      set here rather than added to that content model, and matches
+      tokens.css's light --color-bg exactly.
+    -->
+    <meta name="theme-color" content={site.theme_color} media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
     <link rel="canonical" href={siteUrl} />
     <!--
       The markdown twin of this page (src/pages/index.md.ts), built
@@ -126,17 +150,53 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
 
     <header class="site-header">
       <div class="site-header__inner">
-        <nav aria-label="Section">
-          <a href="#about">About</a>
-          <a href="#projects">Projects</a>
-          <a href="#experience">Experience</a>
-        </nav>
+        <div class="site-header__top">
+          <nav aria-label="Section" class="site-nav">
+            <a href="#about">about</a>
+            <a href="#projects">projects</a>
+            <a href="#experience">experience</a>
+          </nav>
+          <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
+            {person.resume.label}
+          </a>
+        </div>
 
+        <p class="hero__eyebrow">person</p>
         <h1 class="hero__name">{person.name}</h1>
-        <p class="site-header__current-role">
-          Currently: {currentRole.title} at <strong>{currentRole.employer}</strong>
-        </p>
         <p class="hero__tagline">{person.tagline}</p>
+
+        <dl class="meta-record">
+          <div class="meta-record__row">
+            <dt>role</dt>
+            <dd>
+              {currentRole.title} at <strong class="meta-record__employer">{currentRole.employer}</strong>
+              {!currentRole.end && <span class="status-pill">current</span>}
+            </dd>
+          </div>
+          <div class="meta-record__row">
+            <dt>based</dt>
+            <dd>{person.location}</dd>
+          </div>
+          {person.education && (
+            <div class="meta-record__row">
+              <dt>education</dt>
+              <dd>
+                {person.education.credential},{' '}
+                {educationUrl ? (
+                  <a href={educationUrl} rel="noopener" target="_blank">
+                    {person.education.institution}
+                  </a>
+                ) : (
+                  person.education.institution
+                )}
+                {person.education.detail && (
+                  <span class="meta-record__detail"> ({person.education.detail})</span>
+                )}
+              </dd>
+            </div>
+          )}
+        </dl>
+
         <p class="hero__contact">
           <a href={`mailto:${person.email}`}>{person.email}</a>
         </p>
@@ -147,83 +207,125 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
             </a>
           ))}
         </nav>
-        <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
-          {person.resume.label}
-        </a>
       </div>
     </header>
 
     <main id="main-content">
       <section id="about" class="section" aria-labelledby="about-heading">
-        <div class="section__inner">
-          <p class="section__kicker">01</p>
-          <h2 id="about-heading">About</h2>
-          <div class="about-body">
-            {about.map((paragraph) => (
-              <p>{paragraph}</p>
-            ))}
+        <div class="section__inner reveal">
+          <p class="section__kicker">about</p>
+          <div>
+            <h2 id="about-heading">About</h2>
+            <div class="about-body">
+              {about.map((paragraph) => (
+                <p>{paragraph}</p>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       <section id="projects" class="section" aria-labelledby="projects-heading">
         <div class="section__inner section__inner--wide">
-          <p class="section__kicker">02</p>
-          <h2 id="projects-heading">Projects</h2>
-          <div class="projects-grid">
-            {validatedProjects.map((project) => (
-              <article
-                class="project-card"
-                id={`project-${project.slug}`}
-                aria-labelledby={`project-${project.slug}-heading`}
-              >
-                <h3 id={`project-${project.slug}-heading`} class="project-card__name">
-                  {project.name}
-                </h3>
-                <p class="project-card__summary">{project.summary}</p>
-                {project.outcome && <p class="project-card__outcome">{project.outcome}</p>}
-                <ul class="project-card__bullets">
-                  {project.bullets.map((bullet) => (
-                    <li>{bullet}</li>
-                  ))}
-                </ul>
-                <ul class="project-card__stack" aria-label="Technology stack">
-                  {project.stack.map((item) => (
-                    <li class="stack-item">{item}</li>
-                  ))}
-                </ul>
-                {project.links && project.links.length > 0 && (
-                  <p class="project-card__links">
-                    {project.links.map((link) => (
-                      <a href={link.url} rel="noopener" target="_blank">
-                        {link.label}
-                      </a>
+          <p class="section__kicker">projects</p>
+          <div>
+            <h2 id="projects-heading">Projects</h2>
+
+            <div class="projects-featured">
+              {featuredProjects.map((project) => (
+                <article
+                  class="project-card reveal"
+                  id={`project-${project.slug}`}
+                  aria-labelledby={`project-${project.slug}-heading`}
+                >
+                  <h3 id={`project-${project.slug}-heading`} class="project-card__name">
+                    {project.name}
+                  </h3>
+                  <p class="project-card__summary">{project.summary}</p>
+                  {project.outcome && <p class="project-card__outcome">{project.outcome}</p>}
+                  <ul class="project-card__bullets">
+                    {project.bullets.map((bullet) => (
+                      <li>{bullet}</li>
                     ))}
-                  </p>
-                )}
-              </article>
-            ))}
+                  </ul>
+                  <ul class="project-card__stack" aria-label="Technology stack">
+                    {project.stack.map((item) => (
+                      <li class="stack-item">{item}</li>
+                    ))}
+                  </ul>
+                  {project.links && project.links.length > 0 && (
+                    <p class="project-card__links">
+                      {project.links.map((link) => (
+                        <a href={link.url} rel="noopener" target="_blank">
+                          {link.label}
+                        </a>
+                      ))}
+                    </p>
+                  )}
+                </article>
+              ))}
+            </div>
+
+            {otherProjects.length > 0 && (
+              <div class="projects-other">
+                <p class="projects-other__label">also</p>
+                <div class="projects-other-list">
+                  {otherProjects.map((project) => (
+                    <article
+                      class="project-row reveal"
+                      id={`project-${project.slug}`}
+                      aria-labelledby={`project-${project.slug}-heading`}
+                    >
+                      <h3 id={`project-${project.slug}-heading`} class="project-row__name">
+                        {project.name}
+                      </h3>
+                      <p class="project-row__summary">{project.summary}</p>
+                      <div class="project-row__meta">
+                        <ul class="project-card__stack" aria-label="Technology stack">
+                          {project.stack.map((item) => (
+                            <li class="stack-item">{item}</li>
+                          ))}
+                        </ul>
+                        {project.links && project.links.length > 0 && (
+                          <p class="project-row__links">
+                            {project.links.map((link) => (
+                              <a href={link.url} rel="noopener" target="_blank">
+                                {link.label}
+                              </a>
+                            ))}
+                          </p>
+                        )}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       <section id="experience" class="section" aria-labelledby="experience-heading">
         <div class="section__inner">
-          <p class="section__kicker">03</p>
-          <h2 id="experience-heading">Experience</h2>
+          <p class="section__kicker">experience</p>
           <div class="timeline">
             {experience.map((job) => (
-              <article class:list={['experience-entry', { 'experience-entry--current': !job.end }]}>
-                <h3>{job.employer}</h3>
-                <p class="experience-entry__title">{job.title}</p>
-                <p class="experience-entry__meta">
-                  {formatDateRange(job.start, job.end)} &middot; {job.location}
-                </p>
-                <ul>
-                  {job.bullets.map((bullet) => (
-                    <li>{bullet}</li>
-                  ))}
-                </ul>
+              <article
+                class:list={['experience-entry reveal', { 'experience-entry--current': !job.end }]}
+              >
+                <span class="experience-entry__marker" aria-hidden="true"></span>
+                <div>
+                  <p class="experience-entry__meta">
+                    <time datetime={job.start}>{formatDateRange(job.start, job.end)}</time> &middot; {job.location}
+                  </p>
+                  <h3>{job.title}</h3>
+                  <p class="experience-entry__employer">{job.employer}</p>
+                  <ul>
+                    {job.bullets.map((bullet) => (
+                      <li>{bullet}</li>
+                    ))}
+                  </ul>
+                </div>
               </article>
             ))}
           </div>
