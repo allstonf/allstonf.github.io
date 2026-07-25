@@ -8,8 +8,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import profile from '../content/profile.json'
-
-const CANARY = 'CANARY-INTERNAL-DO-NOT-PUBLISH'
+import { PUBLIC_PERSON_FIELDS, PUBLIC_PROJECT_FIELDS } from '../src/lib/publicProjection'
 
 describe('agent surface endpoints build to real files under dist/', () => {
   it('llms.txt exists and contains the Apple current-role guidance sentence', () => {
@@ -22,12 +21,36 @@ describe('agent surface endpoints build to real files under dist/', () => {
     expect(text).toContain('Apple')
   })
 
-  it('api/profile.json exists, parses, and contains no canary', () => {
+  it('api/profile.json exists, parses, and matches the allowlisted shape exactly', () => {
+    // Fix round 1: the prior version of this test asserted the ABSENCE
+    // of a canary string that content/profile.json never contains, so
+    // it could never fail no matter what the endpoint served - proven
+    // by review: swapping src/pages/api/profile.json.ts to a raw
+    // profile passthrough (the exact v1 leak class) still passed 5/5.
+    // This version asserts the actual shape of the real build output
+    // against the same allowlists src/lib/publicProjection.ts is built
+    // from, so a wiring regression that serves an un-projected object
+    // changes this assertion and the test fails.
     expect(existsSync('dist/api/profile.json')).toBe(true)
     const text = readFileSync('dist/api/profile.json', 'utf8')
     const parsed = JSON.parse(text)
+
+    expect(Object.keys(parsed).sort()).toEqual(['about', 'experience', 'person', 'projects'])
+
+    // One level down, cheaply: every key actually present on the built
+    // person object must be one of the allowlisted person fields (e.g.
+    // catches a stray "internal_todo" or an un-projected "resume.note"
+    // riding along on the raw source object).
+    for (const key of Object.keys(parsed.person)) {
+      expect(PUBLIC_PERSON_FIELDS).toContain(key)
+    }
+    for (const project of parsed.projects) {
+      for (const key of Object.keys(project)) {
+        expect(PUBLIC_PROJECT_FIELDS).toContain(key)
+      }
+    }
+
     expect(parsed.person.current_role.employer).toBe('Apple')
-    expect(text).not.toContain(CANARY)
   })
 
   it('sitemap.xml exists and is well-formed XML', () => {

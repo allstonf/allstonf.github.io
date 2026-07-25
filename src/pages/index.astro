@@ -16,6 +16,7 @@
 import '../styles/tokens.css'
 import profile from '../../content/profile.json'
 import { validateUrl } from '../lib/url'
+import { buildJsonLd } from '../lib/jsonLd'
 
 const { site, person, about, projects, experience } = profile
 const currentRole = person.current_role
@@ -58,37 +59,17 @@ function formatDateRange(start: string, end: string | null): string {
   return `${start} - ${end ? end : 'Present'}`
 }
 
-// Mirrors build.py's build_json_ld(): a schema.org Person object built
-// directly from the same content model, so the agent-legible structured
-// data and the visible page can never describe two different people.
-const jsonLd: Record<string, unknown> = {
-  '@context': 'https://schema.org',
-  '@type': 'Person',
-  name: person.name,
-  jobTitle: currentRole.title,
-  worksFor: {
-    '@type': 'Organization',
-    name: currentRole.employer,
-    // Not an href, but an agent following worksFor.url deserves the
-    // same scheme guarantee a human clicking a link gets. Validated
-    // WITHOUT HTML-escaping here (this object is JSON.stringify'd
-    // below, never rendered as markup), per the controller amendment.
-    ...(currentRole.employer_url
-      ? { url: validateUrl(currentRole.employer_url, 'person.current_role.employer_url') }
-      : {}),
-  },
-  knowsAbout: person.knows_about ?? [],
-  email: person.email,
-  url: siteUrl,
-  sameAs: validatedProfiles.map((p) => p.url),
-}
-if (person.education) {
-  jsonLd.alumniOf = {
-    '@type': 'CollegeOrUniversity',
-    name: person.education.institution,
-    ...(person.education.institution_url ? { url: person.education.institution_url } : {}),
-  }
-}
+// Built by src/lib/jsonLd.ts's buildJsonLd() - a schema.org Person
+// object built directly from the same content model, so the
+// agent-legible structured data and the visible page can never
+// describe two different people. Extracted to a standalone module
+// (rather than constructed inline here) specifically so every URL sink
+// it emits - worksFor.url, url, sameAs, and alumniOf.url - is covered
+// by tests/jsonLd.test.ts; an inline object literal in this frontmatter
+// is not importable by a test at all, which is how a missing
+// validateUrl() call on person.education.institution_url went
+// undetected in the first pass of this port.
+const jsonLd = buildJsonLd(profile)
 
 // Serialize, then guard against a </script> breakout the same way
 // build.py's render_json_ld_script() does: any "</" sequence (which can
