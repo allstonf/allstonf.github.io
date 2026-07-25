@@ -12,6 +12,18 @@ describe('static shell parity with v1', () => {
     expect(visible).toContain(profile.person.current_role.employer)
   })
 
+  it('names the education institution in VISIBLE text', () => {
+    // Mirrors the employer test above: person.education is rendered as
+    // a visible <dd> in the header meta record (index.astro:180-195),
+    // not just inside the JSON-LD alumniOf block, for the same reason
+    // the current-role line is visible - JSON-LD-only data is invisible
+    // to the AI agents the controlled test in index.astro's header
+    // comment checked. This guards against a future edit silently
+    // dropping or hiding that <dd> while every other test stays green.
+    const visible = html.replace(/<script[\s\S]*?<\/script>/g, '')
+    expect(visible).toContain(profile.person.education.institution)
+  })
+
   it('renders every about paragraph', () => {
     for (const para of profile.about) {
       expect(html).toContain(para.slice(0, 40))

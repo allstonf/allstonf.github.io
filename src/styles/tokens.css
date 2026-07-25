@@ -59,14 +59,6 @@
 
 @font-face {
   font-family: 'DM Mono';
-  font-style: italic;
-  font-display: swap;
-  font-weight: 400;
-  src: url('/fonts/dm-mono-latin-400-italic.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'DM Mono';
   font-style: normal;
   font-display: swap;
   font-weight: 500;
@@ -89,7 +81,13 @@
   --color-border: #334155;
   --color-text: #f8fafc;
   --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  /* #64748b (Slate 500) computes to 4.24:1 against this bg - under the
+     4.5:1 AA text minimum, and every usage site (kicker, stack items,
+     experience meta, footer) is 0.75-0.875rem, so the large-text
+     exemption doesn't apply. Nudged toward Slate 400 to 4.68:1 (still
+     comfortably below --color-text-secondary's 7.87:1, so the two
+     remain visually distinct tiers). */
+  --color-text-muted: #6b7b92;
 
   /* Amber - the single accent. --color-accent is for fills, borders,
      and glows; --color-accent-text is the AA-safe variant for amber
@@ -127,6 +125,9 @@
     --color-border: #e2e8f0;
     --color-text: #0f172a;
     --color-text-secondary: #475569;
+    /* Unlike the dark-mode pair above, #64748b against this bg already
+       clears AA at 4.55:1 - checked alongside the dark-mode fix, left
+       unchanged. */
     --color-text-muted: #64748b;
 
     /* Raw amber fails AA as text against a light background (~2.1:1).
