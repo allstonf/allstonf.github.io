@@ -76,6 +76,14 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
     <meta name="author" content={person.name} />
     <meta name="theme-color" content={site.theme_color} />
     <link rel="canonical" href={site.url} />
+    <!--
+      Root-relative because this is a GitHub Pages USER site served from
+      the domain root (base: '/', not a repo-name subpath). The file
+      itself lives in public/favicon.svg, which Astro copies verbatim
+      to dist/favicon.svg at build time - it is the same monogram v1
+      shipped from assets/favicon.svg, not redrawn.
+    -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
     <meta property="og:type" content="profile" />
     <meta property="og:title" content={site.title} />

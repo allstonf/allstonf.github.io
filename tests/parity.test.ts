@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
+import { join } from 'node:path'
 import profile from '../content/profile.json'
 
 describe('static shell parity with v1', () => {
@@ -30,5 +31,24 @@ describe('static shell parity with v1', () => {
     // comments, copy, commit messages" style rule. Identical runtime
     // behavior to the literal character.
     expect(html).not.toContain(String.fromCharCode(8212))
+  })
+
+  it('ships a favicon that actually resolves on disk', () => {
+    // v1's index.html carries <link rel="icon" ...>. A regression here
+    // was caught by review round 1: the <link> tag alone is not enough
+    // to assert, because a tag pointing at a file the build never
+    // copied is exactly the failure mode that shipped - the browser
+    // tab silently falls back to the generic icon with no build error.
+    // So this test checks BOTH halves: the tag exists, AND the file it
+    // points at exists under dist/ after a real build.
+    const match = html.match(/<link\s+rel="icon"[^>]*href="([^"]+)"/)
+    expect(match, 'expected a <link rel="icon" ...> tag in dist/index.html').not.toBeNull()
+
+    const href = match![1]
+    // href is root-relative ("/favicon.svg") because this is a user
+    // site served from the domain root (base: '/'), so it maps
+    // directly onto a path under dist/ with the leading slash dropped.
+    const distPath = join('dist', href.replace(/^\//, ''))
+    expect(existsSync(distPath), `expected ${distPath} to exist after astro build`).toBe(true)
   })
 })
