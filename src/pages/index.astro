@@ -18,7 +18,16 @@ import profile from '../../content/profile.json'
 import loop from '../../content/loop-data.json'
 import { validateUrl } from '../lib/url'
 import { buildJsonLd } from '../lib/jsonLd'
+import { validateProfile } from '../lib/validateProfile'
 import LoopExplainer from '../components/LoopExplainer'
+
+// Whole-document invariants that no single-value render call can
+// catch (duplicate project slugs, a malformed email) - ported from
+// v1's validate_profile(). Runs before anything below reads `profile`,
+// so a violation aborts the build before any output is written, rather
+// than shipping a page with broken aria-labelledby wiring or a
+// poisoned mailto: link. See src/lib/validateProfile.ts.
+validateProfile(profile)
 
 const { site, person, about, projects, experience } = profile
 const currentRole = person.current_role

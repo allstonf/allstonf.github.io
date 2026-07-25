@@ -1,0 +1,96 @@
+# .github/workflows/deploy.yml - build, gate, and publish the v2 Astro
+# site to GitHub Pages via the Actions deployment path (not the legacy
+# branch-root publishing source).
+#
+# NOT ARMED YET, ON PURPOSE. Switching the repository's Pages source
+# from "Deploy from a branch" to "GitHub Actions" is part of the human
+# review gate for this rebuild, so this workflow currently only runs
+# on manual dispatch (workflow_dispatch) - it will not fire on every
+# push to master. See the commented-out `push` trigger below for
+# exactly what to uncomment, and the repo-settings step, once the
+# owner has reviewed the rebuilt site and is ready to arm it.
+#
+# Step order matches the plan exactly: checkout, install, build, gate
+# on the JS budget, run the test suite, then package and deploy. The
+# budget check and the test suite both run BEFORE any artifact is
+# uploaded, so either one failing stops the job before anything is
+# published - see the "gate on build's exit code" note below for why
+# that ordering is load-bearing, not just tidy.
+name: Deploy to GitHub Pages
+
+on:
+  workflow_dispatch: {}
+  # Uncomment this block (and remove workflow_dispatch above, or keep
+  # both) to arm automatic deploys on every push to master. Do this
+  # ONLY after also switching Settings > Pages > Build and deployment
+  # > Source to "GitHub Actions" in the repository settings - until
+  # that source switch happens, GitHub Pages keeps serving the current
+  # branch-root master content regardless of what this workflow builds.
+  #
+  # push:
+  #   branches:
+  #     - master
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    # `environment` is a job-level key, not a workflow-level one - it
+    # has to live here for actions/deploy-pages@v5's OIDC token
+    # exchange (the id-token: write permission above) to be scoped to
+    # the github-pages environment GitHub Pages expects.
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      # No `continue-on-error` and no `if: always()` guard anywhere
+      # below this step, deliberately. A GitHub Actions job stops at
+      # the first non-zero-exit step by default - that default is what
+      # makes this a real gate. Astro's own validateUrl() can abort a
+      # build with exit 1 while still leaving a PARTIAL dist/ behind
+      # (the agent-surface endpoints get written before the page that
+      # fails), so relying on "dist/ exists" instead of the actual
+      # build exit code would let a broken-but-not-empty site slip
+      # through to the upload step below.
+      - name: Build (astro build)
+        run: npx astro build
+
+      # Reference-aware gzipped-JS budget gate. See
+      # scripts/check-js-budget.mjs for why this cannot be a glob over
+      # dist/**/*.js - it must follow the same astro-island /
+      # script-src / modulepreload reference chain a browser follows,
+      # or it silently passes on JS a browser never fetches (or
+      # silently passes at 0 KB if extraction itself is broken).
+      - name: Check JS budget
+        run: node scripts/check-js-budget.mjs
+
+      - name: Run tests
+        run: npx vitest run
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
