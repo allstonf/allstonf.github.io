@@ -201,8 +201,36 @@ a:hover {
   text-decoration-color: currentColor;
 }
 
+/* Base button reset. LoopExplainer is the first place this page uses a
+   real <button>, so this is the first button rule in the file - font
+   and color are pulled from the same tokens the rest of the page uses
+   rather than left at browser defaults, so a button reads as part of
+   this design system and not as an unstyled form control. */
+button {
+  font-family: var(--font-body);
+  font-size: inherit;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-height: 44px;
+  padding: 0.4rem 0.9rem;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--color-accent);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 a:focus-visible,
-button:focus-visible {
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
   border-radius: 2px;
@@ -694,6 +722,309 @@ time {
 .site-footer__name {
   color: var(--color-text-secondary);
   margin-bottom: 0.2rem;
+}
+
+/* ---------------------------------------------------------------------
+   Loop explainer - the static record (always in the DOM, readable
+   with JavaScript off) plus the LoopExplainer React island that
+   enhances it. Reuses the same bordered-record, muted-label, single-
+   amber-accent vocabulary as the rest of the page rather than
+   introducing a second visual language for the one interactive part
+   of the site.
+   ------------------------------------------------------------------ */
+
+.loop-intro {
+  max-width: var(--measure);
+  color: var(--color-text-secondary);
+}
+
+.loop-weights-static {
+  display: grid;
+  gap: 0.5rem;
+  max-width: var(--measure-wide);
+  margin: 0 0 var(--space-3);
+}
+
+.loop-weights-static__row {
+  display: grid;
+  grid-template-columns: minmax(0, 16rem) 1fr;
+  gap: 0.4rem var(--space-2);
+  align-items: baseline;
+  font-size: 0.9375rem;
+}
+
+.loop-weights-static dt {
+  color: var(--color-text-secondary);
+}
+
+.loop-weights-static dd {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.loop-changelog {
+  list-style: none;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  counter-reset: loop-change;
+}
+
+.loop-changelog li {
+  counter-increment: loop-change;
+  position: relative;
+  padding: var(--space-2) 0 var(--space-2) 2.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.loop-changelog li:first-child {
+  border-top: none;
+}
+
+.loop-changelog li::before {
+  content: '#' counter(loop-change);
+  position: absolute;
+  top: var(--space-2);
+  left: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.loop-changelog p {
+  max-width: var(--measure);
+  margin: 0.5rem 0 0;
+  color: var(--color-text-secondary);
+}
+
+.loop-kind-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15em 0.6em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.loop-reasons {
+  max-width: var(--measure);
+  margin: var(--space-2) 0;
+}
+
+.loop-reasons li {
+  position: relative;
+  padding-left: 1.1em;
+  margin-bottom: 0.4em;
+  color: var(--color-text-secondary);
+}
+
+.loop-reasons li::before {
+  content: '-';
+  position: absolute;
+  left: 0;
+  color: var(--color-text-muted);
+}
+
+.loop-rule {
+  max-width: var(--measure);
+  padding: 0.6rem var(--space-2);
+  margin: var(--space-2) 0 var(--space-4);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+/* The island wrapper. A visible border distinguishes "this part reacts
+   to you" from the static record above it without relying on motion or
+   color alone. */
+.loop-explainer {
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.loop-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: var(--space-3);
+}
+
+.loop-mode-tab--active {
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.loop-mode-panel__intro {
+  max-width: var(--measure);
+  margin: 0 0 var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.loop-walkthrough {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 760px) {
+  .loop-walkthrough {
+    grid-template-columns: minmax(0, 20rem) 1fr;
+    align-items: start;
+  }
+}
+
+.loop-step-indicator {
+  margin: 0 0 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.loop-walkthrough__summary {
+  max-width: var(--measure);
+  margin: 0.6rem 0 var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.loop-walkthrough__nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.loop-bars {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+}
+
+.loop-bar {
+  display: grid;
+  grid-template-columns: minmax(7rem, 10rem) 1fr 3rem;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.loop-bar__label {
+  color: var(--color-text-secondary);
+}
+
+.loop-bar__track {
+  position: relative;
+  height: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.loop-bar__fill {
+  display: block;
+  height: 100%;
+  background: var(--color-text-muted);
+  transition: width 0.2s ease;
+}
+
+.loop-bar--highlight .loop-bar__fill {
+  background: var(--color-accent);
+}
+
+/* prefers-reduced-motion is implemented alongside this animation, not
+   retrofitted: the fill's width still changes state-to-state, but the
+   transition that would otherwise animate it is removed, so the change
+   is instant. */
+@media (prefers-reduced-motion: reduce) {
+  .loop-bar__fill {
+    transition: none;
+  }
+}
+
+.loop-bar__value {
+  text-align: right;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.loop-perturb-controls {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+@media (min-width: 640px) {
+  .loop-perturb-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.loop-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.loop-control select,
+.loop-control input[type='range'] {
+  font-family: var(--font-body);
+}
+
+.loop-control--fieldset {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-2);
+  margin: 0;
+}
+
+.loop-control--fieldset legend {
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.loop-control--fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 36px;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.loop-verdict {
+  margin: var(--space-2) 0 var(--space-3);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.loop-verdict--admitted {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+}
+
+.loop-verdict__label {
+  margin: 0 0 0.3rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 0.8125rem;
+}
+
+.loop-verdict--admitted .loop-verdict__label {
+  color: var(--color-accent-text);
+}
+
+.loop-verdict__reason {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
 }
 
 /* ---------------------------------------------------------------------

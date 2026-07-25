@@ -15,8 +15,10 @@
 // JSON-LD below is additive, never the only place "Apple" appears.
 import '../styles/tokens.css'
 import profile from '../../content/profile.json'
+import loop from '../../content/loop-data.json'
 import { validateUrl } from '../lib/url'
 import { buildJsonLd } from '../lib/jsonLd'
+import LoopExplainer from '../components/LoopExplainer'
 
 const { site, person, about, projects, experience } = profile
 const currentRole = person.current_role
@@ -155,6 +157,7 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
             <a href="#about">about</a>
             <a href="#projects">projects</a>
             <a href="#experience">experience</a>
+            <a href="#loop">the loop</a>
           </nav>
           <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
             {person.resume.label}
@@ -328,6 +331,56 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
                 </div>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+      <section id="loop" class="section" aria-labelledby="loop-heading">
+        <div class="section__inner section__inner--wide">
+          <p class="section__kicker">loop</p>
+          <div>
+            <h2 id="loop-heading">The scoring loop</h2>
+            <p class="loop-intro">
+              A job-search scoring rubric has taken nine logged changes across four
+              retrospectives. Not one of those changes ever mutated a component weight -
+              every entry below says so explicitly. This is the full record, rendered
+              from the same log the interactive panel further down reads from.
+            </p>
+
+            <h3>Component weights</h3>
+            <dl class="loop-weights-static">
+              {loop.weights.map((w) => (
+                <div class="loop-weights-static__row">
+                  <dt>{w.component}</dt>
+                  <dd>{w.weight}%</dd>
+                </div>
+              ))}
+            </dl>
+
+            <h3>Change log</h3>
+            <ol class="loop-changelog">
+              {loop.changes.map((change) => (
+                <li>
+                  <span class="loop-kind-badge">{change.kind}</span>
+                  <p>{change.summary}</p>
+                </li>
+              ))}
+            </ol>
+
+            <h3>Why no weight has ever moved</h3>
+            <ul class="loop-reasons">
+              {loop.whyNoTuning.reasons.map((reason) => (
+                <li>{reason}</li>
+              ))}
+            </ul>
+            <p class="loop-rule">{loop.whyNoTuning.rule}</p>
+
+            <h3>Try it yourself</h3>
+            <p class="loop-intro">
+              The panel below lets you attempt to move a weight and watch the same rule
+              evaluate the attempt live. It needs JavaScript to run; everything above it
+              is the complete record either way.
+            </p>
+            <LoopExplainer client:visible />
           </div>
         </div>
       </section>
