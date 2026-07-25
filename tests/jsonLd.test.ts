@@ -37,7 +37,57 @@ describe('buildJsonLd fails closed on every URL sink it emits', () => {
 
   it('builds cleanly for the real profile and names Apple as worksFor', () => {
     const jsonLd = buildJsonLd(profile) as any
-    expect(jsonLd.worksFor.name).toBe('Apple')
-    expect(jsonLd.alumniOf.url).toBe(profile.person.education.institution_url)
+    const personNode = jsonLd['@graph'].find((node: any) => node['@type'] === 'Person')
+    expect(personNode.worksFor.name).toBe('Apple')
+    expect(personNode.alumniOf.url).toBe(profile.person.education.institution_url)
+  })
+})
+
+// Task 6: entity-disambiguation hardening. A bare Person object with no
+// stable identifier and no linked WebSite is exactly what makes an
+// agent's cross-page/cross-mention entity resolution ambiguous - two
+// "Allston Fojas" mentions on the web have nothing forcing them to
+// resolve to the SAME node. @id + a WebSite node that references the
+// Person back via publisher/about gives a crawler an anchor to dedupe
+// against, per schema.org's documented @graph/@id pattern for tying
+// multiple entities on one page together.
+describe('buildJsonLd emits a disambiguation-hardened @graph', () => {
+  it('gives the Person node a stable @id at <site.url>/#person', () => {
+    const jsonLd = buildJsonLd(profile) as any
+    const personNode = jsonLd['@graph'].find((node: any) => node['@type'] === 'Person')
+    expect(personNode).toBeDefined()
+    expect(personNode['@id']).toBe(`${profile.site.url}/#person`)
+  })
+
+  it('emits a WebSite node with its own @id that references the Person via publisher and about', () => {
+    const jsonLd = buildJsonLd(profile) as any
+    const websiteNode = jsonLd['@graph'].find((node: any) => node['@type'] === 'WebSite')
+    expect(websiteNode).toBeDefined()
+    expect(websiteNode['@id']).toBe(`${profile.site.url}/#website`)
+    expect(websiteNode.url).toBe(profile.site.url)
+    expect(websiteNode.name).toBe(profile.site.title)
+    expect(websiteNode.publisher).toEqual({ '@id': `${profile.site.url}/#person` })
+    expect(websiteNode.about).toEqual({ '@id': `${profile.site.url}/#person` })
+  })
+
+  it('sources dateModified on the WebSite node from _meta.last_updated, never the wall clock', () => {
+    // Mirrors renderSitemapXml's existing lastmod rule (src/lib/agentSurface.ts)
+    // - using the current date instead would make a rebuild of unchanged
+    // content produce different JSON-LD bytes.
+    const jsonLd = buildJsonLd(profile) as any
+    const websiteNode = jsonLd['@graph'].find((node: any) => node['@type'] === 'WebSite')
+    expect(websiteNode.dateModified).toBe(profile._meta.last_updated)
+  })
+
+  it('still keeps sameAs populated from person.profiles, validated through validateUrl', () => {
+    const jsonLd = buildJsonLd(profile) as any
+    const personNode = jsonLd['@graph'].find((node: any) => node['@type'] === 'Person')
+    expect(personNode.sameAs).toEqual(profile.person.profiles.map((p) => p.url))
+  })
+
+  it('rejects a disallowed scheme in site.url before either node is built', () => {
+    const dirty = structuredClone(profile) as any
+    dirty.site.url = 'javascript:alert(1)'
+    expect(() => buildJsonLd(dirty)).toThrow(UnpublishableUrlError)
   })
 })

@@ -24,6 +24,22 @@ describe('static shell parity with v1', () => {
     expect(visible).toContain(profile.person.education.institution)
   })
 
+  it('shows a visible last-updated date sourced from _meta.last_updated', () => {
+    // Freshness is a measured citation factor (30-89 days old is the
+    // observed sweet spot), and it has to be VISIBLE text, not just the
+    // JSON-LD dateModified value - the same "structured data alone is
+    // invisible to the agents that matter" reasoning as the visible
+    // current-role line above.
+    const visible = html.replace(/<script[\s\S]*?<\/script>/g, '')
+    expect(visible).toContain(profile._meta.last_updated)
+  })
+
+  it('states role and employer plainly in the meta description', () => {
+    const description = html.match(/<meta name="description" content="([^"]*)"/)
+    expect(description, 'expected a <meta name="description"> tag').not.toBeNull()
+    expect(description![1]).toContain(profile.person.current_role.employer)
+  })
+
   it('renders every about paragraph', () => {
     for (const para of profile.about) {
       expect(html).toContain(para.slice(0, 40))

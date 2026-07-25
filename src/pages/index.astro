@@ -29,7 +29,7 @@ import LoopExplainer from '../components/LoopExplainer'
 // poisoned mailto: link. See src/lib/validateProfile.ts.
 validateProfile(profile)
 
-const { site, person, about, projects, experience } = profile
+const { site, person, about, projects, experience, _meta } = profile
 const currentRole = person.current_role
 
 // Every URL sink on this page runs through validateUrl() before it
@@ -401,6 +401,18 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         <p class="site-footer__contact">
           <a href={`mailto:${person.email}`}>{person.email}</a>
         </p>
+        <!--
+          A VISIBLE freshness signal, not just JSON-LD's dateModified.
+          Freshness is a measured citation factor (a 30-89 day-old page
+          is the observed sweet spot), and the same visible-text
+          requirement as the current-role line above applies here too -
+          a controlled test found five major AI agents all missed data
+          that existed only inside a JSON-LD block, so the fact has to
+          be readable in plain text as well. Sourced from
+          content/profile.json's _meta.last_updated, never the wall
+          clock, so a rebuild of unchanged content ships the same bytes.
+        -->
+        <p class="site-footer__meta">Last updated {_meta.last_updated}</p>
       </div>
     </footer>
   </body>

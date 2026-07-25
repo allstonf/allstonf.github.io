@@ -1,4 +1,4 @@
-// src/lib/jsonLd.ts - builds the schema.org Person object embedded in
+// src/lib/jsonLd.ts - builds the schema.org JSON-LD graph embedded in
 // index.astro's <script type="application/ld+json"> block.
 //
 // Extracted out of index.astro's frontmatter into a standalone,
@@ -18,16 +18,39 @@
 // by the caller, never rendered as markup - see src/lib/url.ts for why
 // that split matters (a URL sink headed into JSON needs scheme
 // validation but not HTML-entity escaping, unlike an href).
+//
+// Task 6 (AEO/GEO hardening) restructured the single top-level Person
+// object into a schema.org "@graph" of two linked nodes:
+//   - Person, now carrying a stable "@id" (<site.url>/#person) so an
+//     agent has a durable anchor to dedupe this entity against, instead
+//     of re-deriving identity from name matching alone.
+//   - WebSite, a new node with its own "@id" (<site.url>/#website)
+//     whose publisher and about both point back at the Person node via
+//     "@id" reference - the standard schema.org pattern for tying
+//     multiple entities appearing on one page together, and the piece
+//     that was entirely missing before this task (a bare Person object
+//     has nothing forcing two mentions of "Allston Fojas" on the web to
+//     resolve to the same node).
+// Per the evidence basis for this task: two independent controlled
+// tests found ChatGPT, Claude, and Perplexity do not reliably parse
+// JSON-LD during a live fetch (only Gemini does), so this hardening is
+// aimed at Google's index and entity disambiguation, not at agents
+// reading the page directly - the VISIBLE page carries the same facts
+// in prose, per index.astro's own header comment.
 import { validateUrl } from './url'
 
 export function buildJsonLd(profile: any): Record<string, unknown> {
-  const { person, site } = profile
+  const { person, site, _meta } = profile
   const currentRole = person.current_role
   const education = person.education
 
-  const data: Record<string, unknown> = {
-    '@context': 'https://schema.org',
+  const siteUrl = validateUrl(site.url, 'site.url')
+  const personId = `${siteUrl}/#person`
+  const websiteId = `${siteUrl}/#website`
+
+  const personNode: Record<string, unknown> = {
     '@type': 'Person',
+    '@id': personId,
     name: person.name,
     jobTitle: currentRole.title,
     worksFor: {
@@ -41,12 +64,12 @@ export function buildJsonLd(profile: any): Record<string, unknown> {
     },
     knowsAbout: person.knows_about ?? [],
     email: person.email,
-    url: validateUrl(site.url, 'site.url'),
+    url: siteUrl,
     sameAs: (person.profiles ?? []).map((p: any) => validateUrl(p.url, 'person.profiles[].url')),
   }
 
   if (education) {
-    data.alumniOf = {
+    personNode.alumniOf = {
       '@type': 'CollegeOrUniversity',
       name: education.institution,
       // The sink the controller amendment's six-sink list omitted:
@@ -59,5 +82,23 @@ export function buildJsonLd(profile: any): Record<string, unknown> {
     }
   }
 
-  return data
+  const websiteNode: Record<string, unknown> = {
+    '@type': 'WebSite',
+    '@id': websiteId,
+    url: siteUrl,
+    name: site.title,
+    publisher: { '@id': personId },
+    about: { '@id': personId },
+    // Sourced from _meta.last_updated (a hand-edited content-model
+    // field), NEVER the wall clock - the same reproducible-build
+    // property renderSitemapXml()'s lastmod already locks in. Using the
+    // wall clock would make a rebuild of unchanged content produce
+    // different JSON-LD bytes.
+    dateModified: _meta.last_updated,
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [personNode, websiteNode],
+  }
 }
