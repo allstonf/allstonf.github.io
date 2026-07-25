@@ -1,0 +1,195 @@
+/*
+ * tokens.css - baseline design tokens for the v2 Astro shell.
+ *
+ * This is deliberately a minimal placeholder, not the final visual
+ * design. Task 3 of the rebuild plan replaces this file wholesale with
+ * self-hosted Syne + DM Mono woff2 subsets and the full DESIGN.md token
+ * set, dispatched through the ui-ux-designer agent. Task 1's only job
+ * is a structurally correct, readable static shell that works with
+ * JavaScript disabled, so these tokens cover just enough to make the
+ * page presentable without pre-empting that later design pass.
+ *
+ * Font stack note: the global constraint forbids Inter, Roboto, Arial,
+ * or a bare system-font stack as the PRIMARY face. This stack leads
+ * with a local serif (Charter/Georgia) for body text and a local
+ * monospace for headings and metadata, which is both distinctive and
+ * zero-network - no font file is fetched, self-hosted or otherwise,
+ * until Task 3 adds one.
+ */
+
+:root {
+  /* Color - matches content/profile.json's site.theme_color (#0B0C0E),
+     so the page chrome and the theme-color meta tag agree. */
+  --color-bg: #0b0c0e;
+  --color-bg-raised: #16181c;
+  --color-text: #e8e6e1;
+  --color-text-muted: #9a9da4;
+  --color-border: #2a2d33;
+  --color-link: #e8e6e1;
+  --color-accent: #f59e0b;
+
+  /* Type - serif body, monospace for headings/labels/metadata. Neither
+     is Inter, Roboto, Arial, or a bare system-ui sans stack. */
+  --font-body: Charter, "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", Menlo, Consolas, monospace;
+
+  --font-size-base: 1rem;
+  --font-size-sm: 0.875rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: 1.75rem;
+  --font-size-2xl: 2.5rem;
+
+  --line-height-body: 1.6;
+  --line-height-tight: 1.25;
+
+  /* Spacing scale, used for section/article rhythm. */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --space-5: 4rem;
+
+  --content-max-width: 42rem;
+  --content-max-width-wide: 64rem;
+
+  --radius: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-mono);
+  line-height: var(--line-height-tight);
+  margin: 0 0 var(--space-2);
+}
+
+p {
+  margin: 0 0 var(--space-2);
+}
+
+a {
+  color: var(--color-link);
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--color-accent);
+}
+
+/* Skip link - hidden until keyboard-focused, per the accessibility
+   requirement that the static shell works fully without JavaScript. */
+.skip-link {
+  position: absolute;
+  top: -3rem;
+  left: var(--space-2);
+  background: var(--color-accent);
+  color: var(--color-bg);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  z-index: 100;
+  transition: top 0.15s ease-out;
+}
+
+.skip-link:focus {
+  top: var(--space-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skip-link {
+    transition: none;
+  }
+}
+
+.site-header,
+.section,
+.site-footer {
+  padding: var(--space-4) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.site-footer {
+  border-bottom: none;
+}
+
+.site-header__inner,
+.section__inner,
+.site-footer__inner {
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+}
+
+.section__inner--wide {
+  max-width: var(--content-max-width-wide);
+}
+
+.site-header__current-role {
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+  font-size: var(--font-size-lg);
+}
+
+.hero__name {
+  font-size: var(--font-size-2xl);
+}
+
+.hero__tagline {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+}
+
+.projects-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+}
+
+.project-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  background: var(--color-bg-raised);
+}
+
+.project-card__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  list-style: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.experience-entry {
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.experience-entry:first-child {
+  border-top: none;
+}
+
+.experience-entry__meta {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}

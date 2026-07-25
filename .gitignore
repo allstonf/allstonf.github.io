@@ -2,3 +2,12 @@ node_modules
 bower_components
 __pycache__/
 *.pyc
+
+# Astro build output and generated type cache - both are rebuild
+# targets from src/ + content/, never a parallel source. Never commit.
+dist/
+.astro/
+
+# Local Superpowers worktree/skill state. This repo is public; this
+# path must never be committed.
+.superpowers/

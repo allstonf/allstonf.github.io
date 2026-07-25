@@ -1,0 +1,211 @@
+---
+// src/pages/index.astro - the v2 Astro shell.
+//
+// Task 1 of the rebuild: render the same canonical content/profile.json
+// that v1's build/build.py renders into index.html, as a static Astro
+// page with no client-side JavaScript. content/profile.json stays the
+// single source of truth for both the human surface (this page) and
+// the agent surfaces (llms.txt, api/profile.json - built in Task 2), so
+// the two audiences cannot drift apart.
+//
+// The load-bearing requirement here is the VISIBLE current-role line.
+// A controlled test found five major AI agents (ChatGPT, Claude,
+// Perplexity, Gemini, Copilot) all missed employer data that existed
+// only inside a <script type="application/ld+json"> block - so the
+// JSON-LD below is additive, never the only place "Apple" appears.
+import '../styles/tokens.css'
+import profile from '../../content/profile.json'
+
+const { site, person, about, projects, experience } = profile
+const currentRole = person.current_role
+
+/**
+ * Format an experience entry's date range the same way v1 does:
+ * "YYYY-MM - YYYY-MM", or "YYYY-MM - Present" for a still-current role
+ * (end is null). Always a plain hyphen surrounded by spaces, never an
+ * em dash - the repo owner's standing style rule applies here too.
+ */
+function formatDateRange(start: string, end: string | null): string {
+  return `${start} - ${end ? end : 'Present'}`
+}
+
+// Mirrors build.py's build_json_ld(): a schema.org Person object built
+// directly from the same content model, so the agent-legible structured
+// data and the visible page can never describe two different people.
+const jsonLd: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: person.name,
+  jobTitle: currentRole.title,
+  worksFor: {
+    '@type': 'Organization',
+    name: currentRole.employer,
+    ...(currentRole.employer_url ? { url: currentRole.employer_url } : {}),
+  },
+  knowsAbout: person.knows_about ?? [],
+  email: person.email,
+  url: site.url,
+  sameAs: (person.profiles ?? []).map((p) => p.url),
+}
+if (person.education) {
+  jsonLd.alumniOf = {
+    '@type': 'CollegeOrUniversity',
+    name: person.education.institution,
+    ...(person.education.institution_url ? { url: person.education.institution_url } : {}),
+  }
+}
+
+// Serialize, then guard against a </script> breakout the same way
+// build.py's render_json_ld_script() does: any "</" sequence (which can
+// only occur inside a string value - JSON's structural characters never
+// include "<") becomes "<\/", a valid JSON escape for a bare "/", so
+// JSON.parse() on the embedded text still recovers the exact original
+// string. This is what the round-trip test in build.py's own test
+// suite verifies, and the same property holds here.
+const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
+---
+
+<!doctype html>
+<html lang={site.locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>{site.title}</title>
+    <meta name="description" content={site.description} />
+    <meta name="author" content={person.name} />
+    <meta name="theme-color" content={site.theme_color} />
+    <link rel="canonical" href={site.url} />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content={site.title} />
+    <meta property="og:description" content={site.description} />
+    <meta property="og:url" content={site.url} />
+    <meta property="og:site_name" content={site.title} />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={site.title} />
+    <meta name="twitter:description" content={site.description} />
+
+    <script type="application/ld+json" set:html={jsonLdScript} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+      <div class="site-header__inner">
+        <nav aria-label="Section">
+          <a href="#about">About</a>
+          <a href="#projects">Projects</a>
+          <a href="#experience">Experience</a>
+        </nav>
+
+        <h1 class="hero__name">{person.name}</h1>
+        <p class="site-header__current-role">
+          Currently: {currentRole.title} at <strong>{currentRole.employer}</strong>
+        </p>
+        <p class="hero__tagline">{person.tagline}</p>
+        <p class="hero__contact">
+          <a href={`mailto:${person.email}`}>{person.email}</a>
+        </p>
+        <nav class="hero__social" aria-label="Social profiles">
+          {person.profiles?.map((profileLink) => (
+            <a href={profileLink.url} rel="me noopener" target="_blank">
+              {profileLink.label}
+            </a>
+          ))}
+        </nav>
+        <a class="topbar__resume" href={person.resume.url} rel="noopener" target="_blank">
+          {person.resume.label}
+        </a>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <section id="about" class="section" aria-labelledby="about-heading">
+        <div class="section__inner">
+          <p class="section__kicker">01</p>
+          <h2 id="about-heading">About</h2>
+          <div class="about-body">
+            {about.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="projects" class="section" aria-labelledby="projects-heading">
+        <div class="section__inner section__inner--wide">
+          <p class="section__kicker">02</p>
+          <h2 id="projects-heading">Projects</h2>
+          <div class="projects-grid">
+            {projects.map((project) => (
+              <article
+                class="project-card"
+                id={`project-${project.slug}`}
+                aria-labelledby={`project-${project.slug}-heading`}
+              >
+                <h3 id={`project-${project.slug}-heading`} class="project-card__name">
+                  {project.name}
+                </h3>
+                <p class="project-card__summary">{project.summary}</p>
+                {project.outcome && <p class="project-card__outcome">{project.outcome}</p>}
+                <ul class="project-card__bullets">
+                  {project.bullets.map((bullet) => (
+                    <li>{bullet}</li>
+                  ))}
+                </ul>
+                <ul class="project-card__stack" aria-label="Technology stack">
+                  {project.stack.map((item) => (
+                    <li class="stack-item">{item}</li>
+                  ))}
+                </ul>
+                {project.links && project.links.length > 0 && (
+                  <p class="project-card__links">
+                    {project.links.map((link) => (
+                      <a href={link.url} rel="noopener" target="_blank">
+                        {link.label}
+                      </a>
+                    ))}
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="experience" class="section" aria-labelledby="experience-heading">
+        <div class="section__inner">
+          <p class="section__kicker">03</p>
+          <h2 id="experience-heading">Experience</h2>
+          <div class="timeline">
+            {experience.map((job) => (
+              <article class:list={['experience-entry', { 'experience-entry--current': !job.end }]}>
+                <h3>{job.employer}</h3>
+                <p class="experience-entry__title">{job.title}</p>
+                <p class="experience-entry__meta">
+                  {formatDateRange(job.start, job.end)} &middot; {job.location}
+                </p>
+                <ul>
+                  {job.bullets.map((bullet) => (
+                    <li>{bullet}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p class="site-footer__name">{person.name}</p>
+        <p class="site-footer__contact">
+          <a href={`mailto:${person.email}`}>{person.email}</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>
