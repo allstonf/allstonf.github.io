@@ -1119,11 +1119,20 @@ time {
    binary (showing the human page vs the markdown twin), so it borrows
    the mark instead of inventing a second one or reaching for an emoji.
 
-   min-width is set in ch to the longer of the two label strings ("view
-   as human page" is 19 characters) so the aria-pressed swap never
-   shifts layout; justify-content: center keeps both label lengths
-   looking intentional inside that fixed box rather than left-aligned
-   with visible slack.
+   min-width is set in ch to the longer of the two label strings so the
+   aria-pressed swap never shifts layout; justify-content: center keeps
+   both label lengths looking intentional inside that fixed box rather
+   than left-aligned with visible slack.
+
+   25ch, not 20ch: the box (border-box) has to clear the full pill
+   width, not just the 19-character label text - padding, the 1px
+   border, and the state dot + its gap all add to that total. Measured
+   in the live page (DM Mono, 12px, 1ch = 7.1875px here): the "view as
+   human page" state's natural box width is 176.5px, which needs at
+   least 25ch (179.7px) of reserved width, not 20ch (144px, which sat
+   below both label widths and never bound). Kept in ch rather than a
+   fixed px figure so it still covers the longer label if the font
+   size ever changes.
    ------------------------------------------------------------------ */
 
 .topbar__utility {
@@ -1139,7 +1148,7 @@ time {
   justify-content: center;
   gap: 0.45em;
   min-height: 44px;
-  min-width: 20ch;
+  min-width: 25ch;
   padding: 0.25rem 0.85rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);
