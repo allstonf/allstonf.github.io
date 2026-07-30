@@ -168,18 +168,20 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
             <a href="#experience">experience</a>
             <a href="#loop">the loop</a>
           </nav>
-          <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
-            {person.resume.label}
-          </a>
-          <a
-            class="topbar__view-toggle"
-            data-view-toggle
-            href="/index.md"
-            aria-pressed="false"
-            title="See the markdown representation this page serves to AI agents"
-          >
-            view as markdown
-          </a>
+          <div class="topbar__utility">
+            <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
+              {person.resume.label}
+            </a>
+            <a
+              class="topbar__view-toggle"
+              data-view-toggle
+              href="/index.md"
+              aria-pressed="false"
+              title="See the markdown representation this page serves to AI agents"
+            >
+              view as markdown
+            </a>
+          </div>
         </div>
 
         <p class="hero__eyebrow">person</p>

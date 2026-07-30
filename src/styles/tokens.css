@@ -1102,3 +1102,131 @@ time {
     }
   }
 }
+
+/* ---------------------------------------------------------------------
+   View toggle - a quiet utility control paired with the resume link,
+   not a second primary action. Wrapping both in .topbar__utility turns
+   .site-header__top's flex row from three evenly spaced items back into
+   two groups (nav, then utility pair), which is most of what made the
+   toggle read as loud: space-between was giving it its own slot at the
+   far edge, the same visual weight as the nav and the resume button.
+
+   Sized and colored off the page's existing "muted label" tier
+   (.section__kicker / .hero__eyebrow: 0.75rem, text-muted) instead of
+   the nav-link tier, and the state dot reuses the filled/hollow circle
+   already established by .status-pill and .experience-entry__marker
+   for current-vs-not-current - this control has exactly that same
+   binary (showing the human page vs the markdown twin), so it borrows
+   the mark instead of inventing a second one or reaching for an emoji.
+
+   min-width is set in ch to the longer of the two label strings ("view
+   as human page" is 19 characters) so the aria-pressed swap never
+   shifts layout; justify-content: center keeps both label lengths
+   looking intentional inside that fixed box rather than left-aligned
+   with visible slack.
+   ------------------------------------------------------------------ */
+
+.topbar__utility {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.topbar__view-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  min-height: 44px;
+  min-width: 20ch;
+  padding: 0.25rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.topbar__view-toggle::before {
+  content: '';
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  border: 1px solid var(--color-text-muted);
+}
+
+.topbar__view-toggle:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.topbar__view-toggle[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+.topbar__view-toggle[aria-pressed='true']::before {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar__view-toggle {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Agent view - the pre.agent-view element viewToggle.ts swaps in as
+   main's sole child. Backed by --color-card rather than --color-surface:
+   card is the page's "elevated" surface token and had no consumer
+   anywhere else in this file yet, which makes it a fitting debut for
+   the one element on the page meant to read as a raised, self-contained
+   document rather than part of the normal section flow.
+
+   Wraps at the same --measure prose width every paragraph on the page
+   already uses (.about-body, .hero__tagline, project summaries), so
+   "readable at length" means the same thing here as everywhere else on
+   the page. overflow-wrap + overflow-x: auto are a defensive second
+   layer, not the primary line-handling strategy - the markdown this
+   page actually serves is prose (single long lines per paragraph, no
+   code fences or tables), so wrapping at measure is what makes it
+   readable; the scroll behavior only engages for a token that cannot
+   wrap at all (an unbroken URL), and it engages on the box itself, so
+   the page body can never be forced wider by it.
+   ------------------------------------------------------------------ */
+
+pre.agent-view {
+  display: block;
+  position: relative;
+  width: min(100% - 2 * var(--space-2), var(--measure));
+  margin: var(--space-4) auto;
+  padding: calc(var(--space-3) + 1.3em) var(--space-3) var(--space-3);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow-x: auto;
+}
+
+pre.agent-view::before {
+  content: '[ markdown source ]';
+  position: absolute;
+  top: var(--space-1);
+  left: var(--space-3);
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  color: var(--color-text-secondary);
+}
