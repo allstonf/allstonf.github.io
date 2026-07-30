@@ -79,4 +79,11 @@ describe('static shell parity with v1', () => {
     const distPath = join('dist', href.replace(/^\//, ''))
     expect(existsSync(distPath), `expected ${distPath} to exist after astro build`).toBe(true)
   })
+
+  it('ships the markdown-twin link as a real anchor, so it works without JS', () => {
+    // The toggle is progressive enhancement. If a future edit turns it
+    // into a <button>, a scripting-disabled reader loses the agent view
+    // entirely and every other test still passes.
+    expect(html).toMatch(/<a[^>]*data-view-toggle[^>]*href="\/index\.md"/)
+  })
 })

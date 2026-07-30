@@ -171,6 +171,15 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
           <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
             {person.resume.label}
           </a>
+          <a
+            class="topbar__view-toggle"
+            data-view-toggle
+            href="/index.md"
+            aria-pressed="false"
+            title="See the markdown representation this page serves to AI agents"
+          >
+            view as markdown
+          </a>
         </div>
 
         <p class="hero__eyebrow">person</p>
@@ -222,7 +231,7 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
       </div>
     </header>
 
-    <main id="main-content">
+    <main id="main-content" data-view-target>
       <section id="about" class="section" aria-labelledby="about-heading">
         <div class="section__inner reveal">
           <p class="section__kicker">about</p>
@@ -415,5 +424,10 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         <p class="site-footer__meta">Last updated {_meta.last_updated}</p>
       </div>
     </footer>
+
+    <script>
+      import { initViewToggle } from '../lib/viewToggle'
+      initViewToggle(document)
+    </script>
   </body>
 </html>
