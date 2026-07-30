@@ -93,4 +93,56 @@ describe('initViewToggle', () => {
     expect(target.querySelector('img')).toBeNull()
     expect(target.textContent).toContain('<img src=x')
   })
+
+  it('does not let a stale, slower duplicate request revert an already-applied markdown view', async () => {
+    // Reproduces the review-confirmed race: two activations fire before
+    // the first fetch resolves, so with no re-entrancy guard both take
+    // the fetch branch. The FIRST call resolves quickly and
+    // successfully; the SECOND (duplicate, superseded) call resolves
+    // LATER and rejects. Without a guard, that late rejection's catch
+    // unconditionally calls showHuman() and silently reverts the
+    // already-rendered markdown view with no user action and no error
+    // shown. A correct implementation must not let a late-arriving
+    // failure from a superseded request mutate view state.
+    const doc = makeDoc()
+    let callCount = 0
+    const fetchImpl = vi.fn().mockImplementation(() => {
+      callCount += 1
+      if (callCount === 1) {
+        // Fast, successful first request.
+        return Promise.resolve({
+          ok: true,
+          text: async () => '# first, wins',
+        })
+      }
+      // Slower, failing duplicate request - resolves after the first.
+      return new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error('stale duplicate failure')), 10)
+      })
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const Event_ = doc.defaultView!.Event
+
+    // Two activations dispatched back-to-back, before the first fetch
+    // has had a chance to resolve.
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+
+    // Let the first (fast) fetch resolve and render.
+    await new Promise((r) => setTimeout(r, 0))
+    const target = doc.querySelector('[data-view-target]')!
+    expect(target.querySelector('pre')).not.toBeNull()
+    expect(toggle.getAttribute('aria-pressed')).toBe('true')
+
+    // Let the second (slow, failing) request resolve too.
+    await new Promise((r) => setTimeout(r, 20))
+
+    // The markdown view must still be showing: a late failure from the
+    // superseded duplicate request must not revert already-applied state.
+    expect(target.querySelector('pre')).not.toBeNull()
+    expect(target.textContent).toContain('first, wins')
+    expect(toggle.getAttribute('aria-pressed')).toBe('true')
+  })
 })

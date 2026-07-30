@@ -39,9 +39,23 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
   const doFetch = fetchImpl ?? (doc.defaultView?.fetch?.bind(doc.defaultView) as typeof fetch)
   if (!doFetch) return
 
+  // Captured once, synchronously, at init time. This is a snapshot, not
+  // a live reference: if any future code appends a new top-level child
+  // to the target (a lazily-injected banner, a late client-only widget)
+  // AFTER this line runs, that node is absent from the snapshot and
+  // gets silently dropped the first time a user toggles to markdown
+  // and back to human.
   const humanNodes = Array.from(target.childNodes)
   let markdown: string | null = null
   let showingMarkdown = false
+  // True while a markdown fetch is outstanding. Guards against the
+  // re-entrancy race where a second activation fired before the first
+  // fetch resolves starts a second, duplicate request; if that
+  // duplicate resolves LATER than the first and fails, its catch would
+  // otherwise revert an already-applied, successful markdown view with
+  // no user action and no visible error. Only one fetch is ever allowed
+  // in flight, so a superseded request can never exist to race.
+  let fetchInFlight = false
 
   const showHuman = (): void => {
     target.replaceChildren(...humanNodes)
@@ -75,6 +89,13 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
       return
     }
 
+    // Re-entrancy guard: a click while a fetch is already outstanding
+    // is a no-op rather than a second concurrent request. preventDefault
+    // above has already run, so this just drops the redundant
+    // activation; it does not fall through to a real navigation.
+    if (fetchInFlight) return
+
+    fetchInFlight = true
     void (async () => {
       try {
         const response = await doFetch(toggle.getAttribute('href') ?? '/index.md', {
@@ -84,11 +105,18 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
         markdown = await response.text()
         showMarkdown(markdown)
       } catch {
-        // Leave the human view intact and the control unpressed. The
-        // anchor's href is still valid, so a second click navigates to
-        // the markdown twin directly. Failing back to a working link
-        // beats failing into a half-toggled state.
+        // Leave the human view intact and the control unpressed. Note
+        // that this does NOT enable "a second click navigates to the
+        // markdown twin directly": preventDefault() above runs on every
+        // click unconditionally, so a plain second click just
+        // re-triggers this same fetch path and can fail the same way.
+        // Only a modified click (middle-click, ctrl/cmd-click) bypasses
+        // this handler and navigates for real. Failing back to a
+        // stable, working human view beats failing into a
+        // half-toggled state.
         showHuman()
+      } finally {
+        fetchInFlight = false
       }
     })()
   })
