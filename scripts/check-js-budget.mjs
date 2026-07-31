@@ -1,7 +1,24 @@
 #!/usr/bin/env node
-// scripts/check-js-budget.mjs - CI gate on total gzipped JS a browser
-// actually downloads on this site, enforced against the plan's Global
+// scripts/check-js-budget.mjs - CI gate on the gzipped JS this site
+// serves as SEPARATE FILES, enforced against the plan's Global
 // Constraint of 150 KB gzipped total.
+//
+// SCOPE, stated plainly because the honest version of this comment
+// matters more than a flattering one: this gate measures external
+// script FILES reachable from the built HTML. It does NOT measure
+// inline <script> content, which is emitted directly into
+// dist/index.html and therefore never appears as a file to resolve.
+// At the time of writing that exclusion is 4 inline blocks totalling
+// roughly 3.4 KB gzipped (Astro's island bootstrap, the view-toggle
+// module, and a JSON-LD block that is data rather than executable
+// code). That is unmeasured by this script and unbudgeted.
+//
+// So "PASS" here means "the external chunk graph fits the budget", not
+// "this page ships under 150 KB of JS in total". The margin is wide
+// enough (62 KB against 150 KB) that the excluded few KB cannot change
+// the verdict, which is why the exclusion is documented rather than
+// closed. If the reachable figure ever approaches the budget, close it
+// before trusting the result.
 //
 // MUST be reference-aware, not a glob over dist/**/*.js. Registering
 // @astrojs/react makes `astro build` emit a React runtime chunk into
@@ -20,7 +37,9 @@
 // downloads real JS the moment the island hydrates. See
 // assertNotSilentZero() below - a budget gate that cannot tell "no JS"
 // from "I failed to find the JS" is worse than no gate, because it
-// looks green.
+// looks green. That guard covers the reference-extraction failure
+// mode only; it does not cover the inline-script exclusion described
+// above, which is a known and deliberate gap, not a detected one.
 //
 // Algorithm:
 //   1. Parse every dist/**/*.html file for all four reference forms

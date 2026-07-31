@@ -341,6 +341,40 @@ describe('initViewToggle', () => {
     expect(replaceSpy).not.toHaveBeenCalled()
   })
 
+  it('manages scroll position across the swap instead of stranding the reader', async () => {
+    // Minor 2: toggling at 2,500px dropped the reader deep inside a
+    // long <pre>, mid-content, with the "[ markdown source ]" label off
+    // screen. Entering markdown scrolls the new view into view;
+    // returning restores where the reader was in the human page.
+    const doc = makeDoc()
+    const view = doc.defaultView!
+    const calls: number[] = []
+    // jsdom does not implement scrolling, so record the intent.
+    view.scrollTo = ((arg: { top: number }) => calls.push(arg.top)) as typeof view.scrollTo
+    Object.defineProperty(view, 'scrollY', { value: 2500, writable: true, configurable: true })
+
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '# md',
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const Event_ = doc.defaultView!.Event
+
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+    await new Promise((r) => setTimeout(r, 0))
+
+    // Entering markdown must not leave the reader at 2500px.
+    expect(calls.length).toBe(1)
+    expect(calls[0]).toBeLessThan(2500)
+
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+    // Returning puts the reader back where they were reading.
+    expect(calls.length).toBe(2)
+    expect(calls[1]).toBe(2500)
+  })
+
   it('is inert when the expected elements are absent', () => {
     const dom = new JSDOM('<main></main>')
     expect(() => initViewToggle(dom.window.document)).not.toThrow()

@@ -32,6 +32,10 @@ const STATUS_SELECTOR = '[data-view-status]'
 // reader is not left clicking a dead control.
 const DEFAULT_FETCH_TIMEOUT_MS = 8000
 
+// Breathing room left above the markdown block when scrolling to it,
+// so it does not sit flush against the top of the viewport.
+const MARKDOWN_SCROLL_MARGIN_PX = 24
+
 /**
  * Attach toggle behavior to the first matching control/target pair.
  *
@@ -81,12 +85,14 @@ export function initViewToggle(
     toggle.classList.remove('is-error')
   }
 
-  // Captured once, synchronously, at init time. This is a snapshot, not
-  // a live reference: if any future code appends a new top-level child
-  // to the target (a lazily-injected banner, a late client-only widget)
-  // AFTER this line runs, that node is absent from the snapshot and
-  // gets silently dropped the first time a user toggles to markdown
-  // and back to human.
+  // A snapshot, not a live reference.
+  //
+  // Precondition: every top-level child of the target must already be
+  // in the DOM when this runs. A node appended after this line is
+  // absent from the snapshot and is dropped the first time the reader
+  // toggles to markdown and back. Anything injected later (a lazy
+  // banner, a late client-only widget) has to be restored by its own
+  // owner or added to this snapshot.
   const humanNodes = Array.from(target.childNodes)
   let markdown: string | null = null
   let showingMarkdown = false
@@ -99,15 +105,39 @@ export function initViewToggle(
   // in flight, so a superseded request can never exist to race.
   let fetchInFlight = false
 
+  // Where the reader was in the human page when they left it, so
+  // returning does not dump them back at the top of a long document.
+  let humanScrollY = 0
+
+  /**
+   * Jump the viewport to `top`.
+   *
+   * Deliberately an instant jump, not a smooth one: a view swap is a
+   * context change, the same class of event as a page navigation, and
+   * animating 2,500px of it is both slow and disorienting. Introducing
+   * no transition is also how this respects prefers-reduced-motion,
+   * rather than by branching on it.
+   */
+  const scrollViewportTo = (top: number): void => {
+    const view = doc.defaultView
+    if (!view?.scrollTo) return
+    view.scrollTo({ top, behavior: 'auto' })
+  }
+
   // The label never changes. State is carried by aria-pressed for
   // assistive tech and by the dot plus border for sighted readers,
   // which is also why the control needs no reserved width: with one
   // label there is only ever one box width.
-  const showHuman = (): void => {
+  //
+  // `restoreScroll` is false on the in-page nav path, where the browser
+  // is about to perform its own hash scroll and ours would be a wasted
+  // jump immediately overridden.
+  const showHuman = (restoreScroll = true): void => {
     target.replaceChildren(...humanNodes)
     toggle.setAttribute('aria-pressed', 'false')
     showingMarkdown = false
     announce('Human page restored.')
+    if (restoreScroll) scrollViewportTo(humanScrollY)
   }
 
   const showMarkdown = (source: string): void => {
@@ -116,10 +146,20 @@ export function initViewToggle(
     // textContent, never innerHTML: the agent view is inert text by
     // construction, so nothing in the markdown can become a live node.
     pre.textContent = source
+    // Remember the reading position BEFORE the swap moves the page.
+    humanScrollY = doc.defaultView?.scrollY ?? 0
+
     target.replaceChildren(pre)
     toggle.setAttribute('aria-pressed', 'true')
     showingMarkdown = true
     announce('Markdown source shown. This is the view AI agents receive.')
+
+    // Land at the top of the markdown block rather than wherever the
+    // reader happened to be. Toggling at 2,500px otherwise dropped them
+    // mid-<pre> with the "[ markdown source ]" label off screen, which
+    // reads as a broken page rather than a different view.
+    const top = pre.getBoundingClientRect().top + (doc.defaultView?.scrollY ?? 0)
+    scrollViewportTo(Math.max(0, top - MARKDOWN_SCROLL_MARGIN_PX))
   }
 
   const activate = (): void => {
@@ -246,7 +286,9 @@ export function initViewToggle(
     if (!link || link === toggle) return
 
     // Restore synchronously and let the default action proceed, so the
-    // browser's own hash scroll does the scrolling.
-    showHuman()
+    // browser's own hash scroll does the scrolling. Our own scroll
+    // restore is skipped here precisely because the browser is about
+    // to override it.
+    showHuman(false)
   })
 }
