@@ -248,7 +248,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
 
       <section id="about" class="band" aria-labelledby="about-heading">
         <div class="band__inner reveal">
-          <p class="band__kicker">About</p>
           <h2 id="about-heading">About</h2>
           <p class="band__meta">
             {person.location}
@@ -276,7 +275,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
 
       <section id="projects" class="band" aria-labelledby="projects-heading">
         <div class="band__inner reveal">
-          <p class="band__kicker">Projects</p>
           <h2 id="projects-heading">Projects</h2>
 
           <div class="projects-featured">
@@ -356,7 +354,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
 
       <section id="experience" class="band" aria-labelledby="experience-heading">
         <div class="band__inner reveal">
-          <p class="band__kicker">Experience</p>
           <h2 id="experience-heading">Experience</h2>
           <div class="timeline">
             {experience.map((job) => (
@@ -385,7 +382,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
 
       <section id="loop" class="band" aria-labelledby="loop-heading">
         <div class="band__inner reveal">
-          <p class="band__kicker">The Loop</p>
           <h2 id="loop-heading">The Scoring Loop</h2>
           <p class="loop-intro">
             A job-search scoring rubric has taken nine logged changes across four
@@ -442,7 +438,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         />
         <div class="photo-band__overlay" aria-hidden="true"></div>
         <div class="photo-band__inner">
-          <p class="band__kicker">Contact</p>
           <h2 id="contact-heading">Get in Touch</h2>
           <p class="band__lede">
             <a href={`mailto:${person.email}`}>{person.email}</a>

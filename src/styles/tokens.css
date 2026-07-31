@@ -752,15 +752,6 @@ time {
   text-align: center;
 }
 
-.band__kicker {
-  margin: 0 0 var(--space-1);
-  font-family: var(--font-display);
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: var(--letter-display);
-  color: var(--color-text-muted);
-}
-
 .band__prose {
   max-width: var(--measure);
   margin: 0 auto;
