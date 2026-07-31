@@ -93,6 +93,33 @@ export function checkContent(profile) {
   return { ok: failures.length === 0, failures }
 }
 
+/**
+ * Classify an HTTP status from the URL liveness check.
+ *
+ * Split out of the CLI loop so it is testable, and so the
+ * bot-block case is a NAMED outcome rather than an untested branch.
+ *
+ * The gate originally failed on any status other than 200. On
+ * 2026-07-31 that failed a clean build because LinkedIn answered 999 -
+ * its anti-automation response, not a real HTTP status - on a URL that
+ * had returned 200 hours earlier the same day. A gate that a third
+ * party can trip on correct content is worse than no gate: the tempting
+ * fix under deadline is to delete the accurate link.
+ *
+ * 403 is deliberately NOT treated as a bot-block. On a portfolio, a 403
+ * usually means a repo went private, and a link a recruiter cannot open
+ * is a real defect worth failing on.
+ *
+ * @param {number} status HTTP status, or 0 for a network-level failure
+ * @returns {'ok'|'blocked'|'dead'}
+ */
+export function classifyUrlStatus(status) {
+  if (status === 200) return 'ok'
+  // 999: LinkedIn anti-automation. 429: rate limited, transient.
+  if (status === 999 || status === 429) return 'blocked'
+  return 'dead'
+}
+
 // CLI. Guarded so importing this from a test never calls process.exit().
 if (import.meta.url === `file://${process.argv[1]}`) {
   const profile = JSON.parse(readFileSync('content/profile.json', 'utf8'))
@@ -108,8 +135,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       const status = await fetch(url, { redirect: 'follow' })
         .then((r) => r.status)
         .catch(() => 0)
-      if (status === 200) {
+      const verdict = classifyUrlStatus(status)
+      if (verdict === 'ok') {
         console.log(`  ok    ${url}`)
+      } else if (verdict === 'blocked') {
+        // Reported loudly but NOT counted as a failure - the link is
+        // fine, the checker just cannot see it.
+        console.warn(`  warn  ${url} returned ${status} (bot-blocked, not verifiable from here)`)
       } else {
         console.error(`  FAIL  ${url} returned ${status}`)
         failures.push(url)

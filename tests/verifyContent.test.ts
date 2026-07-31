@@ -6,7 +6,7 @@
 // trustworthy: each one pins a rule to a concrete failing input, so the
 // gate cannot quietly stop enforcing something.
 import { describe, it, expect } from 'vitest'
-import { checkContent } from '../scripts/verify-content.mjs'
+import { checkContent, classifyUrlStatus } from '../scripts/verify-content.mjs'
 import profile from '../content/profile.json'
 
 describe('checkContent', () => {
@@ -94,5 +94,42 @@ describe('checkContent', () => {
     })
     expect(r.ok).toBe(false)
     expect(r.failures.join(' ')).toContain('duplicate')
+  })
+})
+
+describe('classifyUrlStatus', () => {
+  // Added 2026-07-31 after the gate failed a clean build on
+  // https://www.linkedin.com/in/allston-fojas returning 999. The same
+  // URL had returned 200 hours earlier in the same session, so a flaky
+  // third party could fail the build on correct content - the exact
+  // "fail-closed scoped too wide" failure recorded that morning.
+  it('treats 200 as ok', () => {
+    expect(classifyUrlStatus(200)).toBe('ok')
+  })
+
+  it('treats LinkedIn 999 as blocked, not dead', () => {
+    // 999 is not a real HTTP status. It is LinkedIn's anti-automation
+    // response. The page is fine in a browser.
+    expect(classifyUrlStatus(999)).toBe('blocked')
+  })
+
+  it('treats 429 as blocked, since rate limiting is transient', () => {
+    expect(classifyUrlStatus(429)).toBe('blocked')
+  })
+
+  it('still FAILS a genuinely dead link', () => {
+    for (const code of [404, 410, 500]) {
+      expect(classifyUrlStatus(code)).toBe('dead')
+    }
+  })
+
+  it('still FAILS 403 - on a portfolio that usually means a private repo', () => {
+    // Deliberately NOT lumped in with the bot-blocks: a 403 on a link a
+    // recruiter is meant to click is a real defect worth failing on.
+    expect(classifyUrlStatus(403)).toBe('dead')
+  })
+
+  it('treats a network error (0) as dead', () => {
+    expect(classifyUrlStatus(0)).toBe('dead')
   })
 })
