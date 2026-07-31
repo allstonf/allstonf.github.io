@@ -453,15 +453,14 @@ export function renderResumeMd(profile: any): string {
     }
   }
 
-  // person.knows_about stays a flat list here on purpose. It is
-  // schema.org-shaped (it feeds jsonLd.ts's knowsAbout) and describes
-  // focus areas rather than tools, so it is published under its own
-  // label instead of being force-fitted into the PDF's three tool
-  // groups, which would misrepresent both.
-  const focusAreas = person.knows_about ?? []
-  if (focusAreas.length) {
-    lines.push(`- **Focus Areas:** ${focusAreas.join(', ')}`)
-  }
+  // person.knows_about is deliberately NOT published here (review round
+  // 1). It is schema.org shaping that exists for the JSON-LD consumer in
+  // jsonLd.ts, and for /index.md. Rendering it on this surface duplicated
+  // Objective-C, C++ and Python against the Programming Languages group
+  // above, and grew a 40-item skills section on a file that mirrors a
+  // ONE-PAGE resume. The three groups above come from the PDF, which is
+  // canonical for /resume.md; knows_about answers a different question
+  // for a different consumer and stays in the content model untouched.
   lines.push('')
 
   lines.push('## Experience', '')
@@ -494,10 +493,20 @@ export function renderResumeMd(profile: any): string {
     if (project.stack?.length) {
       lines.push('', `Stack: ${project.stack.join(', ')}`)
     }
-    for (const link of project.links ?? []) {
-      // Every URL sink in this module runs through validateUrl() before
-      // it ships, the same guarantee each href on index.astro gets.
-      lines.push(`Link: [${link.label}](${validateUrl(link.url, 'projects[].links[].url')})`)
+    // Blank line first, then one LIST ITEM per link. Both halves matter:
+    // CommonMark fuses consecutive non-blank lines into a single
+    // paragraph, so an earlier "Stack: ...\nLink: a\nLink: b" rendered as
+    // one run-on sentence (review round 1). A blank line closes the Stack
+    // paragraph, and a list item is its own block, so the links cannot
+    // fuse into each other either.
+    const links = project.links ?? []
+    if (links.length) {
+      lines.push('', 'Links:', '')
+      for (const link of links) {
+        // Every URL sink in this module runs through validateUrl() before
+        // it ships, the same guarantee each href on index.astro gets.
+        lines.push(`- [${link.label}](${validateUrl(link.url, 'projects[].links[].url')})`)
+      }
     }
     lines.push('')
   }

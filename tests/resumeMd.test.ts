@@ -47,9 +47,53 @@ describe('renderResumeMd', () => {
     }
   })
 
-  it('lists every skill from knows_about', () => {
-    for (const skill of profile.person.knows_about) {
-      expect(md).toContain(skill)
+  // Review round 1 REMOVED a test that required every person.knows_about
+  // member to appear here. That assertion encoded a wrong requirement, so
+  // deleting it is a correction rather than a weakening: knows_about is
+  // schema.org shaping that exists for the JSON-LD consumer (jsonLd.ts's
+  // knowsAbout) and for /index.md, and publishing it here both duplicated
+  // Objective-C / C++ / Python against the Programming Languages group and
+  // pushed a file that mirrors a ONE-PAGE resume to a 40-item skills
+  // section. The field stays in content/profile.json untouched; it just
+  // does not belong on this surface. The test below replaces it with the
+  // requirement that actually holds.
+  it('publishes exactly the three PDF skill groups, and no schema.org focus-area list', () => {
+    const skillsStart = md.indexOf('## Skills')
+    const skillsEnd = md.indexOf('## Experience')
+    expect(skillsStart).toBeGreaterThan(-1)
+    expect(skillsEnd).toBeGreaterThan(skillsStart)
+    const groupLines = md
+      .slice(skillsStart, skillsEnd)
+      .split('\n')
+      .filter((line) => line.startsWith('- **'))
+
+    // Exact count, not a lower bound: the regression this guards is a
+    // fourth group appearing, which is how the duplication got in.
+    expect(groupLines).toHaveLength(3)
+    expect(groupLines[0]).toContain('**Programming Languages:**')
+    expect(groupLines[1]).toContain('**Development Tools:**')
+    expect(groupLines[2]).toContain('**AI Agent Tools:**')
+
+    // "Retrieval-Augmented Generation" appears ONLY in knows_about, in the
+    // whole content model, so its absence proves the schema.org list is
+    // gone rather than merely relabelled.
+    expect(md).not.toContain('Focus Areas')
+    expect(md).not.toContain('Retrieval-Augmented Generation')
+  })
+
+  it('separates a project Stack line from its links, so CommonMark cannot fuse them into one paragraph', () => {
+    // Three consecutive non-blank lines are ONE paragraph in CommonMark,
+    // so "Stack: ...\nLink: [a](x)\nLink: [b](y)" renders as a single
+    // run-on sentence. That is a real defect in the one artifact whose
+    // whole purpose is clean machine parsing, and it applies between two
+    // link lines just as much as at the Stack/link boundary. Every Stack
+    // line must therefore be followed by a blank line, and each link must
+    // be its own list item (a list item is its own block).
+    expect(md).not.toMatch(/^Stack:.*\n(?!\n)/m)
+    for (const project of profile.projects) {
+      for (const link of project.links) {
+        expect(md).toContain(`- [${link.label}](${link.url})`)
+      }
     }
   })
 
