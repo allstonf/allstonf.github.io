@@ -211,8 +211,9 @@
       "summary": "Three supervised models predicting individual risk for coronary artery disease, Alzheimer's and diabetes.",
       "outcome": "Accuracies of 0.91, 0.89 and 0.88 across the three disease models.",
       "bullets": [
-        "Built and compared classifiers across three separate disease datasets rather than tuning a single model.",
-        "Reproducible notebooks with the full preprocessing and evaluation path committed alongside the results."
+        "Predicted risk for three diseases from one body of modelling work: coronary artery disease, Alzheimer's and diabetes.",
+        "Built as the UC San Diego Data Science capstone in the genetics domain.",
+        "Delivered as reproducible notebooks."
       ],
       "stack": ["Python", "pandas", "NumPy", "scikit-learn", "Matplotlib", "Seaborn"],
       "links": [
@@ -227,8 +228,8 @@
       "summary": "A web app mapping IoT weather sensors and testing whether forecast accuracy varies by city.",
       "outcome": "Determined that forecasts for Sacramento are about 7% more accurate than for San Diego.",
       "bullets": [
-        "Full path from an ESP32 sensor through a MySQL store to a browser map, built end to end.",
-        "Framed as a hypothesis with a measured answer rather than a dashboard with no question behind it."
+        "A web app spanning an ESP32 sensor device, a MySQL store and a browser front end.",
+        "Compared forecast accuracy between two cities and quantified the gap."
       ],
       "stack": ["HTML", "CSS", "JavaScript", "Python", "MySQL", "C", "Arduino", "ESP32"],
       "links": [
@@ -243,8 +244,8 @@
       "summary": "A playlist tool for DJs that recommends the next song by BPM or by title.",
       "outcome": null,
       "bullets": [
-        "Recommendations driven by the Spotify API's audio features rather than by genre tags.",
-        "Consumer-facing interface built for a specific user in mind, not a generic search box."
+        "Recommends the next track by BPM or by song title.",
+        "A web app on Node.js and Firebase, integrating the Spotify API."
       ],
       "stack": ["HTML", "CSS", "JavaScript", "Node.js", "Firebase", "Spotify API"],
       "links": [
@@ -259,8 +260,8 @@
       "summary": "A geospatial analysis recommending where in San Francisco a retail business should open.",
       "outcome": "Identified Hayes Valley and Haight-Ashbury as the best-suited areas.",
       "bullets": [
-        "Heat maps layering population density, income and business demographics across San Francisco.",
-        "Delivered as a business recommendation with the reasoning attached, not as a map alone."
+        "Heat maps of San Francisco population density, income and business demographics, built with Folium.",
+        "Entered as a competition submission."
       ],
       "stack": ["Python", "Folium"],
       "links": [
