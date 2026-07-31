@@ -208,7 +208,7 @@
       "name": "Predicting Disease Risk",
       "featured": false,
       "period": "Apr 2020 - Jun 2020",
-      "summary": "Three supervised models predicting individual risk for coronary artery disease, Alzheimer's and diabetes.",
+      "summary": "Supervised prediction of individual risk for three diseases: coronary artery disease, Alzheimer's and diabetes.",
       "outcome": "Accuracies of 0.91, 0.89 and 0.88 across the three disease models.",
       "bullets": [
         "Predicted risk for three diseases from one body of modelling work: coronary artery disease, Alzheimer's and diabetes.",
