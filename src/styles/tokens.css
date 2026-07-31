@@ -515,6 +515,65 @@ time {
   }
 }
 
+/* The hamburger is the exact inverse of .site-nav's breakpoint: it
+   appears where the section links leave, so the header is never without
+   navigation at any width. Added 2026-07-31 - before it, everything
+   under 960px had a header with no nav, and the footer nav (which is a
+   real fallback) required scrolling the whole page to reach.
+   44px is the WCAG 2.5.5 target-size floor and matches .site-nav a. */
+.nav-hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 1px solid var(--color-control-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nav-hamburger:hover {
+  border-color: var(--color-text);
+}
+
+.nav-hamburger:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Above the breakpoint the links sit in the bar, so the button would be
+   a second control for the same job. */
+@media (min-width: 960px) {
+  .nav-hamburger {
+    display: none;
+  }
+}
+
+/* Below it, .site-nav stays display:none until opened, then drops as a
+   panel under the bar. .site-nav-bar is position:fixed, which makes it
+   the containing block for this absolute positioning. */
+@media (max-width: 959px) {
+  .site-nav.is-open {
+    display: flex;
+    position: absolute;
+    inset: 100% 0 auto 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: var(--space-2) 0;
+    background: var(--color-ground);
+    border-bottom: 1px solid var(--color-overlay-medium);
+    z-index: 100;
+  }
+
+  .site-nav.is-open a {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
 .site-nav a {
   color: var(--color-text);
   display: inline-flex;

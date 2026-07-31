@@ -1,0 +1,64 @@
+// src/lib/navMenu.ts - the header navigation menu toggle.
+//
+// The header's section links leave at 960px, which is a deliberate SC
+// 1.4.10 Reflow fix (the full row measures ~892px). Until 2026-07-31
+// they were replaced by nothing, so every viewport under 960px had a
+// header with no navigation at all. This module is the replacement.
+//
+// Ported from 03_Efforts/nz-aus-2026/map.html - the vault's prior art
+// for this pattern - with one addition it lacks: closing after an
+// in-page link click. Without that, tapping "Projects" on a narrow
+// screen jumps to the section and then covers it with the open panel.
+//
+// Progressive enhancement, same contract as viewToggle.ts: the markup
+// ships as a real <button type="button"> and a real <nav> of real <a>
+// elements. With JS off the links stay in the DOM and stay reachable
+// through the footer nav, so nothing here is load-bearing for access to
+// content - it only improves reach.
+export function initNavMenu(doc: Document): void {
+  const toggle = doc.getElementById('nav-toggle')
+  const panel = doc.getElementById('site-nav')
+  // Imported unconditionally by index.astro, so a page without this
+  // markup must return quietly rather than throw and take the view
+  // toggle down with it.
+  if (!toggle || !panel) return
+
+  const isOpen = (): boolean => toggle.getAttribute('aria-expanded') === 'true'
+
+  const open = (): void => {
+    panel.classList.add('is-open')
+    toggle.setAttribute('aria-expanded', 'true')
+  }
+
+  const close = (): void => {
+    panel.classList.remove('is-open')
+    toggle.setAttribute('aria-expanded', 'false')
+    // Focus returns to the control the reader operated; otherwise a
+    // keyboard user is left at the top of the document with no anchor.
+    toggle.focus()
+  }
+
+  toggle.addEventListener('click', (event) => {
+    // Stops this click reaching the document listener below, which
+    // would otherwise read it as an outside-click and immediately
+    // close what was just opened.
+    event.stopPropagation()
+    isOpen() ? close() : open()
+  })
+
+  doc.addEventListener('keydown', (event) => {
+    if ((event as KeyboardEvent).key === 'Escape' && isOpen()) close()
+  })
+
+  doc.addEventListener('click', (event) => {
+    const target = event.target as Node | null
+    if (!target) return
+    if (isOpen() && !panel.contains(target) && !toggle.contains(target)) close()
+  })
+
+  // Close on navigating to a section. Bound on the panel rather than
+  // each link so links added to the nav later are covered for free.
+  panel.addEventListener('click', (event) => {
+    if ((event.target as HTMLElement).closest('a')) close()
+  })
+}

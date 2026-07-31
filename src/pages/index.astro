@@ -184,12 +184,35 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
     <header class="site-nav-bar">
       <div class="site-nav-bar__inner">
         <a class="site-nav-bar__brand" href="#">{person.name}</a>
-        <nav aria-label="Section" class="site-nav">
+        <nav aria-label="Section" class="site-nav" id="site-nav">
           <a href="#about">About</a>
           <a href="#experience">Experience</a>
           <a href="#projects">Projects</a>
           <a href="#contact">Contact</a>
         </nav>
+        {/*
+          Appears exactly where .site-nav's links leave (960px), so the
+          header is never left without navigation. type="button" is
+          required - a bare <button> defaults to submit. State lives on
+          aria-expanded, which initNavMenu keeps in sync; the control is
+          a real <button>, never an <a> (aria-pressed on an <a> is an
+          axe-confirmed aria-allowed-attr violation, impact critical -
+          that exact bug shipped here on 2026-07-30).
+        */}
+        <button
+          class="nav-hamburger"
+          id="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="site-nav"
+          aria-label="Toggle navigation menu"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
         <div class="topbar__utility">
           <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
             {person.resume.label}
@@ -432,7 +455,9 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
 
     <script>
       import { initViewToggle } from '../lib/viewToggle'
+      import { initNavMenu } from '../lib/navMenu'
       initViewToggle(document)
+      initNavMenu(document)
     </script>
   </body>
 </html>
