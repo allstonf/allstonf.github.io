@@ -23,9 +23,11 @@
 // exactly as the CI workflow orders it.
 import { describe, it, expect } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
+import { gzipSync } from 'node:zlib'
 import {
   hasAstroIsland,
   extractReferences,
+  extractInlineModuleScripts,
   assertNotSilentZero,
   SilentZeroBudgetError,
   computeBudgetReport,
@@ -51,6 +53,21 @@ const FIXTURE_HTML_WITH_ISLAND = `<!doctype html>
 const FIXTURE_HTML_NO_ISLAND = `<!doctype html>
 <html><body><p>static shell, no islands at all</p></body></html>`
 
+// A fixture with three script shapes that must be told apart: an inline
+// module script with a real body (must be counted), a module script that
+// points at an external file via src (must NOT be double counted - its
+// bytes are already covered by extractReferences/buildReachableSet), and a
+// classic inline script with no type attribute at all (not a module, must
+// be ignored by this extractor even though it is real executable JS).
+const FIXTURE_HTML_WITH_INLINE_MODULE = `<!doctype html>
+<html>
+<body>
+<script type="module">const viewToggle = () => { console.log('inline module body') }</script>
+<script type="module" src="/_astro/external.abc123.js"></script>
+<script>console.log('classic inline script, not a module, must be ignored')</script>
+</body>
+</html>`
+
 describe('extractReferences finds all four Astro reference forms', () => {
   it('extracts astro-island component-url and renderer-url', () => {
     const refs = extractReferences(FIXTURE_HTML_WITH_ISLAND)
@@ -71,6 +88,27 @@ describe('extractReferences finds all four Astro reference forms', () => {
   it('extracts a <script type="module" src="..."> reference', () => {
     const html = `<script type="module" src="/_astro/entry.xyz.js"></script>`
     expect(extractReferences(html)).toContain('/_astro/entry.xyz.js')
+  })
+})
+
+describe('extractInlineModuleScripts finds inline <script type="module"> bodies', () => {
+  it('extracts the body text of an inline module script with no src', () => {
+    const scripts = extractInlineModuleScripts(FIXTURE_HTML_WITH_INLINE_MODULE)
+    expect(scripts).toContain("const viewToggle = () => { console.log('inline module body') }")
+  })
+
+  it('does not extract a module script that has a src attribute (already an external reference)', () => {
+    const scripts = extractInlineModuleScripts(FIXTURE_HTML_WITH_INLINE_MODULE)
+    expect(scripts.some((src) => src.includes('external.abc123'))).toBe(false)
+  })
+
+  it('does not extract a classic inline script with no type attribute', () => {
+    const scripts = extractInlineModuleScripts(FIXTURE_HTML_WITH_INLINE_MODULE)
+    expect(scripts.some((src) => src.includes('classic inline script'))).toBe(false)
+  })
+
+  it('returns an empty array for HTML with no inline module scripts', () => {
+    expect(extractInlineModuleScripts(FIXTURE_HTML_NO_ISLAND)).toEqual([])
   })
 })
 
@@ -163,5 +201,45 @@ describe('computeBudgetReport against the real dist/ build', () => {
     for (const entry of report.unreachableFiles) {
       expect(reachableNames.has(entry.file)).toBe(false)
     }
+  })
+
+  // This is the failing-test-first case the task calls for. The real
+  // dist/index.html has at least one inline <script type="module"> (the
+  // view-toggle module) that is emitted directly into the HTML response
+  // rather than as a separate file - so it is exactly the kind of JS the
+  // module header claims to bound, but the OLD extractor never looked at
+  // it. Computed independently here (via a plain regex, not the function
+  // under test) so this test does not just restate the implementation.
+  it('the budgeted total includes gzipped inline module-script bytes (RED before the fix)', () => {
+    const html = readFileSync(`${distDir}/index.html`, 'utf8')
+    const inlineModuleBodies = [
+      ...html.matchAll(/<script\s+type="module"(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi),
+    ].map((match) => match[1])
+    expect(inlineModuleBodies.length).toBeGreaterThan(0)
+
+    const inlineBytes = inlineModuleBodies.reduce(
+      (sum, body) => sum + gzipSync(Buffer.from(body, 'utf8')).length,
+      0,
+    )
+
+    const report = computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })
+    const externalReachableBytes = report.reachableFiles.reduce(
+      (sum: number, f: { bytes: number }) => sum + f.bytes,
+      0,
+    )
+    // reachableBytes must keep meaning "external file reachable set only"
+    // (the task requires the existing external-file logic not be silently
+    // redefined), so it should still equal the external sum exactly.
+    expect(report.reachableBytes).toBe(externalReachableBytes)
+    // The number actually gated against the budget must include the inline
+    // module bytes on top of the external reachable set.
+    expect(report.budgetedBytes).toBe(externalReachableBytes + inlineBytes)
+    expect(report.inlineModuleBytes).toBe(inlineBytes)
+  })
+
+  it('still passes at the real 150 KB budget once inline module bytes are included', () => {
+    const report = computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })
+    expect(report.passed).toBe(report.budgetedBytes <= DEFAULT_BUDGET_BYTES)
+    expect(report.passed).toBe(true)
   })
 })

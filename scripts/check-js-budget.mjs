@@ -1,24 +1,26 @@
 #!/usr/bin/env node
-// scripts/check-js-budget.mjs - CI gate on the gzipped JS this site
-// serves as SEPARATE FILES, enforced against the plan's Global
-// Constraint of 150 KB gzipped total.
+// scripts/check-js-budget.mjs - CI gate on the total gzipped JS a
+// browser actually downloads on this site, enforced against the
+// plan's Global Constraint of 150 KB gzipped total.
 //
-// SCOPE, stated plainly because the honest version of this comment
-// matters more than a flattering one: this gate measures external
-// script FILES reachable from the built HTML. It does NOT measure
-// inline <script> content, which is emitted directly into
-// dist/index.html and therefore never appears as a file to resolve.
-// At the time of writing that exclusion is 4 inline blocks totalling
-// roughly 3.4 KB gzipped (Astro's island bootstrap, the view-toggle
-// module, and a JSON-LD block that is data rather than executable
-// code). That is unmeasured by this script and unbudgeted.
-//
-// So "PASS" here means "the external chunk graph fits the budget", not
-// "this page ships under 150 KB of JS in total". The margin is wide
-// enough (62 KB against 150 KB) that the excluded few KB cannot change
-// the verdict, which is why the exclusion is documented rather than
-// closed. If the reachable figure ever approaches the budget, close it
-// before trusting the result.
+// SCOPE: the budgeted total combines two sources of JS a browser
+// downloads as part of loading a page:
+//   1. External script FILES reachable from the built HTML (an
+//      astro-island hydration chunk, a <script src>, or a
+//      modulepreload target), including their transitive static
+//      imports. See "reachableBytes" below.
+//   2. Inline <script type="module"> bodies emitted directly into the
+//      HTML response itself - these never appear as a file to
+//      resolve, but they are still JS the browser parses and runs the
+//      moment the page loads, so they count exactly the same as an
+//      external file toward the budget. See "inlineModuleBytes"
+//      below.
+// The sum of both is "budgetedBytes", the number actually compared
+// against the budget. A plain data block such as a JSON-LD
+// <script type="application/ld+json"> is not executable JS and is
+// correctly excluded, and a classic inline <script> with no `type`
+// attribute is also not counted here (it is real JS too, but outside
+// this task's scope - see extractInlineModuleScripts's doc comment).
 //
 // MUST be reference-aware, not a glob over dist/**/*.js. Registering
 // @astrojs/react makes `astro build` emit a React runtime chunk into
@@ -37,27 +39,29 @@
 // downloads real JS the moment the island hydrates. See
 // assertNotSilentZero() below - a budget gate that cannot tell "no JS"
 // from "I failed to find the JS" is worse than no gate, because it
-// looks green. That guard covers the reference-extraction failure
-// mode only; it does not cover the inline-script exclusion described
-// above, which is a known and deliberate gap, not a detected one.
+// looks green.
 //
 // Algorithm:
-//   1. Parse every dist/**/*.html file for all four reference forms
-//      (extractReferences).
-//   2. Resolve each reference to a file under dist/, deduplicating -
-//      two islands sharing one renderer chunk must be counted once.
+//   1. Parse every dist/**/*.html file for all four external
+//      reference forms (extractReferences), AND for every inline
+//      <script type="module"> body with no src (extractInlineModuleScripts).
+//   2. Resolve each external reference to a file under dist/,
+//      deduplicating - two islands sharing one renderer chunk must be
+//      counted once.
 //   3. Transitively follow static `import ... from "..."` / `export
 //      ... from "..."` specifiers inside each referenced file
 //      (buildReachableSet), since a referenced entry chunk pulls in
 //      its own dependencies exactly the way a browser's module loader
 //      would.
-//   4. Sum the gzipped size of that reachable set. That sum, not the
-//      total bytes emitted under dist/_astro/, is the number compared
-//      against the budget.
-//   5. Report reachable AND total-emitted separately, plus a per-file
-//      breakdown and an explicit list of emitted-but-unreachable
-//      files, so an orphan chunk can never quietly start counting
-//      against the budget without someone noticing the report change.
+//   4. Sum the gzipped size of that external reachable set
+//      (reachableBytes) and the gzipped size of every inline module
+//      body (inlineModuleBytes). Their total, budgetedBytes, is the
+//      number compared against the budget.
+//   5. Report reachableBytes, inlineModuleBytes, budgetedBytes, and
+//      total-emitted-file-bytes separately, plus a per-file breakdown
+//      and an explicit list of emitted-but-unreachable files, so an
+//      orphan chunk can never quietly start counting against the
+//      budget without someone noticing the report change.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
@@ -140,6 +144,42 @@ export function extractReferences(html) {
   }
 
   return [...refs]
+}
+
+/**
+ * Extract the raw source text of every inline <script type="module">
+ * that has NO src attribute, across `html`.
+ *
+ * Scope is deliberately narrow, matching what the header documents:
+ *   - A module script WITH a src attribute is not returned here - it
+ *     is an external file already covered by extractReferences /
+ *     buildReachableSet, and returning its (empty) inline body too
+ *     would not double count bytes, but skipping it keeps this
+ *     function's contract simple: "the inline JS text a browser must
+ *     parse that extractReferences cannot see."
+ *   - A <script type="application/ld+json"> or any other non-module
+ *     type is not returned - it is data, not executable JS.
+ *   - A classic inline <script> with no type attribute at all is also
+ *     not returned. It IS real executable JS, but this task's scope is
+ *     specifically inline MODULE scripts; closing that gap for
+ *     classic inline scripts is a separate, undocumented exclusion
+ *     left for a future pass, not silently folded in here.
+ *
+ * Returns an array of raw strings (script bodies), in document order;
+ * duplicates are not deduplicated because two inline scripts with
+ * identical text still both download and execute as separate bytes.
+ */
+export function extractInlineModuleScripts(html) {
+  const bodies = []
+  const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+  let match
+  while ((match = re.exec(html))) {
+    const attrs = parseAttrs(`<script${match[1]}>`)
+    if ((attrs.type ?? '').toLowerCase() === 'module' && !attrs.src) {
+      bodies.push(match[2])
+    }
+  }
+  return bodies
 }
 
 /**
@@ -250,6 +290,12 @@ export function gzipSizeOf(filePath) {
   return gzipSizeCache.get(filePath)
 }
 
+/** Gzipped byte size of an in-memory string. Used for inline module
+ * script bodies, which have no file on disk to hand to gzipSizeOf. */
+export function gzipSizeOfString(source) {
+  return gzipSync(Buffer.from(source, 'utf8')).length
+}
+
 /** Every *.html file under `distDir`, recursive, as absolute paths. */
 function listHtmlFiles(distDir) {
   return readdirSync(distDir, { recursive: true })
@@ -275,12 +321,31 @@ function listEmittedJsFiles(distDir) {
  * assertNotSilentZero above) - this is a hard stop, not a field in the
  * returned report, because a caller that only checks `.passed` would
  * otherwise treat a broken extractor identically to a genuinely tiny
- * bundle.
+ * bundle. Note this guard is checked against `reachableBytes` (the
+ * external-file set) only, not `budgetedBytes` - an inline module
+ * script existing elsewhere on the page says nothing about whether
+ * island-reference extraction itself is broken.
  *
- * Returns { budgetBytes, reachableBytes, totalEmittedBytes,
- * reachableFiles, unreachableFiles, passed }, where reachableFiles and
- * unreachableFiles are [{ file, bytes }] with `file` relative to
- * distDir, sorted by path.
+ * Returns { budgetBytes, reachableBytes, inlineModuleBytes,
+ * budgetedBytes, totalEmittedBytes, reachableFiles, inlineModuleFiles,
+ * unreachableFiles, passed }.
+ *   - reachableBytes keeps its original, narrower meaning: the gzipped
+ *     sum of the external-file reachable set only. This is
+ *     deliberately NOT redefined to include inline bytes, so existing
+ *     callers that reason about "the reachable file set" (e.g. the
+ *     unreachable-file diff) keep working unchanged.
+ *   - inlineModuleBytes is the gzipped sum of every inline
+ *     <script type="module"> body found across all built HTML pages.
+ *   - budgetedBytes = reachableBytes + inlineModuleBytes. This, not
+ *     reachableBytes alone, is the number compared against the
+ *     budget, because both are real JS a browser downloads as part of
+ *     loading the page.
+ *   - reachableFiles, unreachableFiles are [{ file, bytes }] with
+ *     `file` relative to distDir, sorted by path.
+ *   - inlineModuleFiles is [{ file, bytes }] with `file` naming the
+ *     HTML page and a 1-based index of the inline module within it
+ *     (e.g. "index.html#inline-module-1"), since an inline script has
+ *     no path of its own on disk.
  */
 export function computeBudgetReport({ distDir, budgetBytes = DEFAULT_BUDGET_BYTES }) {
   // Absolutize once, up front. buildReachableSet's transitive-import
@@ -297,10 +362,23 @@ export function computeBudgetReport({ distDir, budgetBytes = DEFAULT_BUDGET_BYTE
 
   const allRefs = new Set()
   let anyIsland = false
+  const inlineModuleFiles = []
   for (const htmlFile of htmlFiles) {
     const html = readFileSync(htmlFile, 'utf8')
     if (hasAstroIsland(html)) anyIsland = true
     for (const ref of extractReferences(html)) allRefs.add(ref)
+
+    // Inline module scripts have no file identity of their own, so
+    // they are gzipped directly from their source text and reported
+    // against the HTML page that emitted them, with a 1-based index
+    // to disambiguate multiple inline modules on the same page.
+    const htmlLabel = relative(distDir, htmlFile).split(sep).join('/')
+    extractInlineModuleScripts(html).forEach((source, index) => {
+      inlineModuleFiles.push({
+        file: `${htmlLabel}#inline-module-${index + 1}`,
+        bytes: gzipSizeOfString(source),
+      })
+    })
   }
 
   const rootFiles = [...allRefs].map((ref) => resolveDistRef(distDir, ref))
@@ -318,13 +396,19 @@ export function computeBudgetReport({ distDir, budgetBytes = DEFAULT_BUDGET_BYTE
 
   const toEntry = (file) => ({ file: relative(distDir, file).split(sep).join('/'), bytes: gzipSizeOf(file) })
 
+  const inlineModuleBytes = inlineModuleFiles.reduce((sum, entry) => sum + entry.bytes, 0)
+  const budgetedBytes = reachableBytes + inlineModuleBytes
+
   return {
     budgetBytes,
     reachableBytes,
+    inlineModuleBytes,
+    budgetedBytes,
     totalEmittedBytes,
     reachableFiles: reachableJsFiles.map(toEntry),
+    inlineModuleFiles,
     unreachableFiles: unreachableJsFiles.map(toEntry),
-    passed: reachableBytes <= budgetBytes,
+    passed: budgetedBytes <= budgetBytes,
   }
 }
 
@@ -333,15 +417,24 @@ function formatKb(bytes) {
 }
 
 function printReport(report) {
-  console.log('JS budget check (reachable-set only, see scripts/check-js-budget.mjs)')
+  console.log('JS budget check (external reachable set + inline module scripts, see scripts/check-js-budget.mjs)')
   console.log('')
-  console.log(`  reachable (budgeted):  ${formatKb(report.reachableBytes)} gzipped`)
+  console.log(`  budgeted total:        ${formatKb(report.budgetedBytes)} gzipped`)
   console.log(`  budget:                ${formatKb(report.budgetBytes)} gzipped`)
+  console.log(`    external reachable:  ${formatKb(report.reachableBytes)} gzipped`)
+  console.log(`    inline modules:      ${formatKb(report.inlineModuleBytes)} gzipped`)
   console.log(`  total emitted:         ${formatKb(report.totalEmittedBytes)} gzipped (informational)`)
   console.log('')
   console.log('  reachable files:')
   for (const entry of report.reachableFiles) {
     console.log(`    ${formatKb(entry.bytes).padStart(10)}  ${entry.file}`)
+  }
+  if (report.inlineModuleFiles.length > 0) {
+    console.log('')
+    console.log('  inline module scripts:')
+    for (const entry of report.inlineModuleFiles) {
+      console.log(`    ${formatKb(entry.bytes).padStart(10)}  ${entry.file}`)
+    }
   }
   if (report.unreachableFiles.length > 0) {
     console.log('')
@@ -354,7 +447,7 @@ function printReport(report) {
     console.log('  emitted but unreachable: none')
   }
   console.log('')
-  console.log(report.passed ? 'PASS' : 'FAIL: reachable JS exceeds the budget')
+  console.log(report.passed ? 'PASS' : 'FAIL: budgeted JS exceeds the budget')
 }
 
 function main() {
