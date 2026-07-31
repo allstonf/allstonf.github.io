@@ -129,7 +129,19 @@ describe('classifyUrlStatus', () => {
     expect(classifyUrlStatus(403)).toBe('dead')
   })
 
-  it('treats a network error (0) as dead', () => {
-    expect(classifyUrlStatus(0)).toBe('dead')
+  it('treats a network error (0) as BLOCKED, not dead', () => {
+    // REVERSED after code review 2026-07-31. 0 is what the CLI's catch
+    // handler produces for ANY thrown fetch: DNS blip, timeout, TLS
+    // reset, connection refused. Bucketing it with 404/410/500 meant a
+    // transient network failure on a perfectly live URL failed the
+    // build - the identical failure class the 999 fix was written to
+    // remove, reintroduced through the exception path.
+    //
+    // Reproduced before fixing: fetching an unresolvable host threw,
+    // was caught as 0, and classified 'dead'.
+    //
+    // The checker cannot distinguish "the target is dead" from "my own
+    // network call failed", so it must not assert the former.
+    expect(classifyUrlStatus(0)).toBe('blocked')
   })
 })

@@ -23,6 +23,16 @@ export function initNavMenu(doc: Document): void {
   // toggle down with it.
   if (!toggle || !panel) return
 
+  // Idempotency guard. Without it a second init attaches a second set
+  // of listeners: both fire on one click, one opens and the other
+  // closes, and the toggle becomes a PERMANENT no-op - visibly present,
+  // clickable, doing nothing. Found by code review 2026-07-31 and
+  // reproduced before fixing. index.astro calls this once today, so the
+  // bug was latent, but the failure is silent and an Astro view
+  // transition or a stray re-import would surface it.
+  if (toggle.dataset.navMenuInit === 'true') return
+  toggle.dataset.navMenuInit = 'true'
+
   const isOpen = (): boolean => toggle.getAttribute('aria-expanded') === 'true'
 
   const open = (): void => {

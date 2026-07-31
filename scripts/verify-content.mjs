@@ -116,7 +116,14 @@ export function checkContent(profile) {
 export function classifyUrlStatus(status) {
   if (status === 200) return 'ok'
   // 999: LinkedIn anti-automation. 429: rate limited, transient.
-  if (status === 999 || status === 429) return 'blocked'
+  // 0: the CLI's catch handler produces this for ANY thrown fetch -
+  // DNS failure, timeout, TLS reset, connection refused. It means the
+  // CHECKER's call failed, which is not evidence about the target. Code
+  // review 2026-07-31 caught this bucketed with 404/410/500, so a
+  // transient blip failed the build on a live URL - the same failure
+  // class the 999 case was written to remove, arriving via the
+  // exception path instead of a status code.
+  if (status === 999 || status === 429 || status === 0) return 'blocked'
   return 'dead'
 }
 

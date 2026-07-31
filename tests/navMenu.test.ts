@@ -98,6 +98,23 @@ describe('initNavMenu', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
   })
 
+  it('is idempotent - a second init does not cancel the first', () => {
+    // Found by code review 2026-07-31 and reproduced: without a guard,
+    // two inits attach two click listeners to the same button. Both
+    // fire on one click, one opens and the other closes, so the toggle
+    // becomes a PERMANENT no-op - visually present, clickable, does
+    // nothing. index.astro calls init once today, so this is latent,
+    // but it is one careless re-import or view-transition away and the
+    // failure mode is silent.
+    const doc = makeDoc()
+    initNavMenu(doc)
+    initNavMenu(doc)
+    const toggle = doc.getElementById('nav-toggle')!
+
+    click(doc, toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+  })
+
   it('no-ops when the markup is absent', () => {
     // The module is imported unconditionally by index.astro; a page
     // without the markup must not throw and take the view toggle with it.
