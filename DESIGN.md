@@ -27,6 +27,8 @@ typography:
     lineHeight: 1.6
   scale:
     h1: "40px"
+    h1Wide: "100px"
+    h2: "clamp(1.75rem, 1.35rem + 1.6vw, 2.75rem)"
     bodyWide: "20px"
 spacing:
   sectionY: "100px"
@@ -53,13 +55,13 @@ This language originates in the 2020 revision of allstonf.github.io, built on th
 
 ## Colors
 
-The palette is deliberately almost monochrome: `{colors.ground}` (black) and `{colors.text}` (white) carry every band on the page, with `{colors.textMuted}` (white at 0.8 opacity) used for secondary nav text. Two neutral overlay values, `{colors.overlayWeak}` and `{colors.overlayMedium}`, exist only to shade interface chrome (the nav toggle's resting background, and the active nav-link background plus the collapsed-nav border) on top of black, never as content color.
+The palette is deliberately almost monochrome: `{colors.ground}` (black) and `{colors.text}` (white) carry every band on the page, with `{colors.textMuted}` (white at 0.8 opacity) used for secondary nav text. Two neutral overlay values, `{colors.overlayWeak}` and `{colors.overlayMedium}`, exist only to shade interface chrome on top of black, never as content color: `{colors.overlayWeak}` sets thin hairline borders (project card and loop-item top borders, the loop progress bar's track) and `{colors.overlayMedium}` sets the nav's permanent border-bottom and other bordered chrome (see Nav, under Components).
 
 Note on `#fcfcfc`: this value appears twice in the source stylesheet, in the `::selection` and `::-moz-selection` rules, but each occurrence is immediately overridden on the following line by `background: rgba(255, 255, 255, 0.2)` within the same rule, so it never actually renders in any browser. It is dead CSS, not a design color, and it is not carried into the token set below for that reason.
 
 Against that restraint, `{colors.accent}` (`#42DCA3`, a mint green used five times in the source stylesheet) and its darker hover state `{colors.accentHover}` are the only chromatic colors in the system. Because nothing else in the interface carries color, the accent is unambiguous: if something is mint, it is interactive, and if something is not interactive, it is never mint. This is the rule that makes the palette legible at a glance, and it is the rule most at risk when a design is extended carelessly (a colored icon, a tinted card, a decorative gradient all break it).
 
-The measured contrast of `{colors.text}` on `{colors.ground}` is 21:1, the maximum possible for the sRGB color space, so white text on the black ground always passes WCAG at any size. `{colors.accent}` on `{colors.ground}` has not been measured at this pass and must be checked before it is used for small text; treat it as safe for large text, icons, borders, and states, and verify contrast before setting body-sized copy in it.
+The measured contrast of `{colors.text}` on `{colors.ground}` is 21:1, the maximum possible for the sRGB color space, so white text on the black ground always passes WCAG at any size. `{colors.accent}` (`#42DCA3`) on `{colors.ground}` (`#000000`) measures 12.0:1, and over the 0.55-opacity photographic scrim used behind the photo bands it measures 6.4:1. Both pass WCAG AA (4.5:1) at any text size, so the accent is safe to use for body-sized copy as well as large text, icons, borders, and states - which is exactly what it does, since every inline link in the design is set in the accent.
 
 ## Typography
 
@@ -69,7 +71,7 @@ The uppercase transform combined with letter-spacing is what makes Montserrat re
 
 ## Layout
 
-The page is built from full-width bands stacked vertically, each separated by `{spacing.sectionY}` of vertical padding. The ground beneath every band is `{colors.ground}` (black); there is no lighter band anywhere in the source. Contrast between bands comes entirely from alternating photographic bands (the hero, the download section, each a full-bleed grayscale image over black) with flat black content bands (`.content-section`), not from alternating light and dark backgrounds. Composition inside each band is centered: headings, body copy, and controls sit on a single centered column rather than a multi-column grid, which keeps the reading experience linear and keeps the photography, not a background swap, doing the work of visual rhythm. Headings carry `{spacing.headingBottom}` of margin below them and paragraphs carry `{spacing.paragraphBottom}` (25px on mobile; the source bumps this to 35px, with body line-height to 1.6, at the 768px breakpoint), so vertical rhythm inside a band is consistent even as photographic and flat bands alternate.
+The page is built from full-width bands stacked vertically, each separated by `{spacing.sectionY}` of vertical padding. The ground beneath every band is `{colors.ground}` (black); there is no lighter band anywhere in the source. Contrast between bands comes entirely from alternating photographic bands (the hero and the contact band, each a full-bleed grayscale image over black, `.photo-band`) with flat black content bands (`.band`: About, Projects, Experience, and the Loop), not from alternating light and dark backgrounds. Composition inside each band is centered: headings, body copy, and controls sit on a single centered column rather than a multi-column grid, which keeps the reading experience linear and keeps the photography, not a background swap, doing the work of visual rhythm. Headings carry `{spacing.headingBottom}` of margin below them and paragraphs carry `{spacing.paragraphBottom}` (25px on mobile; the source bumps this to 35px, with body line-height to 1.6, at the 768px breakpoint), so vertical rhythm inside a band is consistent even as photographic and flat bands alternate.
 
 ## Elevation and Depth
 
@@ -81,13 +83,13 @@ The shape vocabulary is deliberately small. The one circular element is the scro
 
 ## Components
 
-**Hero.** A full-bleed photographic band in `{colors.ground}`, centered text in `{colors.text}`, an uppercase display heading at `{typography.scale.h1}` (scaling up at wider viewports), body copy at `{typography.body.fontSize}`, and the scroll-cue button anchored at the bottom. This is the one place in the system where photography, the display face, and the reading face all appear together.
+**Hero.** A full-bleed photographic band in `{colors.ground}`, centered text in `{colors.text}`, an uppercase display heading at `{typography.scale.h1}` (scaling up to `{typography.scale.h1Wide}` at wider viewports), body copy at `{typography.body.fontSize}`, and the scroll-cue button anchored at the bottom. This is the one place in the system where photography, the display face, and the reading face all appear together. Every other section heading (About, Projects, Experience, Contact) is set at `{typography.scale.h2}`, a fluid clamp rather than a fixed pixel value or breakpoint jump, so it scales continuously between its floor and ceiling instead of stepping at a single width like the hero heading does.
 
-**Section band.** A flat `{colors.ground}` band, padded `{spacing.sectionY}` top and bottom, with centered content. Alternating these flat bands with the photographic bands (hero, downloads) is what produces the page's overall rhythm; the flat band itself does not change color.
+**Section band.** A flat `{colors.ground}` band (`.band`), padded `{spacing.sectionY}` top and bottom, with centered content. Alternating these flat bands with the photographic bands (hero, contact) is what produces the page's overall rhythm; the flat band itself does not change color.
 
 **Scroll cue.** The circular button described under Shapes: 70px, `{components.heroButton.border}`, transparent fill, `{colors.text}` icon. On hover the fill shifts to a low-opacity white wash (measured at `rgba(255,255,255,0.1)` in the source stylesheet, a third, lighter overlay value distinct from `{colors.overlayWeak}` and `{colors.overlayMedium}`) and the icon pulses. No color changes; only the wash and the motion communicate the hover state.
 
-**Nav.** An uppercase Montserrat nav in `{colors.ground}`, with `{colors.text}` links. The mobile nav toggle button uses `{colors.overlayWeak}` as its resting background; its `:focus`/`:active` states change only `outline`, not background or color. `{colors.overlayMedium}` belongs to two other places: the active nav link's own background (`.nav li.active a`), and the desktop nav's border-bottom once it has collapsed against scroll. Secondary nav text (a hovered link) drops to `{colors.textMuted}` rather than changing hue, keeping the rule that hue is reserved for the accent.
+**Nav.** An uppercase Montserrat nav in `{colors.ground}`, with `{colors.text}` links, rendered always-solid (not transparent-over-hero collapsing to solid on scroll, since that would need a JS scroll listener this JS-free-by-default nav doesn't add) with a permanent `{colors.overlayMedium}` border-bottom. V3 ships no nav toggle button; there is no hamburger, no collapsed-menu state, and no `overlayWeak` resting background anywhere in the nav. Instead the nav row collapses by removing content, not by hiding it behind a control: below 960px the header's five section links disappear and `.site-footer__nav`, an identical set of links in the page footer, becomes the reachable copy (the two `<nav>` elements are mutually exclusive by viewport width, never both visible); below 480px the brand link also drops, since it duplicates the footer name and isn't a control. The resume link and the agent-view toggle never leave the header at any width down to 320px; an `overflow-x: auto` scroll container is the defensive fallback if the row is ever wider than measured. Secondary nav text (a hovered link) drops to `{colors.textMuted}` rather than changing hue, keeping the rule that hue is reserved for the accent.
 
 **Link.** Inline links are set in `{components.link.color}` at rest and `{components.link.hoverColor}` on hover or focus, with no underline. This is the accent doing its one job: marking text as actionable.
 
