@@ -424,6 +424,21 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
 
     <footer class="site-footer">
       <p class="site-footer__name">{person.name}</p>
+      {/*
+        Duplicates the header's .site-nav section links. Below 960px
+        the header hides that copy (no room for it beside the brand and
+        the resume/agent-view utility group - see tokens.css's
+        .site-nav-bar__inner comment), and this one becomes visible in
+        its place, so the same five destinations stay reachable without
+        JS at every viewport width.
+      */}
+      <nav aria-label="Section" class="site-footer__nav">
+        <a href="#about">About</a>
+        <a href="#projects">Projects</a>
+        <a href="#experience">Experience</a>
+        <a href="#loop">The Loop</a>
+        <a href="#contact">Contact</a>
+      </nav>
       <p class="site-footer__contact">
         <a href={`mailto:${person.email}`}>{person.email}</a>
       </p>

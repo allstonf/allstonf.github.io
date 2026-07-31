@@ -11,21 +11,24 @@
  * the original 2020 stylesheet DESIGN.md was authored from. Comments
  * below cite which.
  *
- * The v2 "record" aesthetic (Syne, DM Mono as a body face, bracketed
- * kickers, a two-column label rail) is gone. V3 has one governing
- * layout idea instead: full-width bands stacked vertically, each a
- * single centered column, alternating flat black content bands with
- * photographic bands. See DESIGN.md's Layout section.
+ * This stylesheet has one governing layout idea: full-width bands
+ * stacked vertically, each a single centered column, alternating flat
+ * black content bands with photographic bands. See DESIGN.md's Layout
+ * section. Type follows the same restraint: Montserrat sets short
+ * structural labels, Lora carries the reading voice, and nothing here
+ * uses a monospace or bracketed-label treatment for body content - see
+ * DESIGN.md's Typography section for why the two faces stay this
+ * separate.
  */
 
 /* ---------------------------------------------------------------------
-   Fonts - self-hosted woff2, already extracted under public/fonts/ by
-   Task 1 (a13ffdc). Montserrat 700 (the ONLY weight the source
-   stylesheet uses for headings/nav/buttons - grayscale.css never sets
-   font-weight: 400 Montserrat as a face, "Montserrat" 400 below is a
-   synthetic style="normal" reference to the same 700 file, not a
-   second weight) and Lora 400/700 are unchanged from Task 1. Zero
-   external requests: nothing here reaches off-origin.
+   Fonts - self-hosted woff2 files under public/fonts/. Montserrat 700
+   (the ONLY weight the source stylesheet uses for headings/nav/buttons
+   - grayscale.css never sets font-weight: 400 Montserrat as a face,
+   "Montserrat" 400 below is a synthetic style="normal" reference to the
+   same 700 file, not a second weight) and Lora 400/700 are the only
+   weights shipped. Zero external requests: nothing here reaches
+   off-origin.
    ------------------------------------------------------------------ */
 
 @font-face {
@@ -117,9 +120,9 @@
 
   /* h2 has no DESIGN.md or grayscale.css font-size (the source
      stylesheet's h1-h6 rule sets only weight/transform/letter-spacing,
-     never a size - band headings inherited the browser default). A
-     later doc fix (fd0b6e0) explicitly removed a FABRICATED h2 size
-     from DESIGN.md for this reason. This value is therefore this
+     never a size - band headings inherited the browser default), and
+     DESIGN.md deliberately does not assert one either: an h2 figure is
+     not part of the published spec. This value is therefore this
      file's own reasoned choice, not a DESIGN.md figure: distinctly
      smaller than h1, generous enough to read as a band's title from a
      normal scroll distance. */
@@ -168,7 +171,7 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  scroll-behavior: auto; /* anchor jumps are instant; see prefers-reduced-motion note below */
+  scroll-behavior: auto; /* anchor jumps are instant already, so there is nothing here for prefers-reduced-motion to guard */
 }
 
 body {
@@ -394,8 +397,30 @@ time {
    fixed height (--nav-height, matched by body's padding-top and every
    .band's scroll-margin-top below); letting its contents wrap to a
    second line at narrow widths would push that second line out from
-   under the solid background into the hero photo behind it. Scrolling
-   the single row sideways keeps the height promise exactly instead.
+   under the solid background into the hero photo behind it.
+
+   The full row (brand + five section links + resume + agent-view
+   toggle) measures roughly 892px from the shipped fonts' advance
+   widths at these declared sizes, so it does not fit under ~960px.
+   Rather than let overflow-x scroll hide the resume link and the
+   agent-view toggle off-screen with no visible cue (the failure this
+   fix exists to remove - iOS/macOS overlay scrollbars render nothing
+   at rest, and DESIGN.md forbids a fade-edge affordance), the row
+   collapses in two stages, each with content that stays fully
+   reachable elsewhere:
+
+   - Below 960px: the five section links leave the header. They are
+     always still reachable in the page footer (.site-footer__nav
+     below), which this same breakpoint reveals.
+   - Below 480px: the brand link leaves too (redundant with
+     .site-footer__name, already visible on scroll, and not a control -
+     losing it costs nothing functional).
+
+   What never leaves, at any width down to 320px, is .topbar__utility:
+   the resume link and the agent-view toggle. See the media queries on
+   .site-nav-bar__brand and .site-nav below for the width arithmetic at
+   each stage. overflow-x stays on as a defensive fallback only, not
+   the fix itself.
 */
 .site-nav-bar__inner {
   height: 100%;
@@ -405,13 +430,25 @@ time {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-2);
   overflow-x: auto;
   overflow-y: hidden;
 }
 
+/* A scroll container can exclude its own trailing padding from the
+   scrollable region (browsers vary on whether end-padding counts as
+   reachable overflow), which otherwise leaves .topbar__view-toggle
+   flush against the viewport edge at maximum scroll with no breathing
+   room. A real flex item the same width as the padding keeps that
+   space reachable regardless of that inconsistency. */
+.site-nav-bar__inner::after {
+  content: '';
+  flex: 0 0 var(--space-2);
+}
+
 .site-nav-bar__brand {
+  display: none;
   flex: none;
   white-space: nowrap;
   color: var(--color-text);
@@ -424,12 +461,35 @@ time {
   color: var(--color-text-muted);
 }
 
+/* Stage 2 of the collapse (see the comment above .site-nav-bar__inner):
+   padding (16) + brand (141.9) + gap (16) + resume (91.5) + gap (16) +
+   toggle (126.3) + padding (16) = ~423.7px, comfortably inside 480px
+   and every width above it up to the next stage. */
+@media (min-width: 480px) {
+  .site-nav-bar__brand {
+    display: inline-flex;
+  }
+
+  .site-nav-bar__inner {
+    justify-content: space-between;
+  }
+}
+
 .site-nav {
-  display: flex;
+  display: none;
   flex: none;
   flex-wrap: nowrap;
   gap: var(--space-3);
   font-size: 0.75rem;
+}
+
+/* Stage 3 of the collapse: the section links return once the full row
+   (~892px - see the comment above .site-nav-bar__inner) fits, with a
+   margin over the exact figure. */
+@media (min-width: 960px) {
+  .site-nav {
+    display: flex;
+  }
 }
 
 .site-nav a {
@@ -922,10 +982,11 @@ time {
    (src/components/LoopExplainer.tsx, unmodified). Class names below
    are consumed directly by that component's JSX, so the selectors stay
    fixed even though every value inside them is new. No accent tint on
-   any passive readout (the callout rule, the verdict box): the verdict
-   states are told apart by border style and an inline glyph, not
-   color, for the same "not a control" reasoning as the experience
-   timeline above.
+   any passive readout (the callout rule, the verdict box, the weight
+   bars): none of the three is clickable or focusable, so none of them
+   gets the accent. States are told apart by border style/weight and an
+   inline glyph or label, not color, for the same "not a control"
+   reasoning as the experience timeline above.
    ------------------------------------------------------------------ */
 
 .loop-intro,
@@ -1120,8 +1181,20 @@ time {
   transition: width 0.2s ease;
 }
 
-.loop-bar--highlight .loop-bar__fill {
-  background: var(--color-accent);
+/* The selected weight's row in the perturb walkthrough (an <li> inside
+   an unclickable, unfocusable <ul>, not a control) is told apart by
+   border and weight, the same idiom .loop-verdict uses below, rather
+   than by the accent - see the "not a control" comment above this
+   block. The border sits on the track, not the fill, because the
+   track's own overflow: hidden would otherwise clip a border drawn on
+   the fill at low percentages. */
+.loop-bar--highlight .loop-bar__track {
+  border: 1px solid var(--color-text);
+}
+
+.loop-bar--highlight .loop-bar__label {
+  color: var(--color-text);
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1232,6 +1305,39 @@ time {
 .site-footer__name {
   color: var(--color-text);
   margin-bottom: 0.2rem;
+}
+
+/* Mirrors the header's five .site-nav section links. Visible by
+   default (mobile-first) and hidden once the header has room to carry
+   them itself - see the collapse comment above .site-nav-bar__inner.
+   Plain always-present links rather than a disclosure control: nothing
+   here needs JavaScript, and nothing here can be missed the way a
+   hidden-by-default fade edge can. */
+.site-footer__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-2) 0 var(--space-3);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+}
+
+.site-footer__nav a {
+  color: var(--color-text);
+}
+
+.site-footer__nav a:hover,
+.site-footer__nav a:focus-visible {
+  color: var(--color-text-muted);
+}
+
+@media (min-width: 960px) {
+  .site-footer__nav {
+    display: none;
+  }
 }
 
 /* ---------------------------------------------------------------------
