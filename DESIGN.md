@@ -8,7 +8,6 @@ description: >
   allstonf.github.io.
 colors:
   ground: "#000000"
-  surface: "#fcfcfc"
   text: "#ffffff"
   textMuted: "rgba(255,255,255,0.8)"
   accent: "#42DCA3"
@@ -28,7 +27,6 @@ typography:
     lineHeight: 1.6
   scale:
     h1: "40px"
-    h2: "28px"
     bodyWide: "20px"
 spacing:
   sectionY: "100px"
@@ -55,7 +53,9 @@ This language originates in the 2020 revision of allstonf.github.io, built on th
 
 ## Colors
 
-The palette is deliberately almost monochrome: `{colors.ground}` (black), `{colors.surface}` (near-white, used for alternating flat bands), `{colors.text}` (white), and `{colors.textMuted}` (white at 0.8 opacity, used for secondary nav text) are the entire non-interactive vocabulary. Two neutral overlay values, `{colors.overlayWeak}` and `{colors.overlayMedium}`, exist only to shade interface chrome (nav toggle background and its active/hover state) on top of black, never as content color.
+The palette is deliberately almost monochrome: `{colors.ground}` (black) and `{colors.text}` (white) carry every band on the page, with `{colors.textMuted}` (white at 0.8 opacity) used for secondary nav text. Two neutral overlay values, `{colors.overlayWeak}` and `{colors.overlayMedium}`, exist only to shade interface chrome (the nav toggle's resting background, and the active nav-link background plus the collapsed-nav border) on top of black, never as content color.
+
+Note on `#fcfcfc`: this value appears twice in the source stylesheet, in the `::selection` and `::-moz-selection` rules, but each occurrence is immediately overridden on the following line by `background: rgba(255, 255, 255, 0.2)` within the same rule, so it never actually renders in any browser. It is dead CSS, not a design color, and it is not carried into the token set below for that reason.
 
 Against that restraint, `{colors.accent}` (`#42DCA3`, a mint green used five times in the source stylesheet) and its darker hover state `{colors.accentHover}` are the only chromatic colors in the system. Because nothing else in the interface carries color, the accent is unambiguous: if something is mint, it is interactive, and if something is not interactive, it is never mint. This is the rule that makes the palette legible at a glance, and it is the rule most at risk when a design is extended carelessly (a colored icon, a tinted card, a decorative gradient all break it).
 
@@ -69,7 +69,7 @@ The uppercase transform combined with letter-spacing is what makes Montserrat re
 
 ## Layout
 
-The page is built from full-width bands stacked vertically, each separated by `{spacing.sectionY}` of vertical padding, alternating between full-bleed photographic bands (the hero, the download section) and flat bands in `{colors.ground}` or `{colors.surface}`. Composition inside each band is centered: headings, body copy, and controls sit on a single centered column rather than a multi-column grid, which keeps the reading experience linear and keeps the photography the visual anchor of the bands that carry it. Headings carry `{spacing.headingBottom}` of margin below them and paragraphs carry `{spacing.paragraphBottom}`, so vertical rhythm inside a band is consistent even as the band backgrounds change.
+The page is built from full-width bands stacked vertically, each separated by `{spacing.sectionY}` of vertical padding. The ground beneath every band is `{colors.ground}` (black); there is no lighter band anywhere in the source. Contrast between bands comes entirely from alternating photographic bands (the hero, the download section, each a full-bleed grayscale image over black) with flat black content bands (`.content-section`), not from alternating light and dark backgrounds. Composition inside each band is centered: headings, body copy, and controls sit on a single centered column rather than a multi-column grid, which keeps the reading experience linear and keeps the photography, not a background swap, doing the work of visual rhythm. Headings carry `{spacing.headingBottom}` of margin below them and paragraphs carry `{spacing.paragraphBottom}` (25px on mobile; the source bumps this to 35px, with body line-height to 1.6, at the 768px breakpoint), so vertical rhythm inside a band is consistent even as photographic and flat bands alternate.
 
 ## Elevation and Depth
 
@@ -77,17 +77,17 @@ This design uses no shadows. There is no box-shadow, no drop-shadow, and no elev
 
 ## Shapes
 
-The shape vocabulary is deliberately small. The one circular element is the scroll cue (`{components.heroButton.shape}`, a 70px circle with a `{components.heroButton.border}` outline), and it is circular specifically because it is the one element the eye needs to find instantly as a "press this" affordance floating over a photograph. Everything else in the source stylesheet is square (`border-radius: 0` on buttons), which keeps the type-driven chrome feeling structural rather than soft. A pill radius (`{rounded.pill}`) is reserved for V3 toggle-style controls, such as the agent-view toggle, where a fully rounded capsule communicates "switch" the way it conventionally does in modern interfaces; it is a deliberate, narrow addition to the vocabulary, not a general rounding of the corner radius across the design.
+The shape vocabulary is deliberately small. The one circular element is the scroll cue (`{components.heroButton.shape}`, a 70px circle with a `{components.heroButton.border}` outline), and it is circular specifically because it is the one element the eye needs to find instantly as a "press this" affordance floating over a photograph. The source stylesheet writes this circle as `border-radius: 100% !important` on a fixed 70px-by-70px element; `{rounded.circle}` normalizes that to `50%`, the standard CSS idiom for a circle on an equal-width/height box, which is visually identical but not a byte-for-byte copy of the source declaration. Everything else in the source stylesheet is square (`border-radius: 0` on buttons), which keeps the type-driven chrome feeling structural rather than soft. A pill radius (`{rounded.pill}`) is reserved for V3 toggle-style controls, such as the agent-view toggle, where a fully rounded capsule communicates "switch" the way it conventionally does in modern interfaces; it is a deliberate, narrow addition to the vocabulary, not a general rounding of the corner radius across the design.
 
 ## Components
 
 **Hero.** A full-bleed photographic band in `{colors.ground}`, centered text in `{colors.text}`, an uppercase display heading at `{typography.scale.h1}` (scaling up at wider viewports), body copy at `{typography.body.fontSize}`, and the scroll-cue button anchored at the bottom. This is the one place in the system where photography, the display face, and the reading face all appear together.
 
-**Section band.** A flat band in either `{colors.ground}` or `{colors.surface}`, padded `{spacing.sectionY}` top and bottom, with centered content. Alternating these bands with photographic bands (hero, downloads) is what produces the page's overall rhythm.
+**Section band.** A flat `{colors.ground}` band, padded `{spacing.sectionY}` top and bottom, with centered content. Alternating these flat bands with the photographic bands (hero, downloads) is what produces the page's overall rhythm; the flat band itself does not change color.
 
 **Scroll cue.** The circular button described under Shapes: 70px, `{components.heroButton.border}`, transparent fill, `{colors.text}` icon. On hover the fill shifts to a low-opacity white wash (measured at `rgba(255,255,255,0.1)` in the source stylesheet, a third, lighter overlay value distinct from `{colors.overlayWeak}` and `{colors.overlayMedium}`) and the icon pulses. No color changes; only the wash and the motion communicate the hover state.
 
-**Nav.** An uppercase Montserrat nav in `{colors.ground}`, with `{colors.text}` links. The mobile nav toggle uses `{colors.overlayWeak}` as its resting background and `{colors.overlayMedium}` as its active-state background; the same `{colors.overlayMedium}` value also appears as the border-bottom under the desktop nav once it has collapsed against scroll. Secondary nav text (a hovered link) drops to `{colors.textMuted}` rather than changing hue, keeping the rule that hue is reserved for the accent.
+**Nav.** An uppercase Montserrat nav in `{colors.ground}`, with `{colors.text}` links. The mobile nav toggle button uses `{colors.overlayWeak}` as its resting background; its `:focus`/`:active` states change only `outline`, not background or color. `{colors.overlayMedium}` belongs to two other places: the active nav link's own background (`.nav li.active a`), and the desktop nav's border-bottom once it has collapsed against scroll. Secondary nav text (a hovered link) drops to `{colors.textMuted}` rather than changing hue, keeping the rule that hue is reserved for the accent.
 
 **Link.** Inline links are set in `{components.link.color}` at rest and `{components.link.hoverColor}` on hover or focus, with no underline. This is the accent doing its one job: marking text as actionable.
 
