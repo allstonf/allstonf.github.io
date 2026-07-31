@@ -202,6 +202,70 @@
       "links": [
         { "label": "Live", "url": "https://allstoncodes.github.io/research-vault-showcase/" }
       ]
+    },
+    {
+      "slug": "predicting-disease-risk",
+      "name": "Predicting Disease Risk",
+      "featured": false,
+      "period": "Apr 2020 - Jun 2020",
+      "summary": "Three supervised models predicting individual risk for coronary artery disease, Alzheimer's and diabetes.",
+      "outcome": "Accuracies of 0.91, 0.89 and 0.88 across the three disease models.",
+      "bullets": [
+        "Built and compared classifiers across three separate disease datasets rather than tuning a single model.",
+        "Reproducible notebooks with the full preprocessing and evaluation path committed alongside the results."
+      ],
+      "stack": ["Python", "pandas", "NumPy", "scikit-learn", "Matplotlib", "Seaborn"],
+      "links": [
+        { "label": "Source", "url": "https://github.com/allstonf/predicting_disease_ml" }
+      ]
+    },
+    {
+      "slug": "weather-forecast-iot",
+      "name": "Weather Forecast IoT Device Map",
+      "featured": false,
+      "period": "Apr 2020 - Jun 2020",
+      "summary": "A web app mapping IoT weather sensors and testing whether forecast accuracy varies by city.",
+      "outcome": "Determined that forecasts for Sacramento are about 7% more accurate than for San Diego.",
+      "bullets": [
+        "Full path from an ESP32 sensor through a MySQL store to a browser map, built end to end.",
+        "Framed as a hypothesis with a measured answer rather than a dashboard with no question behind it."
+      ],
+      "stack": ["HTML", "CSS", "JavaScript", "Python", "MySQL", "C", "Arduino", "ESP32"],
+      "links": [
+        { "label": "Source", "url": "https://github.com/allstonf/weather_forecast" }
+      ]
+    },
+    {
+      "slug": "music-master",
+      "name": "Music Master",
+      "featured": false,
+      "period": "Apr 2019 - Jun 2019",
+      "summary": "A playlist tool for DJs that recommends the next song by BPM or by title.",
+      "outcome": null,
+      "bullets": [
+        "Recommendations driven by the Spotify API's audio features rather than by genre tags.",
+        "Consumer-facing interface built for a specific user in mind, not a generic search box."
+      ],
+      "stack": ["HTML", "CSS", "JavaScript", "Node.js", "Firebase", "Spotify API"],
+      "links": [
+        { "label": "Source", "url": "https://github.com/allstonf/musicmaster.github.io" }
+      ]
+    },
+    {
+      "slug": "facebook-data-challenge",
+      "name": "Facebook Data Challenge 2019",
+      "featured": false,
+      "period": "May 2019",
+      "summary": "A geospatial analysis recommending where in San Francisco a retail business should open.",
+      "outcome": "Identified Hayes Valley and Haight-Ashbury as the best-suited areas.",
+      "bullets": [
+        "Heat maps layering population density, income and business demographics across San Francisco.",
+        "Delivered as a business recommendation with the reasoning attached, not as a map alone."
+      ],
+      "stack": ["Python", "Folium"],
+      "links": [
+        { "label": "Source", "url": "https://github.com/allstonf/facebook_data" }
+      ]
     }
   ],
 
