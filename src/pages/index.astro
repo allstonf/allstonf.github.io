@@ -425,7 +425,14 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
     </main>
 
     <footer class="site-footer">
-      <p class="site-footer__name">{person.name}</p>
+      {/*
+        A real link, not a <p>. Below 480px the header's brand link
+        (also href="#") disappears and this is the only in-page way
+        back to the top - see the collapse comment above
+        .site-nav-bar__brand in tokens.css and the fuller rationale on
+        .site-footer__name there.
+      */}
+      <a class="site-footer__name" href="#">{person.name}</a>
       {/*
         Duplicates the header's .site-nav section links. Below 960px
         the header hides that copy (no room for it beside the brand and

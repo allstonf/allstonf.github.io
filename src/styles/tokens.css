@@ -432,8 +432,12 @@ time {
      always still reachable in the page footer (.site-footer__nav
      below), which this same breakpoint reveals.
    - Below 480px: the brand link leaves too (redundant with
-     .site-footer__name, already visible on scroll, and not a control -
-     losing it costs nothing functional).
+     .site-footer__name once a reader has scrolled that far, and not a
+     control). It does not disappear without replacement: below 480px
+     is exactly where a reader has no other way back to the top of the
+     page, so .site-footer__name is itself a real link (href="#"), not
+     a <p>, and stands in as the return affordance. See the fuller
+     rationale on .site-footer__name below.
 
    What never leaves, at any width down to 320px, is .topbar__utility:
    the resume link and the agent-view toggle. See the media queries on
@@ -1317,9 +1321,24 @@ time {
   font-size: 0.875rem;
 }
 
+/* A real link (href="#"), not decoration: below 480px the header's
+   brand link (also href="#") disappears, and a reader who has scrolled
+   to the footer would otherwise have no in-page way back to the top.
+   Styled like .site-nav-bar__brand rather than the generic accent
+   `a` rule above (text at rest, textMuted on hover/focus) - this is
+   the page's name/identity, the same kind of element as the header
+   brand it stands in for, not a body-copy inline link, so it gets the
+   same deliberate carve-out DESIGN.md's Nav section already makes for
+   .site-nav a and .site-footer__nav a. */
 .site-footer__name {
+  display: inline-block;
   color: var(--color-text);
   margin-bottom: 0.2rem;
+}
+
+.site-footer__name:hover,
+.site-footer__name:focus-visible {
+  color: var(--color-text-muted);
 }
 
 /* Mirrors the header's five .site-nav section links. Visible by
