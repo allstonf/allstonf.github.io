@@ -1186,6 +1186,22 @@ time {
   color: var(--color-accent-text);
 }
 
+/* Pending - the fetch is outstanding. Dimming the control is enough to
+   say "heard you, working on it"; without it a slow connection makes
+   the click look like it did nothing at all. */
+.topbar__view-toggle.is-pending {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+/* Error - the twin could not be loaded. Paired with a message in the
+   [data-view-status] live region, so the failure is not carried by
+   color alone. */
+.topbar__view-toggle.is-error {
+  border-color: var(--color-text-muted);
+  border-style: dashed;
+}
+
 .topbar__view-toggle[aria-pressed='true']::before {
   border-color: var(--color-accent);
   background: var(--color-accent);

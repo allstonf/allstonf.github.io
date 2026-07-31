@@ -208,6 +208,91 @@ describe('initViewToggle', () => {
     expect(doc.querySelector('[data-view-target] pre')).not.toBeNull()
   })
 
+  it('recovers from a hung fetch and stays usable afterwards', async () => {
+    // I1: fetchInFlight never cleared if the fetch never settled, which
+    // bricked the control permanently and silently. Measured before the
+    // fix over 5 clicks: 1 fetch call, aria-pressed stayed false, label
+    // unchanged, nothing applied, no spinner, no error. On a captive
+    // portal that is a reader clicking forever at a dead button.
+    //
+    // The mock honors the abort signal, which is what a real fetch
+    // does; that is the mechanism the fix relies on to recover.
+    const doc = makeDoc()
+    let callCount = 0
+    const fetchImpl = vi.fn().mockImplementation((_url: string, init?: RequestInit) => {
+      callCount += 1
+      if (callCount === 1) {
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new Error('aborted')))
+        })
+      }
+      return Promise.resolve({ ok: true, text: async () => '# recovered' })
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl, { timeoutMs: 10 })
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const Event_ = doc.defaultView!.Event
+
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+    // While outstanding, the click is acknowledged visually rather than
+    // looking like nothing happened.
+    expect(toggle.classList.contains('is-pending')).toBe(true)
+
+    await new Promise((r) => setTimeout(r, 40))
+
+    // Recovered: no longer stuck pending, and the failure is visible.
+    expect(toggle.classList.contains('is-pending')).toBe(false)
+
+    // And a later activation can still succeed.
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(fetchImpl).toHaveBeenCalledTimes(2)
+    expect(doc.querySelector('[data-view-target] pre')?.textContent).toContain('recovered')
+  })
+
+  it('gives a visible signal when the twin responds not-ok', async () => {
+    // I2: the !response.ok branch reset the control to its resting
+    // state with no DOM signal, indistinguishable from a dead button.
+    // Distinct from the reject-path test above: this is a response that
+    // arrives successfully and carries a failing status.
+    const doc = makeDoc()
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 404,
+      text: async () => 'not found',
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    toggle.dispatchEvent(new doc.defaultView!.Event('click', { cancelable: true, bubbles: true }))
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(toggle.classList.contains('is-error')).toBe(true)
+    expect(doc.querySelector('[data-view-status]')!.textContent).toMatch(/could not|unavailable/i)
+    // Still resting, and still a working link to the twin.
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+    expect(doc.querySelector('[data-view-target] #human')).not.toBeNull()
+  })
+
+  it('does not churn the human view when a first activation fails', async () => {
+    // Minor 1: the catch called showHuman() even on a FIRST-click
+    // failure, when nothing had been swapped. Measured: 2 nodes removed
+    // and 2 re-added, needless React-island churn on an error path.
+    const doc = makeDoc()
+    const target = doc.querySelector('[data-view-target]') as HTMLElement
+    const replaceSpy = vi.spyOn(target, 'replaceChildren')
+    const fetchImpl = vi.fn().mockRejectedValue(new Error('offline')) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    toggle.dispatchEvent(new doc.defaultView!.Event('click', { cancelable: true, bubbles: true }))
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(replaceSpy, 'nothing was swapped, so nothing needs reverting').not.toHaveBeenCalled()
+    expect(doc.querySelector('[data-view-target] #human')).not.toBeNull()
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  })
+
   it('is inert when the expected elements are absent', () => {
     const dom = new JSDOM('<main></main>')
     expect(() => initViewToggle(dom.window.document)).not.toThrow()

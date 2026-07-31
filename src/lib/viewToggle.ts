@@ -23,6 +23,15 @@ const TOGGLE_SELECTOR = '[data-view-toggle]'
 const TARGET_SELECTOR = '[data-view-target]'
 const STATUS_SELECTOR = '[data-view-status]'
 
+// Upper bound on a single markdown fetch. Without one, a request that
+// never settles leaves the in-flight guard latched forever and the
+// control is permanently, silently dead: every later click is dropped
+// by the re-entrancy guard with no spinner and no error. A captive
+// portal or a stalled connection produces exactly that. Long enough
+// not to cut off a slow-but-working connection, short enough that a
+// reader is not left clicking a dead control.
+const DEFAULT_FETCH_TIMEOUT_MS = 8000
+
 /**
  * Attach toggle behavior to the first matching control/target pair.
  *
@@ -31,8 +40,16 @@ const STATUS_SELECTOR = '[data-view-status]'
  *
  * @param doc       Document to operate on (injected for jsdom testing).
  * @param fetchImpl Fetch implementation (injected for testing).
+ * @param options   `timeoutMs` caps how long a markdown fetch may stay
+ *                  outstanding before it is aborted. Injectable so the
+ *                  hung-fetch recovery can be tested without waiting
+ *                  the real timeout.
  */
-export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
+export function initViewToggle(
+  doc: Document,
+  fetchImpl?: typeof fetch,
+  options: { timeoutMs?: number } = {},
+): void {
   const toggle = doc.querySelector<HTMLAnchorElement>(TOGGLE_SELECTOR)
   const target = doc.querySelector<HTMLElement>(TARGET_SELECTOR)
   if (!toggle || !target) return
@@ -52,9 +69,16 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
   toggle.setAttribute('role', 'button')
   toggle.setAttribute('aria-pressed', 'false')
 
+  const timeoutMs = options.timeoutMs ?? DEFAULT_FETCH_TIMEOUT_MS
+
   /** Announce a view change to assistive tech via the status region. */
   const announce = (message: string): void => {
     if (status) status.textContent = message
+  }
+
+  /** Clear any error styling left over from a previous failed attempt. */
+  const clearError = (): void => {
+    toggle.classList.remove('is-error')
   }
 
   // Captured once, synchronously, at init time. This is a snapshot, not
@@ -99,6 +123,10 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
   }
 
   const activate = (): void => {
+    // A fresh attempt clears the previous one's error styling, so the
+    // control cannot stay visibly broken after it starts working.
+    clearError()
+
     if (showingMarkdown) {
       showHuman()
       return
@@ -117,26 +145,43 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
     if (fetchInFlight) return
 
     fetchInFlight = true
+    // Acknowledge the click while the request is outstanding. Without
+    // this the control looks inert for the whole fetch, which on a slow
+    // connection is indistinguishable from a broken button.
+    toggle.classList.add('is-pending')
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+
     void (async () => {
       try {
         const response = await doFetch(toggle.getAttribute('href') ?? '/index.md', {
           headers: { Accept: 'text/markdown, text/plain' },
+          signal: controller.signal,
         })
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         markdown = await response.text()
         showMarkdown(markdown)
       } catch {
-        // Leave the human view intact and the control unpressed.
-        //
-        // A plain second click does NOT navigate to the twin: it
-        // re-enters this same fetch path and can fail the same way.
-        // A modified click (cmd, ctrl, shift, alt) and any non-primary
-        // button DO bypass this handler and navigate for real, because
-        // the click listener returns before preventDefault for those.
-        // Failing back to a stable, working human view beats failing
-        // into a half-toggled state.
-        showHuman()
+        // Every failure mode lands here: a rejected request, an aborted
+        // one, and a response that arrived carrying a failing status.
+        // All three used to be silent, which read as a dead button.
+        toggle.classList.add('is-error')
+        announce('The markdown view could not be loaded. The human page is still shown.')
+
+        // Only revert if we actually swapped. On a first-activation
+        // failure nothing was ever replaced, so calling showHuman()
+        // here would detach and re-attach every child of <main> for no
+        // reason, churning the React islands on an error path.
+        if (showingMarkdown) showHuman()
+
+        // The anchor still points at the real twin, so a modified
+        // click remains a working escape hatch.
       } finally {
+        clearTimeout(timer)
+        toggle.classList.remove('is-pending')
+        // Released on every path, including the aborted one. This is
+        // what keeps a hung request from latching the control dead.
         fetchInFlight = false
       }
     })()
