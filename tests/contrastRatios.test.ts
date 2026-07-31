@@ -24,125 +24,21 @@
 // test file exists to prevent. See the report filed alongside this commit
 // for a proposed follow-up (an image-sampling check, not a hardcoded
 // number) if that coverage is wanted later.
+//
+// This suite covers WCAG 1.4.3 (text contrast, 4.5:1). Its sibling
+// nonTextContrast.test.ts covers 1.4.11 (non-text contrast, 3:1) for
+// interactive control boundaries; both share the same parsing and contrast
+// math via tests/helpers/contrast.ts rather than each hand-rolling it.
 
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { readToken as readTokenFrom, parseColor, compositeOver, contrastRatio } from './helpers/contrast'
 
 const css = readFileSync('src/styles/tokens.css', 'utf8')
 
-/**
- * Pull a single custom-property's raw value out of tokens.css.
- *
- * Reads the FIRST `--name: value;` declaration for the given token name.
- * tokens.css declares every color token exactly once inside :root, so
- * "first" is unambiguous here; this is a test-only convenience, not a
- * general CSS parser.
- */
+/** Bind the shared readToken helper to this file's tokens.css snapshot. */
 function readToken(name: string): string {
-  const match = css.match(new RegExp(`--${name}:\\s*([^;]+);`))
-  if (!match) {
-    throw new Error(`expected tokens.css to declare --${name}`)
-  }
-  return match[1].trim()
-}
-
-/** An RGB color in 0-255 channels plus an alpha in [0, 1]. */
-interface RgbaColor {
-  r: number
-  g: number
-  b: number
-  a: number
-}
-
-/**
- * Parse a CSS color literal as it actually appears in tokens.css: either
- * a 6-digit hex (`#42dca3`) or an `rgba(r, g, b, a)` function. Opaque hex
- * colors get a=1 so callers can composite uniformly regardless of which
- * form the token used.
- */
-function parseColor(value: string): RgbaColor {
-  const hexMatch = value.match(/^#([0-9a-fA-F]{6})$/)
-  if (hexMatch) {
-    const hex = hexMatch[1]
-    return {
-      r: parseInt(hex.slice(0, 2), 16),
-      g: parseInt(hex.slice(2, 4), 16),
-      b: parseInt(hex.slice(4, 6), 16),
-      a: 1,
-    }
-  }
-
-  const rgbaMatch = value.match(
-    /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/,
-  )
-  if (rgbaMatch) {
-    const [, r, g, b, a] = rgbaMatch
-    return {
-      r: Number(r),
-      g: Number(g),
-      b: Number(b),
-      a: a === undefined ? 1 : Number(a),
-    }
-  }
-
-  throw new Error(`unrecognized color literal: "${value}" (expected #rrggbb or rgba())`)
-}
-
-/**
- * Alpha-composite a (possibly translucent) foreground over an opaque
- * background, per the standard "over" operator: result = fg*a + bg*(1-a).
- * A translucent token like --color-text-muted (rgba(255,255,255,0.8))
- * cannot have its own contrast ratio in isolation - what a reader actually
- * sees is this composite - so every translucent token gets flattened here
- * before luminance is computed. Throws if the background itself is
- * translucent, since compositing onto an unresolved background would
- * silently produce a meaningless color.
- */
-function compositeOver(fg: RgbaColor, bg: RgbaColor): RgbaColor {
-  if (bg.a !== 1) {
-    throw new Error('compositeOver requires an opaque background (bg.a must be 1)')
-  }
-  return {
-    r: fg.r * fg.a + bg.r * (1 - fg.a),
-    g: fg.g * fg.a + bg.g * (1 - fg.a),
-    b: fg.b * fg.a + bg.b * (1 - fg.a),
-    a: 1,
-  }
-}
-
-/**
- * WCAG 2.x linearization of a single sRGB channel (0-255 in, 0-1 out).
- * The 0.03928 threshold and the two branches below are the spec's exact
- * piecewise definition, not an approximation - see
- * https://www.w3.org/TR/WCAG21/#dfn-relative-luminance.
- */
-function linearizeChannel(channel255: number): number {
-  const c = channel255 / 255
-  return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
-}
-
-/** WCAG 2.x relative luminance: the 0.2126/0.7152/0.0722 weighted sum. */
-function relativeLuminance(color: RgbaColor): number {
-  return (
-    0.2126 * linearizeChannel(color.r) +
-    0.7152 * linearizeChannel(color.g) +
-    0.0722 * linearizeChannel(color.b)
-  )
-}
-
-/**
- * WCAG 2.x contrast ratio between two opaque colors: (L1 + 0.05) / (L2 +
- * 0.05), with L1 the lighter of the two luminances. Order of the two
- * arguments does not matter - the max/min below normalizes it - which
- * matters because "foreground on background" and "background on
- * foreground" must report the same ratio.
- */
-function contrastRatio(a: RgbaColor, b: RgbaColor): number {
-  const la = relativeLuminance(a)
-  const lb = relativeLuminance(b)
-  const lighter = Math.max(la, lb)
-  const darker = Math.min(la, lb)
-  return (lighter + 0.05) / (darker + 0.05)
+  return readTokenFrom(css, name)
 }
 
 // AA normal-text threshold (WCAG 2.x 1.4.3). Every pair below is used for

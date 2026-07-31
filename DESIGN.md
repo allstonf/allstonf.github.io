@@ -14,6 +14,7 @@ colors:
   accentHover: "#1d9b6c"
   overlayWeak: "rgba(255,255,255,0.2)"
   overlayMedium: "rgba(255,255,255,0.3)"
+  controlBorder: "rgba(255,255,255,0.4)"
 typography:
   display:
     fontFamily: "Montserrat"
@@ -55,7 +56,7 @@ This language originates in the 2020 revision of allstonf.github.io, built on th
 
 ## Colors
 
-The palette is deliberately almost monochrome: `{colors.ground}` (black) and `{colors.text}` (white) carry every band on the page, with `{colors.textMuted}` (white at 0.8 opacity) used for secondary nav text. Two neutral overlay values, `{colors.overlayWeak}` and `{colors.overlayMedium}`, exist only to shade interface chrome on top of black, never as content color: `{colors.overlayWeak}` sets thin hairline borders (project card and loop-item top borders, the loop progress bar's track) and `{colors.overlayMedium}` sets the nav's permanent border-bottom and other bordered chrome (see Nav, under Components).
+The palette is deliberately almost monochrome: `{colors.ground}` (black) and `{colors.text}` (white) carry every band on the page, with `{colors.textMuted}` (white at 0.8 opacity) used for secondary nav text. Three neutral overlay values exist to shade interface chrome on top of black, never as content color. `{colors.overlayWeak}` sets thin hairline borders (project card and loop-item top borders, the loop progress bar's track). `{colors.overlayMedium}` sets the nav's permanent border-bottom and other decorative bordered chrome that is not itself a control (see Nav, under Components). `{colors.controlBorder}` is different in kind, not just in value: it is the visible boundary of an actual interactive control a reader operates directly (a native button, such as a LoopExplainer mode tab or a walkthrough prev/next control, and the agent-view toggle at rest), so it is held to WCAG SC 1.4.11's non-text-contrast threshold of 3:1 rather than the 4.5:1 text threshold that governs `{colors.text}` and `{colors.accent}`. Composited over `{colors.ground}`, `{colors.overlayMedium}` computes to 2.46:1 and would fail that boundary requirement; `{colors.controlBorder}` computes to 3.66:1 and clears it. Both figures are fixed, checkable properties of a flat white-over-black composite, the same way `{colors.accent}` on `{colors.ground}` is a fixed 12.0:1 below rather than an asserted number.
 
 Note on `#fcfcfc`: this value appears twice in the source stylesheet, in the `::selection` and `::-moz-selection` rules, but each occurrence is immediately overridden on the following line by `background: rgba(255, 255, 255, 0.2)` within the same rule, so it never actually renders in any browser. It is dead CSS, not a design color, and it is not carried into the token set below for that reason.
 
@@ -95,7 +96,7 @@ The shape vocabulary is deliberately small. The one circular element is the scro
 
 **Link.** Inline links are set in `{components.link.color}` at rest and `{components.link.hoverColor}` on hover or focus, with no underline. This is the accent doing its one job: marking text as actionable.
 
-**Agent-view toggle.** A V3 addition, not present in the 2020 source, but built to the same rules: a pill-shaped (`{rounded.pill}`) capsule with a bordered dot indicator, labeled "agent view." At rest it uses the muted text and border tokens; on hover and in its pressed (`aria-pressed="true"`) state, both the border, the text, and the dot fill shift to `{colors.accent}`, the same accent that governs every other interactive element in the system. A pending state dims the control and a load-error state switches the border to dashed, so state is never carried by color alone.
+**Agent-view toggle.** A V3 addition, not present in the 2020 source, but built to the same rules: a pill-shaped (`{rounded.pill}`) capsule with a bordered dot indicator, labeled "agent view." At rest it uses `{colors.textMuted}` for its label and `{colors.controlBorder}` for its border, the dedicated control-boundary value described under Colors above; on hover and in its pressed (`aria-pressed="true"`) state, both the border, the text, and the dot fill shift to `{colors.accent}`, the same accent that governs every other interactive element in the system. A pending state dims the control and a load-error state switches the border to dashed, so state is never carried by color alone.
 
 ## Do's and Don'ts
 

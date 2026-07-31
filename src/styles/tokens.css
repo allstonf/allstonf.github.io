@@ -83,6 +83,22 @@
      top-level DESIGN.md color token, but named there and given its
      exact value. */
   --color-overlay-wash: rgba(255, 255, 255, 0.1);
+  /* Dedicated boundary color for a genuine, operable UI component (a
+     native <button> a reader can click, the agent-view toggle) - see
+     DESIGN.md Colors. --color-overlay-medium composited over
+     --color-ground computes 2.46:1, below the 3:1 WCAG SC 1.4.11
+     non-text-contrast threshold that applies to a control's own visible
+     boundary. Raising overlay-medium itself was rejected: that token
+     also sets decorative, non-control chrome (the nav border-bottom,
+     card/badge borders, the timeline rule) where a brighter value would
+     read as an unintended brightening of a design whose stated palette
+     is deliberately restrained and nearly monochrome. This token composites
+     to 3.66:1 - a fixed, checkable property of white at 0.4 opacity over
+     black, the same way --color-accent on --color-ground is a fixed 12:1
+     (see the Contrast note under DESIGN.md Colors) - and is used ONLY for
+     the two boundaries that are actually a control's own affordance:
+     tests/nonTextContrast.test.ts pins both. */
+  --color-control-border: rgba(255, 255, 255, 0.4);
 
   /* Contrast, checked (DESIGN.md Colors section asks accent be verified
      before it carries body-sized text): #42DCA3 on #000 computes to
@@ -260,7 +276,10 @@ a:focus-visible {
    grayscale.css's .btn rule exactly (uppercase, Montserrat, weight 400,
    border-radius 0). Every native <button> on the page (LoopExplainer's
    mode tabs, walkthrough prev/next, and any future control) inherits
-   this rather than browser defaults. */
+   this rather than browser defaults.
+   Border uses --color-control-border, not --color-overlay-medium: this
+   IS the button's own boundary (WCAG SC 1.4.11, 3:1 non-text contrast),
+   see the token's definition comment above. */
 button {
   font-family: var(--font-display);
   font-weight: 400;
@@ -269,7 +288,7 @@ button {
   font-size: 0.8125rem;
   color: var(--color-text);
   background: transparent;
-  border: 1px solid var(--color-overlay-medium);
+  border: 1px solid var(--color-control-border);
   border-radius: var(--radius);
   cursor: pointer;
   min-height: 44px;
@@ -1393,7 +1412,10 @@ time {
   gap: 0.45em;
   min-height: 44px;
   padding: 0.3rem 0.9rem;
-  border: 1px solid var(--color-overlay-medium);
+  /* --color-control-border, not --color-overlay-medium: this border IS
+     the toggle's own boundary at rest (WCAG SC 1.4.11, 3:1 non-text
+     contrast). See the token's definition comment near :root. */
+  border: 1px solid var(--color-control-border);
   border-radius: var(--radius-pill);
   color: var(--color-text-muted);
   font-family: var(--font-display);
