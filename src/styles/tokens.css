@@ -65,6 +65,30 @@
   src: url('/fonts/dm-mono-latin-500-normal.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/montserrat-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/lora-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Lora';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/lora-latin-700-normal.woff2') format('woff2');
+}
+
 /* ---------------------------------------------------------------------
    Tokens - dark is the default palette (DESIGN.md's "OLED Dark -
    Expedition Log" values, used as-is), light is a derived override

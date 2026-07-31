@@ -1,13 +1,23 @@
-This directory bundles woff2 subsets of two typefaces, both licensed
+This directory bundles woff2 subsets of four typefaces, all licensed
 under the SIL Open Font License, Version 1.1:
 
   - Syne (variable, weights 400-800), sourced from
     @fontsource-variable/syne
   - DM Mono (weights 400 and 500, plus a 400 italic), sourced from
     @fontsource/dm-mono
+  - Montserrat (weight 700), sourced from the fontsource CDN
+  - Lora (weights 400 and 700), sourced from the fontsource CDN
 
 Copyright 2019 The Syne Project Authors (https://gitlab.com/bonjour-monde/fonderie/syne-typeface)
 Copyright 2020 The DM Mono Project Authors (https://www.github.com/googlefonts/dm-mono)
+
+## Montserrat
+
+Copyright 2024 The Montserrat.Git Project Authors (https://github.com/JulietaUla/Montserrat.git)
+
+## Lora
+
+Copyright 2011 The Lora Project Authors (https://github.com/cyrealtype/Lora-Cyrillic), with Reserved Font Name "Lora".
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
