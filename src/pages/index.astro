@@ -172,15 +172,22 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
             <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
               {person.resume.label}
             </a>
+            {/*
+              Ships as a plain link: no aria-pressed, no role. Both are
+              invalid on the implicit role=link of an <a href> and axe
+              flags aria-pressed here as aria-allowed-attr, impact
+              critical. initViewToggle upgrades this into a real button
+              (role, aria-pressed, Space activation) at init time, so
+              the attributes exist only when the scripting that makes
+              them true is actually running. The label is constant;
+              state is carried by the dot, the border, and aria-pressed.
+            */}
             <a
               class="topbar__view-toggle"
               data-view-toggle
               href="/index.md"
-              aria-pressed="false"
               title="See the markdown representation this page serves to AI agents"
-            >
-              view as markdown
-            </a>
+            >agent view</a>
           </div>
         </div>
 
@@ -232,6 +239,13 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         </nav>
       </div>
     </header>
+
+    {/*
+      Deliberately OUTSIDE [data-view-target]. Toggling replaces every
+      child of <main>, so a live region nested inside it would be
+      destroyed by the very swap it exists to announce.
+    */}
+    <p class="visually-hidden" role="status" data-view-status></p>
 
     <main id="main-content" data-view-target>
       <section id="about" class="section" aria-labelledby="about-heading">

@@ -21,6 +21,7 @@
 
 const TOGGLE_SELECTOR = '[data-view-toggle]'
 const TARGET_SELECTOR = '[data-view-target]'
+const STATUS_SELECTOR = '[data-view-status]'
 
 /**
  * Attach toggle behavior to the first matching control/target pair.
@@ -38,6 +39,23 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
 
   const doFetch = fetchImpl ?? (doc.defaultView?.fetch?.bind(doc.defaultView) as typeof fetch)
   if (!doFetch) return
+
+  const status = doc.querySelector<HTMLElement>(STATUS_SELECTOR)
+
+  // Progressive enhancement of the SEMANTICS, not just the behavior.
+  // The markup ships as a plain <a href="/index.md"> because
+  // aria-pressed is not allowed on the implicit role=link of an anchor
+  // (axe: aria-allowed-attr, impact critical). Applying role=button
+  // and aria-pressed here means they exist only when this script runs,
+  // which is exactly when the control genuinely behaves as a button.
+  // A no-JS reader is left with a clean, valid link to the twin.
+  toggle.setAttribute('role', 'button')
+  toggle.setAttribute('aria-pressed', 'false')
+
+  /** Announce a view change to assistive tech via the status region. */
+  const announce = (message: string): void => {
+    if (status) status.textContent = message
+  }
 
   // Captured once, synchronously, at init time. This is a snapshot, not
   // a live reference: if any future code appends a new top-level child
@@ -57,11 +75,15 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
   // in flight, so a superseded request can never exist to race.
   let fetchInFlight = false
 
+  // The label never changes. State is carried by aria-pressed for
+  // assistive tech and by the dot plus border for sighted readers,
+  // which is also why the control needs no reserved width: with one
+  // label there is only ever one box width.
   const showHuman = (): void => {
     target.replaceChildren(...humanNodes)
     toggle.setAttribute('aria-pressed', 'false')
-    toggle.textContent = 'view as markdown'
     showingMarkdown = false
+    announce('Human page restored.')
   }
 
   const showMarkdown = (source: string): void => {
@@ -72,13 +94,11 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
     pre.textContent = source
     target.replaceChildren(pre)
     toggle.setAttribute('aria-pressed', 'true')
-    toggle.textContent = 'view as human page'
     showingMarkdown = true
+    announce('Markdown source shown. This is the view AI agents receive.')
   }
 
-  toggle.addEventListener('click', (event: Event) => {
-    event.preventDefault()
-
+  const activate = (): void => {
     if (showingMarkdown) {
       showHuman()
       return
@@ -89,10 +109,11 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
       return
     }
 
-    // Re-entrancy guard: a click while a fetch is already outstanding
-    // is a no-op rather than a second concurrent request. preventDefault
-    // above has already run, so this just drops the redundant
-    // activation; it does not fall through to a real navigation.
+    // Re-entrancy guard: an activation while a fetch is already
+    // outstanding is a no-op rather than a second concurrent request.
+    // The caller has already suppressed the default action, so this
+    // drops the redundant activation without falling through to a
+    // real navigation.
     if (fetchInFlight) return
 
     fetchInFlight = true
@@ -119,5 +140,22 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
         fetchInFlight = false
       }
     })()
+  }
+
+  toggle.addEventListener('click', (event: Event) => {
+    event.preventDefault()
+    activate()
+  })
+
+  // role=button makes a screen reader announce "toggle button", and a
+  // button is expected to activate on Space. A link does not, so
+  // without this the user is told to press Space and nothing happens.
+  // Enter already activates an anchor natively and arrives as a click.
+  toggle.addEventListener('keydown', (event: Event) => {
+    const key = (event as KeyboardEvent).key
+    if (key !== ' ' && key !== 'Spacebar') return
+    // Space would otherwise scroll the page underneath the control.
+    event.preventDefault()
+    activate()
   })
 }

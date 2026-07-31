@@ -86,4 +86,43 @@ describe('static shell parity with v1', () => {
     // entirely and every other test still passes.
     expect(html).toMatch(/<a[^>]*data-view-toggle[^>]*href="\/index\.md"/)
   })
+
+  it('ships the toggle anchor with no aria-pressed and no role', () => {
+    // axe-core rule aria-allowed-attr, impact critical: aria-pressed is
+    // not permitted on the implicit role=link of an <a href>. Shipping
+    // it in the static HTML put a real WCAG violation on the page and
+    // into Lighthouse's accessibility category.
+    //
+    // Button semantics are applied by initViewToggle at runtime instead
+    // (see tests/viewToggle.test.ts). The script only runs when JS is
+    // on, which is exactly when the element behaves as a button, so the
+    // no-JS reader gets a clean valid link and the JS reader gets valid
+    // toggle semantics. This test is the guard that stops the violation
+    // from being reintroduced in the markup.
+    const match = html.match(/<a[^>]*data-view-toggle[^>]*>/)
+    expect(match, 'expected the view-toggle anchor in dist/index.html').not.toBeNull()
+    expect(match![0]).not.toMatch(/aria-pressed/)
+    expect(match![0]).not.toMatch(/\brole\s*=/)
+  })
+
+  it('labels the toggle with a constant label, so no state depends on the text', () => {
+    // The label does not swap between states. State is carried by the
+    // dot, the border, and aria-pressed, which means the control has
+    // exactly one width by construction and needs no reserved box.
+    const match = html.match(/<a[^>]*data-view-toggle[^>]*>([\s\S]*?)<\/a>/)
+    expect(match, 'expected the view-toggle anchor in dist/index.html').not.toBeNull()
+    expect(match![1].trim()).toBe('agent view')
+  })
+
+  it('ships a live region so the view swap is announced to screen readers', () => {
+    // Toggling replaces the entire contents of <main>. Without a live
+    // region that swap happens with zero announcement. The region has
+    // to live OUTSIDE [data-view-target] or it is destroyed by the very
+    // swap it exists to announce.
+    expect(html).toMatch(/<[^>]*data-view-status[^>]*role="status"|role="status"[^>]*data-view-status/)
+    const mainStart = html.indexOf('data-view-target')
+    const statusAt = html.indexOf('data-view-status')
+    expect(statusAt, 'expected a data-view-status live region').toBeGreaterThan(-1)
+    expect(statusAt, 'live region must sit outside the swapped target').toBeLessThan(mainStart)
+  })
 })

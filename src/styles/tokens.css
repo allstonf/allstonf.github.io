@@ -240,6 +240,24 @@ time {
   font-variant-numeric: tabular-nums;
 }
 
+/* Visually hidden but still announced. Used by the [data-view-status]
+   live region, which must stay in the accessibility tree while taking
+   no visual space. Not display:none and not visibility:hidden - both
+   remove the element from the accessibility tree, which would silence
+   the announcement entirely. The 1px clipped-rect approach is the
+   long-standing pattern that survives that constraint. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* Skip link - hidden until keyboard-focused; unchanged behavior from
    Task 1, restyled to the new tokens. */
 .skip-link {
@@ -1105,11 +1123,10 @@ time {
 
 /* ---------------------------------------------------------------------
    View toggle - a quiet utility control paired with the resume link,
-   not a second primary action. Wrapping both in .topbar__utility turns
-   .site-header__top's flex row from three evenly spaced items back into
-   two groups (nav, then utility pair), which is most of what made the
-   toggle read as loud: space-between was giving it its own slot at the
-   far edge, the same visual weight as the nav and the resume button.
+   not a second primary action. Both live in .topbar__utility so
+   .site-header__top lays out as two groups (nav, then the utility
+   pair) rather than three evenly spaced items, which keeps the toggle
+   from carrying the same visual weight as the nav and resume button.
 
    Sized and colored off the page's existing "muted label" tier
    (.section__kicker / .hero__eyebrow: 0.75rem, text-muted) instead of
@@ -1119,20 +1136,9 @@ time {
    binary (showing the human page vs the markdown twin), so it borrows
    the mark instead of inventing a second one or reaching for an emoji.
 
-   min-width is set in ch to the longer of the two label strings so the
-   aria-pressed swap never shifts layout; justify-content: center keeps
-   both label lengths looking intentional inside that fixed box rather
-   than left-aligned with visible slack.
-
-   25ch, not 20ch: the box (border-box) has to clear the full pill
-   width, not just the 19-character label text - padding, the 1px
-   border, and the state dot + its gap all add to that total. Measured
-   in the live page (DM Mono, 12px, 1ch = 7.1875px here): the "view as
-   human page" state's natural box width is 176.5px, which needs at
-   least 25ch (179.7px) of reserved width, not 20ch (144px, which sat
-   below both label widths and never bound). Kept in ch rather than a
-   fixed px figure so it still covers the longer label if the font
-   size ever changes.
+   The label is constant, so the box has one width by construction and
+   reserves none. State is conveyed by the dot, the border, and
+   aria-pressed.
    ------------------------------------------------------------------ */
 
 .topbar__utility {
@@ -1148,7 +1154,6 @@ time {
   justify-content: center;
   gap: 0.45em;
   min-height: 44px;
-  min-width: 25ch;
   padding: 0.25rem 0.85rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-pill);

@@ -2,11 +2,27 @@ import { describe, it, expect, vi } from 'vitest'
 import { JSDOM } from 'jsdom'
 import { initViewToggle } from '../src/lib/viewToggle'
 
+/**
+ * Build a fixture matching the markup the site actually ships.
+ *
+ * The anchor deliberately carries NO aria-pressed and NO role: those
+ * are invalid on a link and are applied by initViewToggle at runtime.
+ * Keeping the fixture honest is what makes the init-time semantics
+ * tests below meaningful.
+ */
 function makeDoc(): Document {
   const dom = new JSDOM(`
-    <a data-view-toggle href="/index.md" aria-pressed="false">view as markdown</a>
-    <div data-view-target><p id="human">human content</p></div>
+    <nav class="site-nav"><a href="#about">about</a></nav>
+    <p data-view-status role="status" class="visually-hidden"></p>
+    <div data-view-target><p id="human">human content</p><h2 id="about">About</h2></div>
   `)
+  // Inserted separately so the anchor's attribute set is exactly what
+  // the test asserts on, with no fixture-only extras.
+  const toggle = dom.window.document.createElement('a')
+  toggle.setAttribute('data-view-toggle', '')
+  toggle.setAttribute('href', '/index.md')
+  toggle.textContent = 'agent view'
+  dom.window.document.body.prepend(toggle)
   return dom.window.document
 }
 
@@ -67,6 +83,76 @@ describe('initViewToggle', () => {
     // Human view is untouched and the control is not left stuck in a pressed state.
     expect(doc.querySelector('[data-view-target] #human')).not.toBeNull()
     expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('applies button semantics at init, not in the shipped markup', () => {
+    // C1: aria-pressed on an <a href> is an axe aria-allowed-attr
+    // violation (impact critical) because it is not allowed on the
+    // implicit role=link. Applying role=button + aria-pressed here, at
+    // init, means the attributes only ever exist when JS is running -
+    // which is exactly when the control really does behave as a button.
+    const doc = makeDoc()
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+
+    expect(toggle.hasAttribute('role')).toBe(false)
+    expect(toggle.hasAttribute('aria-pressed')).toBe(false)
+
+    initViewToggle(doc, vi.fn() as unknown as typeof fetch)
+
+    expect(toggle.getAttribute('role')).toBe('button')
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('activates on a Space keydown, matching the button semantics it claims', () => {
+    // A screen reader announces "toggle button, not pressed" once
+    // role=button is applied. Space does not activate a link, so
+    // without this handler the user is told to press Space and gets
+    // nothing back.
+    const doc = makeDoc()
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '# md',
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const evt = new doc.defaultView!.KeyboardEvent('keydown', {
+      key: ' ',
+      cancelable: true,
+      bubbles: true,
+    })
+    toggle.dispatchEvent(evt)
+
+    expect(evt.defaultPrevented, 'Space must not also scroll the page').toBe(true)
+    expect(fetchImpl).toHaveBeenCalled()
+  })
+
+  it('announces each view swap in the live region', () => {
+    // The swap replaces every child of <main>. Without an announcement
+    // it is a silent DOM replacement for a screen-reader user.
+    const doc = makeDoc()
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '# md',
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const status = doc.querySelector('[data-view-status]')!
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const Event_ = doc.defaultView!.Event
+
+    expect(status.textContent).toBe('')
+
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+    return new Promise<void>((resolve) => setTimeout(resolve, 0)).then(() => {
+      const afterMarkdown = status.textContent ?? ''
+      expect(afterMarkdown).not.toBe('')
+
+      toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+      const afterHuman = status.textContent ?? ''
+      expect(afterHuman).not.toBe('')
+      expect(afterHuman).not.toBe(afterMarkdown)
+    })
   })
 
   it('is inert when the expected elements are absent', () => {
