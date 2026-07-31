@@ -17,11 +17,9 @@
 // JSON-LD below is additive, never the only place "Apple" appears.
 import '../styles/tokens.css'
 import profile from '../../content/profile.json'
-import loop from '../../content/loop-data.json'
 import { validateUrl } from '../lib/url'
 import { buildJsonLd } from '../lib/jsonLd'
 import { validateProfile } from '../lib/validateProfile'
-import LoopExplainer from '../components/LoopExplainer'
 
 // Whole-document invariants that no single-value render call can
 // catch (duplicate project slugs, a malformed email) - ported from
@@ -190,7 +188,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
           <a href="#about">About</a>
           <a href="#projects">Projects</a>
           <a href="#experience">Experience</a>
-          <a href="#loop">The Loop</a>
           <a href="#contact">Contact</a>
         </nav>
         <div class="topbar__utility">
@@ -380,54 +377,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         </div>
       </section>
 
-      <section id="loop" class="band" aria-labelledby="loop-heading">
-        <div class="band__inner reveal">
-          <h2 id="loop-heading">The Scoring Loop</h2>
-          <p class="loop-intro">
-            A job-search scoring rubric has taken nine logged changes across four
-            retrospectives. Not one of those changes ever mutated a component weight -
-            every entry below says so explicitly. This is the full record, rendered
-            from the same log the interactive panel further down reads from.
-          </p>
-
-          <h3>Component weights</h3>
-          <dl class="loop-weights-static">
-            {loop.weights.map((w) => (
-              <div class="loop-weights-static__row">
-                <dt>{w.component}</dt>
-                <dd>{w.weight}%</dd>
-              </div>
-            ))}
-          </dl>
-
-          <h3>Change log</h3>
-          <ol class="loop-changelog">
-            {loop.changes.map((change) => (
-              <li>
-                <span class="loop-kind-badge">{change.kind}</span>
-                <p>{change.summary}</p>
-              </li>
-            ))}
-          </ol>
-
-          <h3>Why no weight has ever moved</h3>
-          <ul class="loop-reasons">
-            {loop.whyNoTuning.reasons.map((reason) => (
-              <li>{reason}</li>
-            ))}
-          </ul>
-          <p class="loop-rule">{loop.whyNoTuning.rule}</p>
-
-          <h3>Try it yourself</h3>
-          <p class="loop-mode-panel__intro">
-            The panel below lets you attempt to move a weight and watch the same rule
-            evaluate the attempt live. It needs JavaScript to run; everything above it
-            is the complete record either way.
-          </p>
-          <LoopExplainer client:visible />
-        </div>
-      </section>
-
       <section id="contact" class="photo-band" aria-labelledby="contact-heading">
         <img
           class="photo-band__media"
@@ -474,7 +423,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         <a href="#about">About</a>
         <a href="#projects">Projects</a>
         <a href="#experience">Experience</a>
-        <a href="#loop">The Loop</a>
         <a href="#contact">Contact</a>
       </nav>
       <p class="site-footer__contact">

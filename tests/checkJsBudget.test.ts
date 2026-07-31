@@ -188,7 +188,13 @@ describe('computeBudgetReport against the real dist/ build', () => {
   it('passes at the real 150 KB budget', () => {
     const report = computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })
     expect(report.passed).toBe(true)
-    expect(report.reachableBytes).toBeGreaterThan(0)
+    // Was toBeGreaterThan(0) until 2026-07-31, when the Loop section -
+    // the page's only React island - was removed. With no island there
+    // is no external reachable JS at all, so ZERO is now the correct
+    // and expected value, not a broken extractor. Pinned exactly rather
+    // than loosened to >= 0, so re-introducing an island (or an
+    // accidental script import) fails here and gets a deliberate look.
+    expect(report.reachableBytes).toBe(0)
     expect(report.reachableBytes).toBeLessThan(DEFAULT_BUDGET_BYTES)
   })
 
@@ -198,11 +204,19 @@ describe('computeBudgetReport against the real dist/ build', () => {
   })
 
   it('does not throw the silent-zero guard against the real (working) extractor', () => {
-    // The real page DOES contain an astro-island (LoopExplainer), so
-    // this is the live-fire proof that the real extractor - unlike the
-    // naive one above - actually finds it.
+    // Inverted 2026-07-31. The real page NO LONGER contains an
+    // astro-island: removing the Loop section removed the only one.
+    //
+    // ⚠️ Consequence worth knowing: assertNotSilentZero() throws only
+    // when (hasIsland && reachable === 0), so with no island the
+    // silent-zero guard is DORMANT - it cannot fire on this page. That
+    // is correct (there is nothing to extract, so a zero is honest),
+    // but it means the extractor's find-an-island behaviour is covered
+    // only by the synthetic fixtures above, not live-fire. If an island
+    // is ever added back, this assertion flips and the live-fire proof
+    // returns with it.
     const html = readFileSync(`${distDir}/index.html`, 'utf8')
-    expect(hasAstroIsland(html)).toBe(true)
+    expect(hasAstroIsland(html)).toBe(false)
     expect(() => computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })).not.toThrow(
       SilentZeroBudgetError,
     )
@@ -242,9 +256,13 @@ describe('computeBudgetReport against the real dist/ build', () => {
       const isDataType = /json|importmap/i.test(type)
       if (!hasSrc && !isDataType) expectedBodies.push(match[2])
     }
-    // The real build has 2 classic scripts (no type) + 1 module script =
-    // 3 executable inline blocks, excluding the JSON-LD data block.
-    expect(expectedBodies.length).toBeGreaterThanOrEqual(3)
+    // The real build has 1 module script, excluding the JSON-LD data
+    // block. Was 3 until 2026-07-31: the other two were Astro's classic
+    // island-hydration scripts, emitted only because the page mounted a
+    // React island. Removing the Loop section removed both. The point
+    // of this test is unchanged - the budget must count inline bytes,
+    // not only type="module" - and one module script still exercises it.
+    expect(expectedBodies.length).toBeGreaterThanOrEqual(1)
 
     const inlineBytes = expectedBodies.reduce(
       (sum, body) => sum + gzipSync(Buffer.from(body, 'utf8')).length,

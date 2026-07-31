@@ -166,7 +166,7 @@ describe('agent surface endpoints build to real files under dist/', () => {
     const text = readFileSync('dist/robots.txt', 'utf8')
     expect(text).toContain(`# Agent-readable profile: ${profile.site.url}/llms.txt`)
     expect(text).toContain(
-      `# Agent surface (page prose, no Loop section): ${profile.site.url}/llms-full.txt`,
+      `# Agent surface (full page prose): ${profile.site.url}/llms-full.txt`,
     )
   })
 

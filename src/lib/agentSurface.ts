@@ -180,12 +180,9 @@ export function renderLlmsTxt(profile: any): string {
  *
  * NOTE: despite the "full" name, this is the same markdown body as
  * /index.md - role, about, projects, experience, and education. It
- * does NOT include the page's Loop section at all. That omission
- * covers the section's STATIC prose too (the intro paragraph, the
- * component-weights list, the change log, and the declined-changes
- * rule), not only the interactive panel: most of that block is
- * server-rendered into index.html and is simply absent here. An agent
- * that needs any Loop content has to read index.html directly.
+ * As of 2026-07-31 that is the entire public page: the Loop section
+ * was removed from index.astro, so there is no longer any block that
+ * this file omits relative to index.html.
  * The full-text surface carries the SAME disambiguation
  * paragraph as llms.txt (fix round 1) - it is at least as
  * self-correcting as the lean index, never less.
@@ -228,12 +225,12 @@ export function renderRobotsTxt(profile: any): string {
   lines.push(
     `Sitemap: ${siteUrl}/sitemap.xml`,
     `# Agent-readable profile: ${siteUrl}/llms.txt`,
-    // Informal practice, not spec - a comment, not a directive. Added
-    // alongside llms-full.txt in Task 6. "Full" refers to the full
-    // prose body (role, about, projects, experience, education), not
-    // the page's interactive Loop section - that section is not
-    // included in this file.
-    `# Agent surface (page prose, no Loop section): ${siteUrl}/llms-full.txt`,
+    // Informal practice, not spec - a comment, not a directive.
+    // "Full" refers to the full prose body: role, about, projects,
+    // experience, education. That is now the whole page (the Loop
+    // section was removed from the public site on 2026-07-31), so this
+    // file and index.html no longer diverge in content.
+    `# Agent surface (full page prose): ${siteUrl}/llms-full.txt`,
   )
 
   return lines.join('\n') + '\n'

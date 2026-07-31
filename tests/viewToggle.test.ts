@@ -294,7 +294,7 @@ describe('initViewToggle', () => {
   })
 
   it('restores the human view when an in-page nav link is activated', async () => {
-    // I3: every in-page target (#about, #projects, #experience, #loop)
+    // I3: every in-page target (#about, #experience, #projects)
     // lives inside [data-view-target], so with markdown showing they do
     // not exist. Measured: document.getElementById('about') === null
     // while the sticky nav stayed visible and clickable. Clicking
