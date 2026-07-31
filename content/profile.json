@@ -65,9 +65,8 @@
   "about": [
     "I am a systems software engineer at Apple on the Core OS Power and Performance team. I led the end-to-end design and implementation of on-device telemetry for a next-generation WiFi and Bluetooth chipset, which made it possible to compare battery performance against prior chipsets quantitatively across large device fleets. It shipped with the chipset, and it turned battery questions that had been argued from intuition into questions answered with fleet data. The implementation is Objective-C and C++ across iOS, macOS, and watchOS. The analysis side is Python, Jupyter, and Spark.",
     "Getting that built meant driving alignment across the WiFi, Bluetooth, Privacy, logging infrastructure, and analytics teams. The Privacy constraints are the interesting part of the problem, not an obstacle to it: the useful signal has to survive data minimization.",
-    "Outside of work I build decision systems, and the architecture is the same in every domain. A versioned scoring rubric is the single mutable surface, read at call time. Every heuristic change lands in an append-only log. A two-layer model compares what the system predicted against what actually happened, re-scoring is a deterministic tested function rather than a judgment call, and every rubric mutation stops at a hard human-approval gate. I have run it against a job search, a housing search, and a content pipeline.",
-    "The result I am most attached to is a negative one. Four consecutive retrospectives declined to change a scoring weight. The first of them found a near-perfect inverse correlation between predicted fit and real outcomes and still refused, because the favorable arm was effectively a single data point and most of the channel data had never been recorded. Knowing when your own signal is too thin to learn from is the part that took the longest to build.",
-    "Where the data is personal, I keep the inference local. Journal search on my own machine runs behind a three-layer allowlist guard that fails closed before it reads any user-supplied parameter, which makes it resistant to injection rather than merely configured against it.",
+    "Outside of work I build decision systems, and the architecture is the same in every domain. A versioned scoring rubric is the single mutable surface, read at call time. Every heuristic change lands in an append-only log. A two-layer model compares what the system predicted against what actually happened, re-scoring is a deterministic tested function rather than a judgment call, and every rubric mutation stops at a hard human-approval gate. I have run it against a housing search and a content production pipeline.",
+    "I run a local inference lane on 24 GB of Apple silicon so that agentic coding keeps working with no network and no third party holding the data. It serves open-weight Qwen and Gemma models over OpenAI-compatible and Anthropic-compatible routes, so the same harnesses I use online, Claude Code and pi, drive it unchanged offline. Getting tool calling to work there meant root-causing a failure to a model dropping its sentinel tags, proving it a model fault rather than a harness fault by A/B against a second model, and shipping a parity gate so it cannot regress.",
     "The housing system is the one with an outcome attached. It scored 531 candidate listings across 26 discovery runs against a deterministic, versioned admission gate, ranked them with a dual-anchor commute engine built on open routing data, and shipped a public board. I signed a lease on the property it ranked first."
   ],
 
@@ -115,7 +114,7 @@
       "name": "Execute-and-learn decision loop",
       "featured": true,
       "period": "2026",
-      "summary": "A reusable execute-then-learn loop applied across three unrelated domains: job search, housing search, and content production.",
+      "summary": "A reusable execute-then-learn loop applied across two unrelated domains: housing search and content production.",
       "outcome": null,
       "bullets": [
         "The scoring rubric is the single mutable surface and is read at call time, so behaviour changes are data changes rather than code changes.",
@@ -171,7 +170,7 @@
         "The huggingface route is deliberately excluded from the allowlist because the router silently forwards it to cloud.",
         "Root-caused a tool-calling failure to a model dropping sentinel tags, proven a model fault rather than a harness fault by A/B against a second model, then shipped a parity regression gate."
       ],
-      "stack": ["Python", "Ollama", "MLX", "Apple silicon"],
+      "stack": ["Python", "Ollama", "MLX", "Apple silicon", "Qwen3.5", "Gemma 3", "Claude Code", "pi"],
       "links": []
     },
     {
