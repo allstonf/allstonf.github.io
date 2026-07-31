@@ -485,9 +485,17 @@ time {
 }
 
 /* Stage 2 of the collapse (see the comment above .site-nav-bar__inner):
-   padding (16) + brand (141.9) + gap (16) + resume (91.5) + gap (16) +
-   toggle (126.3) + padding (16) = ~423.7px, comfortably inside 480px
-   and every width above it up to the next stage. */
+   at the compact narrow-width rhythm (the max-width: 519px block below),
+   padding (8) + brand (141.9) + gap (8) + hamburger (44) + gap (8) +
+   resume (91.5) + gap (8) + toggle (126.3) + padding (8) = ~443.7px,
+   inside 480px with room to spare.
+   ⚠️ The hamburger is part of this row at EVERY width below 960px. An
+   earlier version of this comment omitted it - it predated the button -
+   so the row overflowed and, because the row is justify-content:
+   flex-end, the overflow went off the LEFT edge and clipped the
+   hamburger itself: 19 of its 44px visible at 320px. Nothing forced the
+   comment to be updated, so tests/navBarBudget.test.ts now fails the
+   build if this comment stops naming every item in the row. */
 @media (min-width: 480px) {
   .site-nav-bar__brand {
     display: inline-flex;
@@ -495,6 +503,31 @@ time {
 
   .site-nav-bar__inner {
     justify-content: space-between;
+  }
+}
+
+/* Below 520px the row must hold the hamburger (44) + resume (91.5) +
+   agent-view toggle (126.3), plus the brand (141.9) from 480px up. At
+   the full --space-2 rhythm that totals 325.8px under 480 and 483.7px
+   at 480 - both overflow. Halving the gap and the outer padding to
+   --space-1 reclaims 40px and both fit with room to spare.
+   Added 2026-07-31 after a UX review measured #nav-toggle at x=-25.4px
+   (19 of 44px visible) at 320px. The clipping was invisible to a page-
+   level overflow check because .site-nav-bar__inner is its own
+   overflow-x: auto container - the PAGE never overflowed, the button
+   was clipped inside the header. */
+@media (max-width: 519px) {
+  .site-nav-bar__inner {
+    padding: 0 var(--space-1);
+    gap: var(--space-1);
+  }
+
+  .site-nav-bar__inner::after {
+    flex-basis: var(--space-1);
+  }
+
+  .topbar__utility {
+    gap: var(--space-1);
   }
 }
 
