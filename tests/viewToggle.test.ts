@@ -293,6 +293,54 @@ describe('initViewToggle', () => {
     expect(toggle.getAttribute('aria-pressed')).toBe('false')
   })
 
+  it('restores the human view when an in-page nav link is activated', async () => {
+    // I3: every in-page target (#about, #projects, #experience, #loop)
+    // lives inside [data-view-target], so with markdown showing they do
+    // not exist. Measured: document.getElementById('about') === null
+    // while the sticky nav stayed visible and clickable. Clicking
+    // "experience" set the URL hash and nothing happened.
+    const doc = makeDoc()
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '# md',
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const Event_ = doc.defaultView!.Event
+
+    toggle.dispatchEvent(new Event_('click', { cancelable: true, bubbles: true }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(doc.getElementById('about'), 'precondition: target is gone').toBeNull()
+
+    const navLink = doc.querySelector('.site-nav a[href="#about"]') as HTMLAnchorElement
+    navLink.dispatchEvent(
+      new doc.defaultView!.MouseEvent('click', { button: 0, cancelable: true, bubbles: true }),
+    )
+
+    // Synchronously restored, so the browser's default hash scroll
+    // finds a real element. Not awaited on purpose: an async restore
+    // would land after the browser had already given up on the hash.
+    expect(doc.getElementById('about'), 'nav target must exist again').not.toBeNull()
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('leaves in-page nav alone when the human view is already showing', () => {
+    // The listener must not replace the DOM on every nav click; that
+    // would churn the islands on ordinary navigation.
+    const doc = makeDoc()
+    const target = doc.querySelector('[data-view-target]') as HTMLElement
+    initViewToggle(doc, vi.fn() as unknown as typeof fetch)
+    const replaceSpy = vi.spyOn(target, 'replaceChildren')
+
+    const navLink = doc.querySelector('.site-nav a[href="#about"]') as HTMLAnchorElement
+    navLink.dispatchEvent(
+      new doc.defaultView!.MouseEvent('click', { button: 0, cancelable: true, bubbles: true }),
+    )
+
+    expect(replaceSpy).not.toHaveBeenCalled()
+  })
+
   it('is inert when the expected elements are absent', () => {
     const dom = new JSDOM('<main></main>')
     expect(() => initViewToggle(dom.window.document)).not.toThrow()

@@ -216,4 +216,37 @@ export function initViewToggle(
     event.preventDefault()
     activate()
   })
+
+  // Every in-page target (#about, #projects, #experience, #loop) lives
+  // INSIDE the swapped region, so with markdown showing none of them
+  // exist while the sticky nav stays visible and clickable. Clicking
+  // "experience" set the hash and did nothing.
+  //
+  // A click listener rather than a hashchange listener, for two
+  // reasons. First, click runs synchronously BEFORE the browser
+  // performs the default hash navigation, so restoring the human view
+  // here guarantees the element exists by the time the browser looks
+  // for it; hashchange fires after that lookup has already failed, and
+  // the browser does not retry the scroll. Second, hashchange does not
+  // fire at all when the new hash equals the current one, so a reader
+  // who clicked "about", toggled to markdown, then clicked "about"
+  // again would stay stuck.
+  //
+  // Delegated on the document so it covers the skip link and the
+  // footer profile links too, not just the header nav.
+  doc.addEventListener('click', (event: Event) => {
+    if (!showingMarkdown) return
+
+    const mouse = event as MouseEvent
+    if (mouse.metaKey || mouse.ctrlKey || mouse.shiftKey || mouse.altKey) return
+    if (typeof mouse.button === 'number' && mouse.button !== 0) return
+
+    const el = event.target as Element | null
+    const link = el?.closest?.('a[href^="#"]')
+    if (!link || link === toggle) return
+
+    // Restore synchronously and let the default action proceed, so the
+    // browser's own hash scroll does the scrolling.
+    showHuman()
+  })
 }
