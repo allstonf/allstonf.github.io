@@ -289,4 +289,22 @@ describe('computeBudgetReport against the real dist/ build', () => {
     expect(report.passed).toBe(report.budgetedBytes <= DEFAULT_BUDGET_BYTES)
     expect(report.passed).toBe(true)
   })
+
+  it('emits no unreachable JavaScript chunk at all', () => {
+    // The Loop section was the only React island. Once it and the
+    // @astrojs/react integration are gone, Astro should emit no client
+    // renderer - not merely an unreachable one. An "emitted but
+    // UNREACHABLE" entry costs visitors nothing (no HTML references it)
+    // but ships ~58 KB of dead artifact on every deploy, and its presence
+    // means the React dependency chain is still wired up.
+    //
+    // NOTE: the plan that introduced this test named the helper
+    // runBudgetCheck() and a report.unreachable field. Neither exists in
+    // this file - the real helper is computeBudgetReport() (already
+    // imported above) and the real field is report.unreachableFiles, per
+    // the describe block this test lives in. Using the real names per
+    // the plan's own instruction to read before writing.
+    const report = computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })
+    expect(report.unreachableFiles).toEqual([])
+  })
 })

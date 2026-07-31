@@ -9,13 +9,14 @@
 // Scope: only the two boundaries that are actually a control's own
 // affordance.
 //   - The `button` base border, inherited un-overridden by the
-//     LoopExplainer mode tabs and the walkthrough prev/next controls.
+//     hamburger nav toggle (the only surviving native <button> on the
+//     page since the Loop section's walkthrough controls were deleted).
 //   - `.topbar__view-toggle`'s resting border (the agent-view toggle).
 //
 // Deliberately NOT covered here: every other place --color-overlay-medium
 // (or its replacement) appears - the nav's permanent border-bottom, the
-// project-card left border, stack-item / badge / loop-verdict borders,
-// the timeline rule, and the band__meta link underline. None of those is
+// project-card left border, stack-item / badge borders, the timeline
+// rule, and the band__meta link underline. None of those is
 // itself the clickable/focusable affordance of a control; they are
 // dividers and decorative grouping chrome, so SC 1.4.11 does not bind
 // them the way it binds an actual button edge. Brightening that token
@@ -49,7 +50,7 @@ describe('WCAG non-text contrast (SC 1.4.11): interactive control boundaries', (
   // a stale assumption of "which token is wired in."
   const boundaries: Array<{ name: string; selector: string }> = [
     {
-      name: 'button base border (LoopExplainer mode tabs, walkthrough prev/next controls)',
+      name: 'button base border (hamburger nav toggle)',
       selector: 'button',
     },
     {

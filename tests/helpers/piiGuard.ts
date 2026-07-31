@@ -79,10 +79,12 @@ export function stripKnownPhoneShapedCollisions(text: string): string {
       // inline SVG.
       .replace(/points="[\d\s.,-]+"/g, '')
       // Computed bar-chart fill widths: style="width:33.33333333333333%".
-      // These come from the Loop section's LoopExplainer component,
-      // which renders a component weight (a plain float) into an
-      // inline style attribute - not a contact detail. Only index.html
-      // renders this component.
+      // These were rendered by the Loop section (deleted 2026-07-31),
+      // which turned a component weight (a plain float) into an inline
+      // style attribute - not a contact detail. Kept as a harmless
+      // no-op strip rule: nothing currently emits this shape, but it
+      // costs nothing to leave in place if a future component ever
+      // renders a percentage width inline again.
       .replace(/style="width:[\d.]+%"/g, '')
   )
 }

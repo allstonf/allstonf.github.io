@@ -179,10 +179,9 @@ export function renderLlmsTxt(profile: any): string {
  * only way this file can never drift from /index.md.
  *
  * NOTE: despite the "full" name, this is the same markdown body as
- * /index.md - role, about, projects, experience, and education. It
- * As of 2026-07-31 that is the entire public page: the Loop section
- * was removed from index.astro, so there is no longer any block that
- * this file omits relative to index.html.
+ * /index.md - role, about, projects, experience, and education. That
+ * is the entire public page, so there is no block that this file
+ * omits relative to index.html.
  * The full-text surface carries the SAME disambiguation
  * paragraph as llms.txt (fix round 1) - it is at least as
  * self-correcting as the lean index, never less.
@@ -227,9 +226,8 @@ export function renderRobotsTxt(profile: any): string {
     `# Agent-readable profile: ${siteUrl}/llms.txt`,
     // Informal practice, not spec - a comment, not a directive.
     // "Full" refers to the full prose body: role, about, projects,
-    // experience, education. That is now the whole page (the Loop
-    // section was removed from the public site on 2026-07-31), so this
-    // file and index.html no longer diverge in content.
+    // experience, education. That is the whole page, so this file
+    // and index.html do not diverge in content.
     `# Agent surface (full page prose): ${siteUrl}/llms-full.txt`,
   )
 

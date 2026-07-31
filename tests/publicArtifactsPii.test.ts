@@ -112,7 +112,8 @@ describe('every public artifact is guarded against a phone-shaped or street-addr
     //   3. <polyline points="6 9 12 15 18 9"> - the scroll-cue
     //      chevron's SVG coordinate list.
     //   4. style="width:33.33333333333333%" - the Loop section's
-    //      LoopExplainer component-weight bar-chart fill widths.
+    //      component-weight bar-chart fill widths (that section was
+    //      deleted 2026-07-31; the strip rule is a harmless no-op now).
     // All four are stripped by stripKnownPhoneShapedCollisions() (see
     // that function for the per-pattern rationale); none of the four
     // narrows PHONE_SHAPED itself, so a real phone number sitting

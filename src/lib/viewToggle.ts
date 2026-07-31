@@ -8,8 +8,7 @@
 //
 // Authored as a plain module rather than a React island on purpose:
 // the JS budget is a binding CI gate (150 KB gzipped, currently ~62 KB)
-// and this needs no state library. LoopExplainer is the one component
-// that earns React.
+// and this needs no state library.
 //
 // Progressive enhancement is the contract. The control ships as a real
 // <a href="/index.md">, so with scripting disabled it still works. The
@@ -257,7 +256,7 @@ export function initViewToggle(
     activate()
   })
 
-  // Every in-page target (#about, #projects, #experience, #loop) lives
+  // Every in-page target (#about, #contact, #experience, #projects) lives
   // INSIDE the swapped region, so with markdown showing none of them
   // exist while the sticky nav stays visible and clickable. Clicking
   // "experience" set the hash and did nothing.

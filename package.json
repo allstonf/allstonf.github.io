@@ -12,10 +12,7 @@
     "verify:all": "npm run build && npm test && node scripts/verify-content.mjs --check-urls && node scripts/check-js-budget.mjs"
   },
   "dependencies": {
-    "@astrojs/react": "^6.0.1",
-    "astro": "^7.1.3",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "astro": "^7.1.3"
   },
   "devDependencies": {
     "jsdom": "^29.1.1",
