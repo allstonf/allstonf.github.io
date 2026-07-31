@@ -125,4 +125,20 @@ describe('static shell parity with v1', () => {
     expect(statusAt, 'expected a data-view-status live region').toBeGreaterThan(-1)
     expect(statusAt, 'live region must sit outside the swapped target').toBeLessThan(mainStart)
   })
+
+  it('renders the hero image with alt text', () => {
+    // The hero is decorative-adjacent but carries the page's whole first
+    // impression; a missing alt is an a11y regression a redesign can
+    // silently introduce.
+    expect(html).toMatch(/<img[^>]+alt=/)
+  })
+
+  it('still ships the markdown twin link after the V3 redesign', () => {
+    // The V3 grayscale redesign touched nearly every selector on the
+    // page; this pins that the agent-facing markdown-twin contract
+    // (both the <link rel="alternate"> discovery hint and the visible
+    // toggle anchor) survived the rewrite unchanged.
+    expect(html).toContain('rel="alternate"')
+    expect(html).toMatch(/<a[^>]*data-view-toggle[^>]*href="\/index\.md"/)
+  })
 })
