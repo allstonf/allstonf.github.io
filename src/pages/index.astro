@@ -62,7 +62,39 @@ const validatedProjects = (projects ?? []).map((project) => ({
   })),
 }))
 const featuredProjects = validatedProjects.filter((project) => project.featured)
-const otherProjects = validatedProjects.filter((project) => !project.featured)
+
+// The non-featured remainder is split by era. With twelve projects, one
+// undifferentiated "Also" list runs nine rows deep and a reader
+// scanning for current work has to date-check each one.
+//
+// EARLY_ERA_SLUGS is an explicit list rather than a parse of `period`,
+// deliberately: `period` is a human-readable string ("2026", "Apr 2020
+// - Jun 2020", "May 2019") with no guaranteed shape, so parsing it here
+// would make the LAYOUT a second source of truth about when a project
+// happened. An explicit list fails visibly - a slug typo drops the
+// project into the wrong group where it can be seen - whereas a failed
+// date parse would silently mis-sort.
+const EARLY_ERA_SLUGS = new Set([
+  'predicting-disease-risk',
+  'weather-forecast-iot',
+  'music-master',
+  'facebook-data-challenge',
+])
+const otherProjects = validatedProjects.filter(
+  (project) => !project.featured && !EARLY_ERA_SLUGS.has(project.slug),
+)
+const earlyProjects = validatedProjects.filter(
+  (project) => !project.featured && EARLY_ERA_SLUGS.has(project.slug),
+)
+
+// Rendered by ONE markup block below rather than two copied ones. A
+// second hand-copied <article class="project-row"> would be free to
+// drift from the first - dropping the stack list or the links - and
+// nothing would catch it.
+const projectGroups = [
+  { label: 'Also', items: otherProjects },
+  { label: 'Earlier work, 2019 to 2020', items: earlyProjects },
+]
 
 // person.education is rendered as visible text in the About band
 // below (a <p class="band__meta">), not just inside the JSON-LD
@@ -283,11 +315,11 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
             ))}
           </div>
 
-          {otherProjects.length > 0 && (
+          {projectGroups.map((group) => group.items.length > 0 && (
             <div class="projects-other">
-              <p class="projects-other__label">Also</p>
+              <p class="projects-other__label">{group.label}</p>
               <div class="projects-other-list">
-                {otherProjects.map((project) => (
+                {group.items.map((project) => (
                   <article
                     class="project-row"
                     id={`project-${project.slug}`}
@@ -318,7 +350,7 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
                 ))}
               </div>
             </div>
-          )}
+          ))}
         </div>
       </section>
 
