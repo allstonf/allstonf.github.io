@@ -24,14 +24,21 @@ describe('static shell parity with v1', () => {
     expect(visible).toContain(profile.person.education.institution)
   })
 
-  it('shows a visible last-updated date sourced from _meta.last_updated', () => {
-    // Freshness is a measured citation factor (30-89 days old is the
-    // observed sweet spot), and it has to be VISIBLE text, not just the
-    // JSON-LD dateModified value - the same "structured data alone is
-    // invisible to the agents that matter" reasoning as the visible
-    // current-role line above.
+  it('does NOT expose the last-updated date as visible text', () => {
+    // REVERSED 2026-07-31 at Allston's request: "we don't need people
+    // knowing when I last updated it." The prior test asserted the
+    // opposite - freshness is a measured citation factor - and that
+    // tradeoff was consciously given up in favour of not advertising
+    // how long the page has sat.
+    //
+    // Inverted rather than deleted: a deleted test lets the line drift
+    // back in silently, which is exactly what this guards.
+    //
+    // NOTE: JSON-LD still carries dateModified (src/lib/jsonLd.ts),
+    // which is why this strips <script> blocks before asserting. That
+    // is a separate, still-open decision.
     const visible = html.replace(/<script[\s\S]*?<\/script>/g, '')
-    expect(visible).toContain(profile._meta.last_updated)
+    expect(visible).not.toContain(profile._meta.last_updated)
   })
 
   it('states role and employer plainly in the meta description', () => {
