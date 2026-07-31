@@ -1,4 +1,5 @@
-// src/pages/sitemap.xml.ts - sitemap for /, /llms.txt, and /api/profile.json.
+// src/pages/sitemap.xml.ts - sitemap for /, /llms.txt, /resume.md, and
+// /api/profile.json. The path list itself lives in renderSitemapXml().
 import type { APIRoute } from 'astro'
 import profile from '../../content/profile.json'
 import { renderSitemapXml } from '../lib/agentSurface'

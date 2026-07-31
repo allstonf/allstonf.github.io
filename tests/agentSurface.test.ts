@@ -40,10 +40,12 @@ describe('agent surface endpoints build to real files under dist/', () => {
       `${profile.person.current_role.employer}, focused on ${focusAreas}.`
     expect(lines[2]).toBe(expectedBlockquote)
 
-    // ## Docs contains EXACTLY one entry: the markdown mirror at
-    // /index.md. Separate About/Projects/Experience anchor entries into
-    // the same single page would pad the file without adding structure
-    // - the link list is for distinct fetchable resources.
+    // ## Docs contains EXACTLY one entry per DISTINCT fetchable markdown
+    // resource: the page mirror at /index.md, and (Task 5) the resume at
+    // /resume.md. Still an exact count, not a lower bound - separate
+    // About/Projects/Experience anchor entries into the same single page
+    // would pad the file without adding structure, and that is the
+    // regression this length assertion exists to catch.
     const docsStart = text.indexOf('## Docs')
     const optionalStart = text.indexOf('## Optional')
     expect(docsStart).toBeGreaterThan(-1)
@@ -52,8 +54,9 @@ describe('agent surface endpoints build to real files under dist/', () => {
       .slice(docsStart, optionalStart)
       .split('\n')
       .filter((line) => line.startsWith('- ['))
-    expect(docsEntries).toHaveLength(1)
+    expect(docsEntries).toHaveLength(2)
     expect(docsEntries[0]).toContain(`${profile.site.url}/index.md`)
+    expect(docsEntries[1]).toContain(`${profile.site.url}/resume.md`)
 
     // ## Optional carries GitHub + LinkedIn, per spec semantics ("can
     // be skipped if a shorter context is needed"). Fix round 1: no

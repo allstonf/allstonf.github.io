@@ -33,9 +33,19 @@ import { validateUrl } from './url'
  * "plain hyphen, never an em dash" style rule and by the parity test in
  * tests/parity.test.ts that already asserts index.html's date range
  * matches this shape.
+ *
+ * `separator` exists only so renderResumeMd() can pass RESUME_DATE_SEPARATOR
+ * (see the constant's own note for why the hyphen form is unusable there)
+ * while every other caller keeps the index.astro-matching default and
+ * therefore byte-identical output. One helper with one optional argument,
+ * rather than a second near-identical date formatter that could drift.
  */
-function formatDateRange(start: string, end: string | null | undefined): string {
-  return `${start} - ${end ? end : 'Present'}`
+function formatDateRange(
+  start: string,
+  end: string | null | undefined,
+  separator = ' - ',
+): string {
+  return `${start}${separator}${end ? end : 'Present'}`
 }
 
 // How many of person.knows_about's entries to fold into the llms.txt
@@ -113,9 +123,10 @@ function buildLlmsHeaderLines(profile: any): string[] {
  * required section - the person's name, not marketing copy), a
  * blockquote summary, a free-prose disambiguation paragraph (spec-legal
  * per the "sections of any type except headings" clause - see
- * buildLlmsHeaderLines() above), a "## Docs" section with exactly one
- * entry (the /index.md markdown mirror - not one fabricated entry per
- * anchor on that single page), and a "## Optional" section (GitHub +
+ * buildLlmsHeaderLines() above), a "## Docs" section listing one entry
+ * per DISTINCT fetchable markdown resource (/index.md and, since Task 5,
+ * /resume.md - never one fabricated entry per anchor within a single
+ * page), and a "## Optional" section (GitHub +
  * LinkedIn + resume, which per spec "can be skipped if a shorter
  * context is needed"). Every URL sink here runs through validateUrl()
  * before it reaches the file, the same guarantee every href on
@@ -135,6 +146,7 @@ export function renderLlmsTxt(profile: any): string {
     '## Docs',
     '',
     `- [index.md](${siteUrl}/index.md): Full page content in markdown.`,
+    `- [resume.md](${siteUrl}/resume.md): Work history, skills and projects in markdown.`,
     '',
     '## Optional',
     '',
@@ -222,7 +234,8 @@ function escapeXmlText(value: string): string {
 }
 
 /**
- * Render sitemap.xml as a urlset for /, /llms.txt, and /api/profile.json.
+ * Render sitemap.xml as a urlset for /, /llms.txt, /resume.md, and
+ * /api/profile.json.
  *
  * lastmod comes from _meta.last_updated in the content model, NOT from
  * the current wall clock - using the wall clock would make a rebuild of
@@ -236,7 +249,7 @@ function escapeXmlText(value: string): string {
 export function renderSitemapXml(profile: any): string {
   const siteUrl = String(profile.site.url).replace(/\/+$/, '')
   const lastUpdated = profile._meta.last_updated
-  const paths = ['/', '/llms.txt', '/api/profile.json']
+  const paths = ['/', '/llms.txt', '/resume.md', '/api/profile.json']
 
   const urlEntries = paths
     .map(
@@ -338,6 +351,170 @@ export function renderIndexMd(profile: any): string {
   // trailing content still pushes one blank line, and the next section
   // header adds another) down to a single blank line, then trim the
   // final trailing blank before adding exactly one closing newline.
+  return (
+    lines
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .trimEnd() + '\n'
+  )
+}
+
+// -- /resume.md: the machine-readable resume surface (Task 5). --
+
+// The date separator /resume.md uses in place of the default " - ".
+//
+// Not a style choice. tests/resumeMd.test.ts enforces that this file
+// contains no phone-shaped digit run, using the deliberately blunt
+// /\+?\d[\d\s().-]{8,}\d/ shape check - and a closed range rendered as
+// "2020-08 - 2022-06" IS that shape (17 characters of digits, spaces and
+// hyphens). The guard cannot tell a date range from a phone number, and
+// the fail-closed rule says the OUTPUT moves, never the guard: widening
+// the regex to spare a date range would also spare a real space-separated
+// phone number, which is the whole thing it exists to stop. The word
+// separator breaks the run and reads correctly on a resume. (An example
+// of such a number is deliberately NOT written here: the pii-audit gate
+// scans source, not just built output, and a phone-shaped literal in a
+// public repo is a finding even when it is fictional.)
+// index.md keeps the hyphen form, since that file
+// carries no such guarantee and must keep matching index.astro.
+const RESUME_DATE_SEPARATOR = ' to '
+
+/**
+ * The ONLY skill groups /resume.md will publish, in publication order,
+ * each an explicit `content/profile.json` key paired with its heading.
+ *
+ * This is the fail-closed half of the skills section. Iterating
+ * Object.entries(profile.skills) would publish whatever key the content
+ * model gains next, which is precisely how v1's render_api_profile()
+ * put an internal editorial note on a public URL. Naming the keys here
+ * means a fourth group added to profile.json is structurally incapable
+ * of reaching the page until someone adds it to this list on purpose.
+ *
+ * The group names and their members come from the resume PDF, which is
+ * canonical for this surface - they are not a taxonomy invented here.
+ */
+const RESUME_SKILL_GROUPS = [
+  { key: 'programming_languages', label: 'Programming Languages' },
+  { key: 'development_tools', label: 'Development Tools' },
+  { key: 'ai_agent_tools', label: 'AI Agent Tools' },
+] as const
+
+/**
+ * Render /resume.md: a bounded, machine-readable resume, so an agent
+ * asked "what is Allston's experience" reads structured markdown instead
+ * of extracting text from a PDF's layout, where reading order is a
+ * property of the page geometry rather than of the document.
+ *
+ * Section order: name, current role, contact, summary, Skills,
+ * Experience, Projects, Education.
+ *
+ * SAFETY: this string is served at a public URL from a public repository
+ * whose history is permanent, so it is built the same fail-closed way
+ * publicProjection() builds /api/profile.json - every value is read from
+ * a NAMED field, never spread and never iterated out of an unknown key
+ * set. Concretely: an experience entry contributes exactly employer,
+ * title, start, end, location and bullets; a project contributes exactly
+ * name, summary, outcome, bullets, stack and links; skills come only from
+ * RESUME_SKILL_GROUPS above. Email may appear (it is already published on
+ * this site and on the human page); person.location, a phone number, a
+ * street address or any other contact detail must not, which is why the
+ * contact line names person.email alone rather than assembling whatever
+ * contact-shaped fields exist. tests/resumeMd.test.ts poisons the content
+ * model at two depths to prove the property holds by construction.
+ *
+ * `profile` is typed loosely for the same reason publicProjection()'s
+ * argument is: the content model is hand-authored, and the field names
+ * read below are the actual contract.
+ */
+export function renderResumeMd(profile: any): string {
+  const { person, skills, projects, experience } = profile
+  const currentRole = person.current_role
+
+  const lines: string[] = [
+    `# ${person.name}`,
+    '',
+    `${currentRole.title} at ${currentRole.employer}`,
+    '',
+    `Contact: ${person.email}`,
+    '',
+    person.tagline,
+    '',
+    '## Skills',
+    '',
+  ]
+
+  for (const group of RESUME_SKILL_GROUPS) {
+    const members = skills?.[group.key]
+    // Skip a group the content model does not carry rather than emitting
+    // an empty heading, the same "only if it actually exists" guard
+    // renderIndexMd() applies to person.education.
+    if (members?.length) {
+      lines.push(`- **${group.label}:** ${members.join(', ')}`)
+    }
+  }
+
+  // person.knows_about stays a flat list here on purpose. It is
+  // schema.org-shaped (it feeds jsonLd.ts's knowsAbout) and describes
+  // focus areas rather than tools, so it is published under its own
+  // label instead of being force-fitted into the PDF's three tool
+  // groups, which would misrepresent both.
+  const focusAreas = person.knows_about ?? []
+  if (focusAreas.length) {
+    lines.push(`- **Focus Areas:** ${focusAreas.join(', ')}`)
+  }
+  lines.push('')
+
+  lines.push('## Experience', '')
+  for (const job of experience ?? []) {
+    lines.push(
+      `### ${job.employer} - ${job.title}`,
+      '',
+      `${formatDateRange(job.start, job.end, RESUME_DATE_SEPARATOR)} - ${job.location}`,
+      '',
+    )
+    for (const bullet of job.bullets ?? []) {
+      lines.push(`- ${bullet}`)
+    }
+    lines.push('')
+  }
+
+  // The project SET is whatever the content model carries. The resume
+  // PDF and content/profile.json currently list different projects, and
+  // which projects belong on a resume is the owner's call, not a
+  // rendering decision - so this reconciles nothing and reorders nothing.
+  lines.push('## Projects', '')
+  for (const project of projects ?? []) {
+    lines.push(`### ${project.name}`, '', project.summary, '')
+    if (project.outcome) {
+      lines.push(`Outcome: ${project.outcome}`, '')
+    }
+    for (const bullet of project.bullets ?? []) {
+      lines.push(`- ${bullet}`)
+    }
+    if (project.stack?.length) {
+      lines.push('', `Stack: ${project.stack.join(', ')}`)
+    }
+    for (const link of project.links ?? []) {
+      // Every URL sink in this module runs through validateUrl() before
+      // it ships, the same guarantee each href on index.astro gets.
+      lines.push(`Link: [${link.label}](${validateUrl(link.url, 'projects[].links[].url')})`)
+    }
+    lines.push('')
+  }
+
+  if (person.education) {
+    const detailSuffix = person.education.detail ? ` (${person.education.detail})` : ''
+    lines.push(
+      '## Education',
+      '',
+      `${person.education.credential}, ${person.education.institution}${detailSuffix}`,
+      '',
+    )
+  }
+
+  // Same blank-line normalization renderIndexMd() ends with: collapse
+  // the runs left by per-section trailing pushes, then exactly one
+  // closing newline.
   return (
     lines
       .join('\n')

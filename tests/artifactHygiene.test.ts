@@ -142,6 +142,7 @@ describe('zero em-dash bytes across every generated text artifact, not just dist
   const artifacts = [
     'dist/index.html',
     'dist/index.md',
+    'dist/resume.md',
     'dist/llms.txt',
     'dist/llms-full.txt',
     'dist/robots.txt',

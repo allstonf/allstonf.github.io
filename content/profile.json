@@ -20,7 +20,7 @@
     "location": "San Francisco Bay Area",
     "email": "allstonfojas@gmail.com",
     "current_role": {
-      "title": "Systems Software Engineer, Power and Performance",
+      "title": "Systems Software Engineer, Core OS Power and Performance",
       "employer": "Apple",
       "employer_url": "https://www.apple.com",
       "start": "2022-07",
@@ -54,6 +54,12 @@
       "url": "https://drive.google.com/file/d/1Jhg-7GrlfA92Q_n3mn3xtgBgL-f5UO76/view",
       "label": "Resume"
     }
+  },
+
+  "skills": {
+    "programming_languages": ["Python", "Objective-C", "C++", "SQL", "Swift", "JavaScript", "HTML", "CSS", "Java"],
+    "development_tools": ["Git", "Jupyter", "Spark", "Streamlit", "Tableau", "Jenkins", "Kubernetes", "Convex", "Vercel", "Bash"],
+    "ai_agent_tools": ["Claude Code", "Codex", "LangGraph", "Claude API", "OpenAI API", "Gemini", "MCP", "OpenCode", "Pi"]
   },
 
   "about": [
@@ -176,7 +182,7 @@
   "experience": [
     {
       "employer": "Apple",
-      "title": "Systems Software Engineer, Power and Performance",
+      "title": "Systems Software Engineer, Core OS Power and Performance",
       "start": "2022-07",
       "end": null,
       "location": "Cupertino, CA",
