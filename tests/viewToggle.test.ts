@@ -155,6 +155,59 @@ describe('initViewToggle', () => {
     })
   })
 
+  it('lets a modified click perform its native action instead of swapping', async () => {
+    // C2: preventDefault() ran unconditionally, so a cmd-click aimed at
+    // opening the twin in a background tab was swallowed: no new tab,
+    // and the page the reader was on got replaced underneath them.
+    // Measured before the fix with {metaKey: true, button: 0}:
+    // defaultPrevented true, fetch fired, view swapped.
+    const doc = makeDoc()
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '# md',
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const evt = new doc.defaultView!.MouseEvent('click', {
+      metaKey: true,
+      button: 0,
+      cancelable: true,
+      bubbles: true,
+    })
+    toggle.dispatchEvent(evt)
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(evt.defaultPrevented, 'the browser must be left to open the twin').toBe(false)
+    expect(fetchImpl).not.toHaveBeenCalled()
+    expect(doc.querySelector('[data-view-target] #human')).not.toBeNull()
+    expect(doc.querySelector('[data-view-target] pre')).toBeNull()
+    expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('still handles a plain primary click', async () => {
+    // Guards the modified-click early return from being written so
+    // broadly that it swallows the normal case too.
+    const doc = makeDoc()
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => '# md',
+    }) as unknown as typeof fetch
+
+    initViewToggle(doc, fetchImpl)
+    const toggle = doc.querySelector('[data-view-toggle]') as HTMLAnchorElement
+    const evt = new doc.defaultView!.MouseEvent('click', {
+      button: 0,
+      cancelable: true,
+      bubbles: true,
+    })
+    toggle.dispatchEvent(evt)
+    await new Promise((r) => setTimeout(r, 0))
+
+    expect(evt.defaultPrevented).toBe(true)
+    expect(doc.querySelector('[data-view-target] pre')).not.toBeNull()
+  })
+
   it('is inert when the expected elements are absent', () => {
     const dom = new JSDOM('<main></main>')
     expect(() => initViewToggle(dom.window.document)).not.toThrow()

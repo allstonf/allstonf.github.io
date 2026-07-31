@@ -126,15 +126,15 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
         markdown = await response.text()
         showMarkdown(markdown)
       } catch {
-        // Leave the human view intact and the control unpressed. Note
-        // that this does NOT enable "a second click navigates to the
-        // markdown twin directly": preventDefault() above runs on every
-        // click unconditionally, so a plain second click just
-        // re-triggers this same fetch path and can fail the same way.
-        // Only a modified click (middle-click, ctrl/cmd-click) bypasses
-        // this handler and navigates for real. Failing back to a
-        // stable, working human view beats failing into a
-        // half-toggled state.
+        // Leave the human view intact and the control unpressed.
+        //
+        // A plain second click does NOT navigate to the twin: it
+        // re-enters this same fetch path and can fail the same way.
+        // A modified click (cmd, ctrl, shift, alt) and any non-primary
+        // button DO bypass this handler and navigate for real, because
+        // the click listener returns before preventDefault for those.
+        // Failing back to a stable, working human view beats failing
+        // into a half-toggled state.
         showHuman()
       } finally {
         fetchInFlight = false
@@ -143,6 +143,19 @@ export function initViewToggle(doc: Document, fetchImpl?: typeof fetch): void {
   }
 
   toggle.addEventListener('click', (event: Event) => {
+    // A modified click is the reader asking the BROWSER for something
+    // this handler cannot give them: a background tab, a new window, a
+    // download, a save. Returning before preventDefault lets the
+    // browser perform its native action on the real href. Swallowing
+    // it meant a cmd-click replaced the page being read instead of
+    // opening the twin alongside it.
+    const mouse = event as MouseEvent
+    if (mouse.metaKey || mouse.ctrlKey || mouse.shiftKey || mouse.altKey) return
+    // Anything other than the primary button (middle-click auxiliary
+    // navigation, right-click context menu) is likewise the browser's
+    // to handle.
+    if (typeof mouse.button === 'number' && mouse.button !== 0) return
+
     event.preventDefault()
     activate()
   })
