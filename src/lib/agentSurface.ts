@@ -22,7 +22,7 @@
 // signals like this "add only 2-6 percentage points and cannot
 // overcome poor retrieval or weak relevance" - so the goal here is a
 // correct, unambiguous index, not an engineered extraction target.
-import { validateUrl } from './url'
+import { absolutizeUrl, validateUrl } from './url'
 
 /**
  * Render a job's date range the same way index.astro's formatDateRange
@@ -160,7 +160,11 @@ export function renderLlmsTxt(profile: any): string {
   // Include the resume only if the content model actually carries one -
   // never fabricate the entry.
   if (person.resume?.url) {
-    const resumeUrl = validateUrl(person.resume.url, 'person.resume.url')
+    // absolutize, not validate: the content model stores a same-origin path and
+    // llms.txt is fetched directly, so a relative link here reaches a reader
+    // with no base to resolve it against. Every other link in this file is
+    // already absolute via siteUrl.
+    const resumeUrl = absolutizeUrl(person.resume.url, siteUrl, 'person.resume.url')
     lines.push(`- [${person.resume.label}](${resumeUrl})`)
   }
 

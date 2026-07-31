@@ -61,6 +61,28 @@ export class UnpublishableUrlError extends Error {}
  * characters before parsing the scheme - render the return value, never
  * the original `value`.
  */
+/**
+ * Return `value` validated and, if it is a same-origin absolute path, joined
+ * onto `siteUrl` so it can be resolved by a reader with no document base.
+ *
+ * For MACHINE surfaces only. dist/api/profile.json and dist/llms.txt are
+ * fetched directly over HTTP rather than loaded as documents, and neither
+ * carries an origin field a consumer could join a relative path to, so a bare
+ * "/file.pdf" is unresolvable to exactly the readers those files exist for.
+ * The human page keeps the relative href: a browser resolves it against the
+ * document, which is the correct form there.
+ *
+ * Only a leading "/" is joined. A "#fragment" is meaningless without a document
+ * and a "./" relative form has no unambiguous base here, so both are left alone
+ * rather than silently rewritten into something that looks resolvable and is
+ * not - the same fail-loudly-rather-than-guess reasoning as validateUrl itself.
+ */
+export function absolutizeUrl(value: unknown, siteUrl: string, field = 'url'): string {
+  const url = validateUrl(value, field)
+  if (!url.startsWith('/')) return url
+  return `${validateUrl(siteUrl, 'site.url').replace(/\/+$/, '')}${url}`
+}
+
 export function validateUrl(value: unknown, field = 'url'): string {
   const cleaned = String(value).replace(URL_IGNORED_CHARS, '')
   const probe = cleaned.toLowerCase()
