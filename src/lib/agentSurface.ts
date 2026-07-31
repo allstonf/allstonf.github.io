@@ -169,16 +169,21 @@ export function renderLlmsTxt(profile: any): string {
 
 /**
  * Render llms-full.txt: the same H1 + blockquote + disambiguation
- * header as llms.txt (via buildLlmsHeaderLines()), followed by the FULL
- * markdown body - mechanically derived by calling renderIndexMd()
+ * header as llms.txt (via buildLlmsHeaderLines()), followed by the
+ * page's prose body - mechanically derived by calling renderIndexMd()
  * (defined below), never a second hand-maintained copy of the page
  * content. llms-full.txt is not part of the llmstxt.org spec itself
  * (that spec's own CLI generates llms-ctx.txt / llms-ctx-full.txt);
  * llms-full.txt is the separate industry convention several major sites
- * (Anthropic, Vercel) ship, chosen here because this site is exactly
- * one page, so "the full content" already exists as renderIndexMd()'s
- * output and reusing it is the only way this file can never drift from
- * /index.md. The full-text surface carries the SAME disambiguation
+ * (Anthropic, Vercel) ship. Reusing renderIndexMd()'s output is the
+ * only way this file can never drift from /index.md.
+ *
+ * NOTE: despite the "full" name, this is the same markdown body as
+ * /index.md - role, about, projects, experience, and education. It
+ * does NOT include the page's interactive Loop section; that block is
+ * rendered client-side only and has no markdown equivalent in this
+ * file. An agent that needs the Loop content has to read index.html
+ * directly. The full-text surface carries the SAME disambiguation
  * paragraph as llms.txt (fix round 1) - it is at least as
  * self-correcting as the lean index, never less.
  *
@@ -221,8 +226,11 @@ export function renderRobotsTxt(profile: any): string {
     `Sitemap: ${siteUrl}/sitemap.xml`,
     `# Agent-readable profile: ${siteUrl}/llms.txt`,
     // Informal practice, not spec - a comment, not a directive. Added
-    // alongside llms-full.txt in Task 6.
-    `# Full-content agent surface: ${siteUrl}/llms-full.txt`,
+    // alongside llms-full.txt in Task 6. "Full" refers to the full
+    // prose body (role, about, projects, experience, education), not
+    // the page's interactive Loop section - that section is not
+    // included in this file.
+    `# Agent surface (page prose, no Loop section): ${siteUrl}/llms-full.txt`,
   )
 
   return lines.join('\n') + '\n'
