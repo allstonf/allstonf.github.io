@@ -186,8 +186,8 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         <a class="site-nav-bar__brand" href="#">{person.name}</a>
         <nav aria-label="Section" class="site-nav">
           <a href="#about">About</a>
-          <a href="#projects">Projects</a>
           <a href="#experience">Experience</a>
+          <a href="#projects">Projects</a>
           <a href="#contact">Contact</a>
         </nav>
         <div class="topbar__utility">
@@ -265,6 +265,34 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
           <div class="band__prose">
             {about.map((paragraph) => (
               <p>{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="experience" class="band" aria-labelledby="experience-heading">
+        <div class="band__inner reveal">
+          <h2 id="experience-heading">Experience</h2>
+          <div class="timeline">
+            {experience.map((job) => (
+              <article
+                class:list={['experience-entry', { 'experience-entry--current': !job.end }]}
+              >
+                <span class="experience-entry__marker" aria-hidden="true"></span>
+                <div>
+                  <p class="experience-entry__meta">
+                    <time datetime={job.start}>{formatDateRange(job.start, job.end)}</time> &middot; {job.location}
+                    {!job.end && <span class="experience-entry__current-tag">Current</span>}
+                  </p>
+                  <h3>{job.title}</h3>
+                  <p class="experience-entry__employer">{job.employer}</p>
+                  <ul>
+                    {job.bullets.map((bullet) => (
+                      <li>{bullet}</li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
             ))}
           </div>
         </div>
@@ -349,34 +377,6 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
         </div>
       </section>
 
-      <section id="experience" class="band" aria-labelledby="experience-heading">
-        <div class="band__inner reveal">
-          <h2 id="experience-heading">Experience</h2>
-          <div class="timeline">
-            {experience.map((job) => (
-              <article
-                class:list={['experience-entry', { 'experience-entry--current': !job.end }]}
-              >
-                <span class="experience-entry__marker" aria-hidden="true"></span>
-                <div>
-                  <p class="experience-entry__meta">
-                    <time datetime={job.start}>{formatDateRange(job.start, job.end)}</time> &middot; {job.location}
-                    {!job.end && <span class="experience-entry__current-tag">Current</span>}
-                  </p>
-                  <h3>{job.title}</h3>
-                  <p class="experience-entry__employer">{job.employer}</p>
-                  <ul>
-                    {job.bullets.map((bullet) => (
-                      <li>{bullet}</li>
-                    ))}
-                  </ul>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section id="contact" class="photo-band" aria-labelledby="contact-heading">
         <img
           class="photo-band__media"
@@ -421,8 +421,8 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
       */}
       <nav aria-label="Section" class="site-footer__nav">
         <a href="#about">About</a>
-        <a href="#projects">Projects</a>
         <a href="#experience">Experience</a>
+        <a href="#projects">Projects</a>
         <a href="#contact">Contact</a>
       </nav>
       <p class="site-footer__contact">
