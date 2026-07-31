@@ -27,7 +27,7 @@ import { gzipSync } from 'node:zlib'
 import {
   hasAstroIsland,
   extractReferences,
-  extractInlineModuleScripts,
+  extractInlineExecutableScripts,
   assertNotSilentZero,
   SilentZeroBudgetError,
   computeBudgetReport,
@@ -53,18 +53,24 @@ const FIXTURE_HTML_WITH_ISLAND = `<!doctype html>
 const FIXTURE_HTML_NO_ISLAND = `<!doctype html>
 <html><body><p>static shell, no islands at all</p></body></html>`
 
-// A fixture with three script shapes that must be told apart: an inline
-// module script with a real body (must be counted), a module script that
-// points at an external file via src (must NOT be double counted - its
-// bytes are already covered by extractReferences/buildReachableSet), and a
-// classic inline script with no type attribute at all (not a module, must
-// be ignored by this extractor even though it is real executable JS).
-const FIXTURE_HTML_WITH_INLINE_MODULE = `<!doctype html>
+// A fixture with four script shapes that must be told apart:
+//   - an inline module script with a real body (must be counted - JS)
+//   - a module script that points at an external file via src (must NOT
+//     be counted here - it is already covered by
+//     extractReferences/buildReachableSet, and its inline body is empty
+//     anyway since the src attribute is what a browser actually fetches)
+//   - a classic inline script with no type attribute at all (must be
+//     counted - the HTML default script type IS JavaScript, and this is
+//     exactly the shape of Astro's island bootstrap / hydration runtime)
+//   - a JSON-LD data block (must NOT be counted - it is data, not a
+//     program a browser executes)
+const FIXTURE_HTML_WITH_INLINE_SCRIPTS = `<!doctype html>
 <html>
 <body>
 <script type="module">const viewToggle = () => { console.log('inline module body') }</script>
 <script type="module" src="/_astro/external.abc123.js"></script>
-<script>console.log('classic inline script, not a module, must be ignored')</script>
+<script>console.log('classic inline script, no type attribute, real executable JS')</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Person"}</script>
 </body>
 </html>`
 
@@ -91,24 +97,36 @@ describe('extractReferences finds all four Astro reference forms', () => {
   })
 })
 
-describe('extractInlineModuleScripts finds inline <script type="module"> bodies', () => {
+describe('extractInlineExecutableScripts finds every inline script a browser executes as JS', () => {
   it('extracts the body text of an inline module script with no src', () => {
-    const scripts = extractInlineModuleScripts(FIXTURE_HTML_WITH_INLINE_MODULE)
+    const scripts = extractInlineExecutableScripts(FIXTURE_HTML_WITH_INLINE_SCRIPTS)
     expect(scripts).toContain("const viewToggle = () => { console.log('inline module body') }")
   })
 
   it('does not extract a module script that has a src attribute (already an external reference)', () => {
-    const scripts = extractInlineModuleScripts(FIXTURE_HTML_WITH_INLINE_MODULE)
+    const scripts = extractInlineExecutableScripts(FIXTURE_HTML_WITH_INLINE_SCRIPTS)
     expect(scripts.some((src) => src.includes('external.abc123'))).toBe(false)
   })
 
-  it('does not extract a classic inline script with no type attribute', () => {
-    const scripts = extractInlineModuleScripts(FIXTURE_HTML_WITH_INLINE_MODULE)
-    expect(scripts.some((src) => src.includes('classic inline script'))).toBe(false)
+  // This is the new failing-test-first case: a classic inline script with
+  // no type attribute at all is real executable JS (the HTML default
+  // script type IS JavaScript) - it must now be COUNTED, reversing the
+  // previous (too narrow) module-only behavior.
+  it('extracts a classic inline script with no type attribute (real executable JS)', () => {
+    const scripts = extractInlineExecutableScripts(FIXTURE_HTML_WITH_INLINE_SCRIPTS)
+    expect(scripts.some((src) => src.includes('classic inline script'))).toBe(true)
   })
 
-  it('returns an empty array for HTML with no inline module scripts', () => {
-    expect(extractInlineModuleScripts(FIXTURE_HTML_NO_ISLAND)).toEqual([])
+  // This is the other new failing-test-first case: a JSON-LD block is
+  // structured data, not a program - it must never be counted as JS even
+  // though it lives inside a <script> tag.
+  it('does not extract a type="application/ld+json" data block', () => {
+    const scripts = extractInlineExecutableScripts(FIXTURE_HTML_WITH_INLINE_SCRIPTS)
+    expect(scripts.some((src) => src.includes('@context'))).toBe(false)
+  })
+
+  it('returns an empty array for HTML with no inline scripts at all', () => {
+    expect(extractInlineExecutableScripts(FIXTURE_HTML_NO_ISLAND)).toEqual([])
   })
 })
 
@@ -203,21 +221,32 @@ describe('computeBudgetReport against the real dist/ build', () => {
     }
   })
 
-  // This is the failing-test-first case the task calls for. The real
-  // dist/index.html has at least one inline <script type="module"> (the
-  // view-toggle module) that is emitted directly into the HTML response
-  // rather than as a separate file - so it is exactly the kind of JS the
-  // module header claims to bound, but the OLD extractor never looked at
-  // it. Computed independently here (via a plain regex, not the function
-  // under test) so this test does not just restate the implementation.
-  it('the budgeted total includes gzipped inline module-script bytes (RED before the fix)', () => {
+  // This is the failing-test-first case for the SECOND round of this gate:
+  // the real dist/index.html has both an inline module script AND two
+  // classic inline scripts (Astro's intersection-observer bootstrap and
+  // its hydration runtime) with no type attribute - all real executable
+  // JS emitted directly into the HTML response. A JSON-LD data block is
+  // also present and must be excluded. Computed independently here (via a
+  // plain regex, not the function under test) so this test does not just
+  // restate the implementation.
+  it('the budgeted total includes gzipped bytes for every executable inline script, not only type="module" (RED before the fix)', () => {
     const html = readFileSync(`${distDir}/index.html`, 'utf8')
-    const inlineModuleBodies = [
-      ...html.matchAll(/<script\s+type="module"(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi),
-    ].map((match) => match[1])
-    expect(inlineModuleBodies.length).toBeGreaterThan(0)
+    const scriptTagRe = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
+    const expectedBodies: string[] = []
+    let match: RegExpExecArray | null
+    while ((match = scriptTagRe.exec(html))) {
+      const openAttrs = match[1]
+      const hasSrc = /\bsrc\s*=/i.test(openAttrs)
+      const typeMatch = /\btype\s*=\s*"([^"]*)"/i.exec(openAttrs)
+      const type = typeMatch ? typeMatch[1] : ''
+      const isDataType = /json|importmap/i.test(type)
+      if (!hasSrc && !isDataType) expectedBodies.push(match[2])
+    }
+    // The real build has 2 classic scripts (no type) + 1 module script =
+    // 3 executable inline blocks, excluding the JSON-LD data block.
+    expect(expectedBodies.length).toBeGreaterThanOrEqual(3)
 
-    const inlineBytes = inlineModuleBodies.reduce(
+    const inlineBytes = expectedBodies.reduce(
       (sum, body) => sum + gzipSync(Buffer.from(body, 'utf8')).length,
       0,
     )
@@ -231,13 +260,13 @@ describe('computeBudgetReport against the real dist/ build', () => {
     // (the task requires the existing external-file logic not be silently
     // redefined), so it should still equal the external sum exactly.
     expect(report.reachableBytes).toBe(externalReachableBytes)
-    // The number actually gated against the budget must include the inline
-    // module bytes on top of the external reachable set.
+    // The number actually gated against the budget must include ALL
+    // executable inline script bytes on top of the external reachable set.
     expect(report.budgetedBytes).toBe(externalReachableBytes + inlineBytes)
-    expect(report.inlineModuleBytes).toBe(inlineBytes)
+    expect(report.inlineScriptBytes).toBe(inlineBytes)
   })
 
-  it('still passes at the real 150 KB budget once inline module bytes are included', () => {
+  it('still passes at the real 150 KB budget once all executable inline scripts are included', () => {
     const report = computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })
     expect(report.passed).toBe(report.budgetedBytes <= DEFAULT_BUDGET_BYTES)
     expect(report.passed).toBe(true)
