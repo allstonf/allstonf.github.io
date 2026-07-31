@@ -1,12 +1,14 @@
 ---
-// src/pages/index.astro - the v2 Astro shell.
+// src/pages/index.astro - the v3 Astro shell.
 //
-// Task 1 of the rebuild: render the same canonical content/profile.json
-// that v1's build/build.py renders into index.html, as a static Astro
-// page with no client-side JavaScript. content/profile.json stays the
-// single source of truth for both the human surface (this page) and
-// the agent surfaces (llms.txt, api/profile.json - built in Task 2), so
-// the two audiences cannot drift apart.
+// V3 reimplements the 2020 grayscale visual language (see /DESIGN.md)
+// over the same canonical content/profile.json this page has rendered
+// since Task 1. content/profile.json stays the single source of truth
+// for both the human surface (this page) and the agent surfaces
+// (llms.txt, api/profile.json), so the two audiences cannot drift
+// apart. This task changes only presentation: the frontmatter logic
+// below - validation, URL scheme checks, JSON-LD construction - is
+// unchanged from Task 1/2.
 //
 // The load-bearing requirement here is the VISIBLE current-role line.
 // A controlled test found five major AI agents (ChatGPT, Claude,
@@ -62,15 +64,14 @@ const validatedProjects = (projects ?? []).map((project) => ({
 const featuredProjects = validatedProjects.filter((project) => project.featured)
 const otherProjects = validatedProjects.filter((project) => !project.featured)
 
-// person.education was, until this task, consumed ONLY by the JSON-LD
-// alumniOf block below and never rendered as visible text - the exact
-// failure shape the visible-current-role-line rule above exists to
-// prevent, just for a different field. A controlled test found five
-// major AI agents (ChatGPT, Claude, Perplexity, Gemini, Copilot) all
-// missed data that existed only inside JSON-LD, so it is rendered in
-// the header meta record below, sourced from profile.json rather than
-// hardcoded, and its URL runs through the same validateUrl() gate as
-// every other href on this page.
+// person.education is rendered as visible text in the About band
+// below (a <p class="band__meta">), not just inside the JSON-LD
+// alumniOf block - the exact failure shape the visible-current-role-
+// line rule above exists to prevent, just for a different field. A
+// controlled test found five major AI agents all missed data that
+// existed only inside JSON-LD, so it is sourced from profile.json
+// rather than hardcoded, and its URL runs through the same
+// validateUrl() gate as every other href on this page.
 const educationUrl = person.education?.institution_url
   ? validateUrl(person.education.institution_url, 'person.education.institution_url')
   : null
@@ -112,20 +113,11 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark" />
     <title>{site.title}</title>
     <meta name="description" content={site.description} />
     <meta name="author" content={person.name} />
-    <!--
-      Two theme-color tags, split by media query, so the browser chrome
-      matches whichever palette prefers-color-scheme actually renders.
-      The dark value is site.theme_color from profile.json (the single
-      content model); the light value is presentation-only, so it is
-      set here rather than added to that content model, and matches
-      tokens.css's light --color-bg exactly.
-    -->
-    <meta name="theme-color" content={site.theme_color} media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content={site.theme_color} />
     <link rel="canonical" href={siteUrl} />
     <!--
       The markdown twin of this page (src/pages/index.md.ts), built
@@ -159,84 +151,37 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
 
-    <header class="site-header">
-      <div class="site-header__inner">
-        <div class="site-header__top">
-          <nav aria-label="Section" class="site-nav">
-            <a href="#about">about</a>
-            <a href="#projects">projects</a>
-            <a href="#experience">experience</a>
-            <a href="#loop">the loop</a>
-          </nav>
-          <div class="topbar__utility">
-            <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
-              {person.resume.label}
-            </a>
-            {/*
-              Ships as a plain link: no aria-pressed, no role. Both are
-              invalid on the implicit role=link of an <a href> and axe
-              flags aria-pressed here as aria-allowed-attr, impact
-              critical. initViewToggle upgrades this into a real button
-              (role, aria-pressed, Space activation) at init time, so
-              the attributes exist only when the scripting that makes
-              them true is actually running. The label is constant;
-              state is carried by the dot, the border, and aria-pressed.
-            */}
-            <a
-              class="topbar__view-toggle"
-              data-view-toggle
-              href="/index.md"
-              title="See the markdown representation this page serves to AI agents"
-            >agent view</a>
-          </div>
-        </div>
-
-        <p class="hero__eyebrow">person</p>
-        <h1 class="hero__name">{person.name}</h1>
-        <p class="hero__tagline">{person.tagline}</p>
-
-        <dl class="meta-record">
-          <div class="meta-record__row">
-            <dt>role</dt>
-            <dd>
-              {currentRole.title} at <strong class="meta-record__employer">{currentRole.employer}</strong>
-              {!currentRole.end && <span class="status-pill">current</span>}
-            </dd>
-          </div>
-          <div class="meta-record__row">
-            <dt>based</dt>
-            <dd>{person.location}</dd>
-          </div>
-          {person.education && (
-            <div class="meta-record__row">
-              <dt>education</dt>
-              <dd>
-                {person.education.credential},{' '}
-                {educationUrl ? (
-                  <a href={educationUrl} rel="noopener" target="_blank">
-                    {person.education.institution}
-                  </a>
-                ) : (
-                  person.education.institution
-                )}
-                {person.education.detail && (
-                  <span class="meta-record__detail"> ({person.education.detail})</span>
-                )}
-              </dd>
-            </div>
-          )}
-        </dl>
-
-        <p class="hero__contact">
-          <a href={`mailto:${person.email}`}>{person.email}</a>
-        </p>
-        <nav class="hero__social" aria-label="Social profiles">
-          {validatedProfiles.map((profileLink) => (
-            <a href={profileLink.url} rel="me noopener" target="_blank">
-              {profileLink.label}
-            </a>
-          ))}
+    <header class="site-nav-bar">
+      <div class="site-nav-bar__inner">
+        <a class="site-nav-bar__brand" href="#">{person.name}</a>
+        <nav aria-label="Section" class="site-nav">
+          <a href="#about">About</a>
+          <a href="#projects">Projects</a>
+          <a href="#experience">Experience</a>
+          <a href="#loop">The Loop</a>
+          <a href="#contact">Contact</a>
         </nav>
+        <div class="topbar__utility">
+          <a class="topbar__resume" href={resumeUrl} rel="noopener" target="_blank">
+            {person.resume.label}
+          </a>
+          {/*
+            Ships as a plain link: no aria-pressed, no role. Both are
+            invalid on the implicit role=link of an <a href> and axe
+            flags aria-pressed here as aria-allowed-attr, impact
+            critical. initViewToggle upgrades this into a real button
+            (role, aria-pressed, Space activation) at init time, so
+            the attributes exist only when the scripting that makes
+            them true is actually running. The label is constant;
+            state is carried by the dot, the border, and aria-pressed.
+          */}
+          <a
+            class="topbar__view-toggle"
+            data-view-toggle
+            href="/index.md"
+            title="See the markdown representation this page serves to AI agents"
+          >agent view</a>
+        </div>
       </div>
     </header>
 
@@ -248,112 +193,147 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
     <p class="visually-hidden" role="status" data-view-status></p>
 
     <main id="main-content" data-view-target>
-      <section id="about" class="section" aria-labelledby="about-heading">
-        <div class="section__inner reveal">
-          <p class="section__kicker">about</p>
-          <div>
-            <h2 id="about-heading">About</h2>
-            <div class="about-body">
-              {about.map((paragraph) => (
-                <p>{paragraph}</p>
-              ))}
-            </div>
-          </div>
+      <section id="hero" class="photo-band hero" aria-label="Introduction">
+        <img
+          class="photo-band__media"
+          src="/img/hero.jpg"
+          alt="A grayscale coastline at dusk: fog-layered hills behind waves breaking over dark rocks."
+          fetchpriority="high"
+        />
+        <div class="photo-band__overlay" aria-hidden="true"></div>
+        <div class="photo-band__inner">
+          <h1 class="hero__name">{person.name}</h1>
+          <p class="band__lede">
+            {currentRole.title} at <strong>{currentRole.employer}</strong>
+          </p>
+          <a class="hero__scroll-cue" href="#about" aria-label="Scroll to the About section">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </a>
         </div>
       </section>
 
-      <section id="projects" class="section" aria-labelledby="projects-heading">
-        <div class="section__inner section__inner--wide">
-          <p class="section__kicker">projects</p>
-          <div>
-            <h2 id="projects-heading">Projects</h2>
-
-            <div class="projects-featured">
-              {featuredProjects.map((project) => (
-                <article
-                  class="project-card reveal"
-                  id={`project-${project.slug}`}
-                  aria-labelledby={`project-${project.slug}-heading`}
-                >
-                  <h3 id={`project-${project.slug}-heading`} class="project-card__name">
-                    {project.name}
-                  </h3>
-                  <p class="project-card__summary">{project.summary}</p>
-                  {project.outcome && <p class="project-card__outcome">{project.outcome}</p>}
-                  <ul class="project-card__bullets">
-                    {project.bullets.map((bullet) => (
-                      <li>{bullet}</li>
-                    ))}
-                  </ul>
-                  <ul class="project-card__stack" aria-label="Technology stack">
-                    {project.stack.map((item) => (
-                      <li class="stack-item">{item}</li>
-                    ))}
-                  </ul>
-                  {project.links && project.links.length > 0 && (
-                    <p class="project-card__links">
-                      {project.links.map((link) => (
-                        <a href={link.url} rel="noopener" target="_blank">
-                          {link.label}
-                        </a>
-                      ))}
-                    </p>
-                  )}
-                </article>
-              ))}
-            </div>
-
-            {otherProjects.length > 0 && (
-              <div class="projects-other">
-                <p class="projects-other__label">also</p>
-                <div class="projects-other-list">
-                  {otherProjects.map((project) => (
-                    <article
-                      class="project-row reveal"
-                      id={`project-${project.slug}`}
-                      aria-labelledby={`project-${project.slug}-heading`}
-                    >
-                      <h3 id={`project-${project.slug}-heading`} class="project-row__name">
-                        {project.name}
-                      </h3>
-                      <p class="project-row__summary">{project.summary}</p>
-                      <div class="project-row__meta">
-                        <ul class="project-card__stack" aria-label="Technology stack">
-                          {project.stack.map((item) => (
-                            <li class="stack-item">{item}</li>
-                          ))}
-                        </ul>
-                        {project.links && project.links.length > 0 && (
-                          <p class="project-row__links">
-                            {project.links.map((link) => (
-                              <a href={link.url} rel="noopener" target="_blank">
-                                {link.label}
-                              </a>
-                            ))}
-                          </p>
-                        )}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </div>
+      <section id="about" class="band" aria-labelledby="about-heading">
+        <div class="band__inner reveal">
+          <p class="band__kicker">About</p>
+          <h2 id="about-heading">About</h2>
+          <p class="band__meta">
+            {person.location}
+            {person.education && (
+              <>
+                {' '}&middot;{' '}
+                {person.education.credential},{' '}
+                {educationUrl ? (
+                  <a href={educationUrl} rel="noopener" target="_blank">
+                    {person.education.institution}
+                  </a>
+                ) : (
+                  person.education.institution
+                )}
+              </>
             )}
+          </p>
+          <div class="band__prose">
+            {about.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
           </div>
         </div>
       </section>
 
-      <section id="experience" class="section" aria-labelledby="experience-heading">
-        <div class="section__inner">
-          <p class="section__kicker">experience</p>
+      <section id="projects" class="band" aria-labelledby="projects-heading">
+        <div class="band__inner reveal">
+          <p class="band__kicker">Projects</p>
+          <h2 id="projects-heading">Projects</h2>
+
+          <div class="projects-featured">
+            {featuredProjects.map((project) => (
+              <article
+                class="project-card"
+                id={`project-${project.slug}`}
+                aria-labelledby={`project-${project.slug}-heading`}
+              >
+                <h3 id={`project-${project.slug}-heading`} class="project-card__name">
+                  {project.name}
+                </h3>
+                <p class="project-card__summary">{project.summary}</p>
+                {project.outcome && <p class="project-card__outcome">{project.outcome}</p>}
+                <ul class="project-card__bullets">
+                  {project.bullets.map((bullet) => (
+                    <li>{bullet}</li>
+                  ))}
+                </ul>
+                <ul class="project-card__stack" aria-label="Technology stack">
+                  {project.stack.map((item) => (
+                    <li class="stack-item">{item}</li>
+                  ))}
+                </ul>
+                {project.links && project.links.length > 0 && (
+                  <p class="project-card__links">
+                    {project.links.map((link) => (
+                      <a href={link.url} rel="noopener" target="_blank">
+                        {link.label}
+                      </a>
+                    ))}
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+
+          {otherProjects.length > 0 && (
+            <div class="projects-other">
+              <p class="projects-other__label">Also</p>
+              <div class="projects-other-list">
+                {otherProjects.map((project) => (
+                  <article
+                    class="project-row"
+                    id={`project-${project.slug}`}
+                    aria-labelledby={`project-${project.slug}-heading`}
+                  >
+                    <h3 id={`project-${project.slug}-heading`} class="project-row__name">
+                      {project.name}
+                    </h3>
+                    <p class="project-row__summary">{project.summary}</p>
+                    <div class="project-row__meta">
+                      <ul class="project-card__stack" aria-label="Technology stack">
+                        {project.stack.map((item) => (
+                          <li class="stack-item">{item}</li>
+                        ))}
+                      </ul>
+                      {project.links && project.links.length > 0 && (
+                        <p class="project-row__links">
+                          {project.links.map((link) => (
+                            <a href={link.url} rel="noopener" target="_blank">
+                              {link.label}
+                            </a>
+                          ))}
+                        </p>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section id="experience" class="band" aria-labelledby="experience-heading">
+        <div class="band__inner reveal">
+          <p class="band__kicker">Experience</p>
+          <h2 id="experience-heading">Experience</h2>
           <div class="timeline">
             {experience.map((job) => (
               <article
-                class:list={['experience-entry reveal', { 'experience-entry--current': !job.end }]}
+                class:list={['experience-entry', { 'experience-entry--current': !job.end }]}
               >
                 <span class="experience-entry__marker" aria-hidden="true"></span>
                 <div>
                   <p class="experience-entry__meta">
                     <time datetime={job.start}>{formatDateRange(job.start, job.end)}</time> &middot; {job.location}
+                    {!job.end && <span class="experience-entry__current-tag">Current</span>}
                   </p>
                   <h3>{job.title}</h3>
                   <p class="experience-entry__employer">{job.employer}</p>
@@ -368,77 +348,97 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
           </div>
         </div>
       </section>
-      <section id="loop" class="section" aria-labelledby="loop-heading">
-        <div class="section__inner section__inner--wide">
-          <p class="section__kicker">loop</p>
-          <div>
-            <h2 id="loop-heading">The scoring loop</h2>
-            <p class="loop-intro">
-              A job-search scoring rubric has taken nine logged changes across four
-              retrospectives. Not one of those changes ever mutated a component weight -
-              every entry below says so explicitly. This is the full record, rendered
-              from the same log the interactive panel further down reads from.
-            </p>
 
-            <h3>Component weights</h3>
-            <dl class="loop-weights-static">
-              {loop.weights.map((w) => (
-                <div class="loop-weights-static__row">
-                  <dt>{w.component}</dt>
-                  <dd>{w.weight}%</dd>
-                </div>
-              ))}
-            </dl>
+      <section id="loop" class="band" aria-labelledby="loop-heading">
+        <div class="band__inner reveal">
+          <p class="band__kicker">The Loop</p>
+          <h2 id="loop-heading">The Scoring Loop</h2>
+          <p class="loop-intro">
+            A job-search scoring rubric has taken nine logged changes across four
+            retrospectives. Not one of those changes ever mutated a component weight -
+            every entry below says so explicitly. This is the full record, rendered
+            from the same log the interactive panel further down reads from.
+          </p>
 
-            <h3>Change log</h3>
-            <ol class="loop-changelog">
-              {loop.changes.map((change) => (
-                <li>
-                  <span class="loop-kind-badge">{change.kind}</span>
-                  <p>{change.summary}</p>
-                </li>
-              ))}
-            </ol>
+          <h3>Component weights</h3>
+          <dl class="loop-weights-static">
+            {loop.weights.map((w) => (
+              <div class="loop-weights-static__row">
+                <dt>{w.component}</dt>
+                <dd>{w.weight}%</dd>
+              </div>
+            ))}
+          </dl>
 
-            <h3>Why no weight has ever moved</h3>
-            <ul class="loop-reasons">
-              {loop.whyNoTuning.reasons.map((reason) => (
-                <li>{reason}</li>
-              ))}
-            </ul>
-            <p class="loop-rule">{loop.whyNoTuning.rule}</p>
+          <h3>Change log</h3>
+          <ol class="loop-changelog">
+            {loop.changes.map((change) => (
+              <li>
+                <span class="loop-kind-badge">{change.kind}</span>
+                <p>{change.summary}</p>
+              </li>
+            ))}
+          </ol>
 
-            <h3>Try it yourself</h3>
-            <p class="loop-intro">
-              The panel below lets you attempt to move a weight and watch the same rule
-              evaluate the attempt live. It needs JavaScript to run; everything above it
-              is the complete record either way.
-            </p>
-            <LoopExplainer client:visible />
-          </div>
+          <h3>Why no weight has ever moved</h3>
+          <ul class="loop-reasons">
+            {loop.whyNoTuning.reasons.map((reason) => (
+              <li>{reason}</li>
+            ))}
+          </ul>
+          <p class="loop-rule">{loop.whyNoTuning.rule}</p>
+
+          <h3>Try it yourself</h3>
+          <p class="loop-mode-panel__intro">
+            The panel below lets you attempt to move a weight and watch the same rule
+            evaluate the attempt live. It needs JavaScript to run; everything above it
+            is the complete record either way.
+          </p>
+          <LoopExplainer client:visible />
+        </div>
+      </section>
+
+      <section id="contact" class="photo-band" aria-labelledby="contact-heading">
+        <img
+          class="photo-band__media"
+          src="/img/contact.jpg"
+          alt="A grayscale sea stack rising from a beach at low tide, waves receding around it."
+        />
+        <div class="photo-band__overlay" aria-hidden="true"></div>
+        <div class="photo-band__inner">
+          <p class="band__kicker">Contact</p>
+          <h2 id="contact-heading">Get in Touch</h2>
+          <p class="band__lede">
+            <a href={`mailto:${person.email}`}>{person.email}</a>
+          </p>
+          <nav class="contact-links" aria-label="Social profiles">
+            {validatedProfiles.map((profileLink) => (
+              <a href={profileLink.url} rel="me noopener" target="_blank">
+                {profileLink.label}
+              </a>
+            ))}
+          </nav>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <div class="site-footer__inner">
-        <p class="site-footer__name">{person.name}</p>
-        <p class="site-footer__contact">
-          <a href={`mailto:${person.email}`}>{person.email}</a>
-        </p>
-        <!--
-          A VISIBLE freshness signal, not just JSON-LD's dateModified.
-          Freshness is a measured citation factor (a 30-89 day-old page
-          is the observed sweet spot), and the same visible-text
-          requirement as the current-role line above applies here too -
-          a controlled test found five major AI agents all missed data
-          that existed only inside a JSON-LD block, so the fact has to
-          be readable in plain text as well. Sourced from
-          content/profile.json's _meta.last_updated, never the wall
-          clock, so a rebuild of unchanged content ships the same bytes.
-        -->
-        <p class="site-footer__meta">Last updated {_meta.last_updated}</p>
-      </div>
+      <p class="site-footer__name">{person.name}</p>
+      <p class="site-footer__contact">
+        <a href={`mailto:${person.email}`}>{person.email}</a>
+      </p>
+      <!--
+        A VISIBLE freshness signal, not just JSON-LD's dateModified.
+        Freshness is a measured citation factor (a 30-89 day-old page
+        is the observed sweet spot), and the same visible-text
+        requirement as the current-role line above applies here too -
+        a controlled test found five major AI agents all missed data
+        that existed only inside a JSON-LD block, so the fact has to
+        be readable in plain text as well. Sourced from
+        content/profile.json's _meta.last_updated, never the wall
+        clock, so a rebuild of unchanged content ships the same bytes.
+      -->
+      <p class="site-footer__meta">Last updated {_meta.last_updated}</p>
     </footer>
 
     <script>

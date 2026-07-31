@@ -1,69 +1,32 @@
 /*
- * tokens.css - design layer for the v2 Astro shell.
+ * tokens.css - design layer for the v3 Astro shell.
  *
- * Direction: monospace-forward, near-monochrome, terminal-and-systems-code
- * vernacular, without simulating a terminal window. The page is styled as
- * a rendered VIEW OF A RECORD (field labels in mono next to values), which
- * is literally what it is - content/profile.json is the single content
- * model this page and the agent surfaces both render. That framing is the
- * signature element: bracketed section labels, a definition-list header,
- * and a status-log treatment for the experience timeline all come from
- * the same idea rather than being decoration bolted onto separate parts.
+ * Direction: Grayscale Revival. A high-contrast black canvas, full-bleed
+ * grayscale photography, uppercase Montserrat headings, and a Lora
+ * reading voice, with one mint accent reserved for interaction. This is
+ * DESIGN.md's "Grayscale Revival" token set applied to V2's content
+ * model - see /DESIGN.md at the repo root for the full rationale; every
+ * value below traces to a named DESIGN.md token or, where DESIGN.md is
+ * silent (an exact px measure, an unlisted h2 size), to grayscale.css,
+ * the original 2020 stylesheet DESIGN.md was authored from. Comments
+ * below cite which.
  *
- * Two font families, both self-hosted as woff2 (zero external requests):
- * Syne for a small number of restrained display moments (the name, the
- * three section headings), DM Mono for everything else, including body
- * copy - a deliberate "monospace-forward" choice rather than reaching for
- * a third, unlisted body face. Prose measure is set in "ch" units, which
- * map to an exact glyph width in a monospace font and read as a small,
- * on-brand technique rather than an arbitrary px value.
- *
- * Color is near-monochrome slate (the same Tailwind Slate family
- * DESIGN.md's dark palette already draws from) with amber (#F59E0B) as
- * the single accent, never diluted onto secondary UI (no teal, no
- * purple, no per-tag rainbow). Light mode is a derived, AA-checked
- * mapping across that same slate scale, not an unrelated palette: amber
- * text specifically needs a darker step (amber-700, #B45309) in light
- * mode to clear 4.5:1 against a light background - #F59E0B itself is
- * only AA-safe as body/link text against a DARK background, so it stays
- * reserved for fills-with-dark-text, borders, and glows once the page is
- * in light mode. See the accent-text token split below.
+ * The v2 "record" aesthetic (Syne, DM Mono as a body face, bracketed
+ * kickers, a two-column label rail) is gone. V3 has one governing
+ * layout idea instead: full-width bands stacked vertically, each a
+ * single centered column, alternating flat black content bands with
+ * photographic bands. See DESIGN.md's Layout section.
  */
 
 /* ---------------------------------------------------------------------
-   Fonts - self-hosted woff2 subsets under public/fonts/, extracted from
-   @fontsource-variable/syne and @fontsource/dm-mono (both MIT/OFL,
-   npm-installed once to source the exact, already-subsetted files, then
-   copied here so the build has no runtime dependency on either package
-   and ships nothing over the network at request time).
+   Fonts - self-hosted woff2, already extracted under public/fonts/ by
+   Task 1 (a13ffdc). Montserrat 700 (the ONLY weight the source
+   stylesheet uses for headings/nav/buttons - grayscale.css never sets
+   font-weight: 400 Montserrat as a face, "Montserrat" 400 below is a
+   synthetic style="normal" reference to the same 700 file, not a
+   second weight) and Lora 400/700 are unchanged from Task 1. Zero
+   external requests: nothing here reaches off-origin.
    ------------------------------------------------------------------ */
-
-@font-face {
-  font-family: 'Syne';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400 800;
-  src: url('/fonts/syne-variable-latin-wght-normal.woff2') format('woff2-variations');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
-    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
-    U+FEFF, U+FFFD;
-}
-
-@font-face {
-  font-family: 'DM Mono';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 400;
-  src: url('/fonts/dm-mono-latin-400-normal.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'DM Mono';
-  font-style: normal;
-  font-display: swap;
-  font-weight: 500;
-  src: url('/fonts/dm-mono-latin-500-normal.woff2') format('woff2');
-}
 
 @font-face {
   font-family: 'Montserrat';
@@ -90,50 +53,85 @@
 }
 
 /* ---------------------------------------------------------------------
-   Tokens - dark is the default palette (DESIGN.md's "OLED Dark -
-   Expedition Log" values, used as-is), light is a derived override
-   under prefers-color-scheme, mapped across the same Slate family.
+   Tokens - DESIGN.md's Grayscale Revival palette. One palette, not a
+   dark/light pair: DESIGN.md's Layout section is explicit that "there
+   is no lighter band anywhere in the source" and this is a
+   near-monochrome black-ground design by definition, not a themeable
+   one. `color-scheme: dark` still tells the browser (form controls,
+   scrollbars) this page is dark-only - that is the "prefers-color-
+   scheme handling" this design has to offer, since it has no second
+   palette to switch to.
    ------------------------------------------------------------------ */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  /* Surfaces - dark default, straight from DESIGN.md. */
-  --color-bg: #020617;
-  --color-surface: #0f172a;
-  --color-card: #1e293b;
-  --color-border: #334155;
-  --color-text: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  /* #64748b (Slate 500) computes to 4.24:1 against this bg - under the
-     4.5:1 AA text minimum, and every usage site (kicker, stack items,
-     experience meta, footer) is 0.75-0.875rem, so the large-text
-     exemption doesn't apply. Nudged toward Slate 400 to 4.68:1 (still
-     comfortably below --color-text-secondary's 7.87:1, so the two
-     remain visually distinct tiers). */
-  --color-text-muted: #6b7b92;
+  /* DESIGN.md colors block, verbatim. */
+  --color-ground: #000000;
+  --color-text: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.8);
+  --color-accent: #42dca3;
+  --color-accent-hover: #1d9b6c;
+  --color-overlay-weak: rgba(255, 255, 255, 0.2);
+  --color-overlay-medium: rgba(255, 255, 255, 0.3);
+  /* The scroll cue's hover wash (DESIGN.md Components > Scroll cue): a
+     third, lighter overlay value distinct from the two above, measured
+     in the source stylesheet at rgba(255,255,255,0.1). Not itself a
+     top-level DESIGN.md color token, but named there and given its
+     exact value. */
+  --color-overlay-wash: rgba(255, 255, 255, 0.1);
 
-  /* Amber - the single accent. --color-accent is for fills, borders,
-     and glows; --color-accent-text is the AA-safe variant for amber
-     used AS TEXT (links, labels, the current-employer highlight). They
-     are the same hex in dark mode, because raw amber already clears
-     4.5:1 against every dark surface above. */
-  --color-accent: #f59e0b;
-  --color-accent-text: #f59e0b;
-  --ink-on-accent: #0b0c0e; /* fixed: dark text placed ON an amber fill, either mode */
+  /* Contrast, checked (DESIGN.md Colors section asks accent be verified
+     before it carries body-sized text): #42DCA3 on #000 computes to
+     ~12:1 by the WCAG relative-luminance formula, clearing AA (4.5:1)
+     and AAA (7:1) at any size. Safe as the color of every inline link
+     below, not just large text/borders/icons. --color-text on
+     --color-ground is 21:1, the sRGB maximum. */
+  --ink-on-accent: #0b0c0e; /* dark text placed ON an accent fill (skip link, hover-inverted buttons) */
 
-  --font-display: 'Syne', ui-sans-serif, sans-serif;
-  --font-body: 'DM Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  /* Same stack as --font-body today, because the body face happens to
-     be a mono. Named separately for the one consumer that needs mono
-     for a SEMANTIC reason rather than an aesthetic one: pre.agent-view
-     renders raw markdown source. If --font-body is ever changed to a
-     proportional face, the source view must not follow it. */
-  --font-mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-display: 'Montserrat', ui-sans-serif, sans-serif;
+  --font-body: 'Lora', ui-serif, Georgia, serif;
+  /* Not a DESIGN.md token: pre.agent-view (the raw-markdown "source"
+     view the agent-view toggle swaps in) is a functional utility
+     surface, not part of the photographic/editorial visual language
+     DESIGN.md governs, and needs a monospace face on the same "show
+     literal characters" grounds v2 had. A system stack costs nothing
+     over the network and adds no new self-hosted font. */
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  --measure: 68ch;
-  --measure-wide: 1100px;
-  --rail-width: 7rem;
+  /* Typography.scale + typography.body, DESIGN.md verbatim for the
+     base values. DESIGN.md's prose ties two breakpoint bumps together
+     at 768px: body copy moves 18px/1.5 -> 20px/1.6 (bodyWide + the
+     published body.lineHeight token, read as the WIDE-breakpoint
+     pair), and paragraphBottom moves 25px -> 35px in the same breath.
+     h1's wide value (100px) is not a named DESIGN.md token but is the
+     literal grayscale.css .brand-heading rule at the same 768px
+     breakpoint - DESIGN.md names grayscale.css as a source alongside
+     itself for exactly this kind of unlisted number. */
+  --text-h1: 40px;
+  --text-h1-wide: 100px;
+  --text-body: 18px;
+  --text-body-wide: 20px;
+  --line-body: 1.5;
+  --line-body-wide: 1.6;
+
+  /* h2 has no DESIGN.md or grayscale.css font-size (the source
+     stylesheet's h1-h6 rule sets only weight/transform/letter-spacing,
+     never a size - band headings inherited the browser default). A
+     later doc fix (fd0b6e0) explicitly removed a FABRICATED h2 size
+     from DESIGN.md for this reason. This value is therefore this
+     file's own reasoned choice, not a DESIGN.md figure: distinctly
+     smaller than h1, generous enough to read as a band's title from a
+     normal scroll distance. */
+  --text-h2: clamp(1.75rem, 1.35rem + 1.6vw, 2.75rem);
+
+  --weight-display: 700;
+  --letter-display: 1px;
+
+  --space-section-y: 100px; /* spacing.sectionY */
+  --space-heading-bottom: 35px; /* spacing.headingBottom */
+  --space-paragraph-bottom: 25px; /* spacing.paragraphBottom, base */
+  --space-paragraph-bottom-wide: 35px; /* spacing.paragraphBottom, 768px */
 
   --space-1: 0.5rem;
   --space-2: 1rem;
@@ -141,30 +139,23 @@
   --space-4: 2.5rem;
   --space-5: 4rem;
 
-  --radius: 4px;
-  --radius-pill: 999px;
+  /* rounded.circle / rounded.pill, DESIGN.md verbatim. Everything else
+     in the source is square (border-radius: 0 on buttons - see Shapes),
+     so --radius stays 0: the deliberate absence of a corner-radius
+     scale, not an oversight. */
+  --radius: 0;
+  --radius-pill: 9999px;
+  --radius-circle: 50%;
 
-  --focus-ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent);
-}
+  /* Not in DESIGN.md: this file's own layout constants. --nav-height
+     sizes the fixed nav band (see Nav below); --measure/--measure-wide
+     bound prose and card-row width the same way v2's did, just recut
+     for Lora's wider average glyph. */
+  --nav-height: 4.5rem;
+  --measure: 64ch;
+  --measure-wide: 60rem;
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-bg: #f8fafc;
-    --color-surface: #f1f5f9;
-    --color-card: #ffffff;
-    --color-border: #e2e8f0;
-    --color-text: #0f172a;
-    --color-text-secondary: #475569;
-    /* Unlike the dark-mode pair above, #64748b against this bg already
-       clears AA at 4.55:1 - checked alongside the dark-mode fix, left
-       unchanged. */
-    --color-text-muted: #64748b;
-
-    /* Raw amber fails AA as text against a light background (~2.1:1).
-       amber-700 (#b45309) is the same family, darkened, and clears
-       5:1 against both #ffffff and #f8fafc. */
-    --color-accent-text: #b45309;
-  }
+  --focus-ring: 0 0 0 2px var(--color-ground), 0 0 0 4px var(--color-accent);
 }
 
 /* ---------------------------------------------------------------------
@@ -177,84 +168,149 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto; /* anchor jumps are instant; see prefers-reduced-motion note below */
 }
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  background: var(--color-ground);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 1rem;
-  line-height: 1.7;
+  font-size: var(--text-body);
+  line-height: var(--line-body);
+  padding-top: var(--nav-height); /* clears the fixed nav (see .site-nav-bar) */
+}
+
+@media (min-width: 768px) {
+  body {
+    font-size: var(--text-body-wide);
+    line-height: var(--line-body-wide);
+  }
 }
 
 h1,
 h2,
 h3 {
-  margin: 0 0 var(--space-2);
-  font-weight: 700;
+  margin: 0 0 var(--space-heading-bottom);
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+  line-height: 1.1;
   text-wrap: balance;
 }
 
-h1,
+h1 {
+  font-size: var(--text-h1);
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: var(--text-h1-wide);
+  }
+}
+
 h2 {
-  font-family: var(--font-display);
-  line-height: 1.1;
-  letter-spacing: -0.01em;
+  font-size: var(--text-h2);
 }
 
 h3 {
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 1.0625rem;
-  letter-spacing: -0.01em;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
 }
 
 p {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-paragraph-bottom);
 }
 
-ul {
+@media (min-width: 768px) {
+  p {
+    margin-bottom: var(--space-paragraph-bottom-wide);
+  }
+}
+
+ul,
+ol {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* Link. DESIGN.md Components > Link: accent at rest, accentHover on
+   hover/focus, no underline - this is the rule that makes "if it is
+   mint, it is interactive" true everywhere EXCEPT the nav, which
+   DESIGN.md's Nav section explicitly carves out to text/textMuted
+   instead (see .site-nav a below, which overrides this). */
 a {
-  color: var(--color-text);
-  text-decoration-color: var(--color-border);
-  text-underline-offset: 0.2em;
+  color: var(--color-accent);
+  text-decoration: none;
 }
 
-a:hover {
-  color: var(--color-accent-text);
-  text-decoration-color: currentColor;
+a:hover,
+a:focus-visible {
+  color: var(--color-accent-hover);
 }
 
-/* Base button reset. LoopExplainer is the first place this page uses a
-   real <button>, so this is the first button rule in the file - font
-   and color are pulled from the same tokens the rest of the page uses
-   rather than left at browser defaults, so a button reads as part of
-   this design system and not as an unstyled form control. */
+/* Button base. DESIGN.md Typography: Montserrat "appears on headings,
+   the nav, and buttons in the source stylesheet, never in paragraph
+   text" - weight 400 here (not the 700 headings use), matching
+   grayscale.css's .btn rule exactly (uppercase, Montserrat, weight 400,
+   border-radius 0). Every native <button> on the page (LoopExplainer's
+   mode tabs, walkthrough prev/next, and any future control) inherits
+   this rather than browser defaults. */
 button {
-  font-family: var(--font-body);
-  font-size: inherit;
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+  font-size: 0.8125rem;
   color: var(--color-text);
   background: transparent;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-overlay-medium);
   border-radius: var(--radius);
   cursor: pointer;
   min-height: 44px;
-  padding: 0.4rem 0.9rem;
+  padding: 0.5rem 1rem;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-button:hover:not(:disabled) {
+button:hover:not(:disabled),
+button[aria-pressed='true'] {
   border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+}
+
+select,
+input[type='range'] {
+  font-family: var(--font-body);
+  accent-color: var(--color-accent);
+}
+
+fieldset {
+  border: 1px solid var(--color-overlay-medium);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-2);
+  margin: 0;
+}
+
+legend {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+  color: var(--color-text-muted);
+  padding: 0 0.3rem;
 }
 
 a:focus-visible,
@@ -263,19 +319,12 @@ input:focus-visible,
 select:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
-  border-radius: 2px;
 }
 
 time {
   font-variant-numeric: tabular-nums;
 }
 
-/* Visually hidden but still announced. Used by the [data-view-status]
-   live region, which must stay in the accessibility tree while taking
-   no visual space. Not display:none and not visibility:hidden - both
-   remove the element from the accessibility tree, which would silence
-   the announcement entirely. The 1px clipped-rect approach is the
-   long-standing pattern that survives that constraint. */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -288,19 +337,21 @@ time {
   white-space: nowrap;
 }
 
-/* Skip link - hidden until keyboard-focused; unchanged behavior from
-   Task 1, restyled to the new tokens. */
+/* Skip link. Square (per --radius: 0), inverted (dark text on the
+   accent fill) so it reads as a real control the moment it appears. */
 .skip-link {
-  position: absolute;
+  position: fixed;
   top: -3rem;
   left: var(--space-2);
-  z-index: 100;
+  z-index: 200;
   background: var(--color-accent);
   color: var(--ink-on-accent);
   padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius);
-  font-family: var(--font-body);
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+  font-size: 0.8125rem;
   transition: top 0.15s ease-out;
 }
 
@@ -315,234 +366,343 @@ time {
 }
 
 /* ---------------------------------------------------------------------
-   Layout scaffold - a label rail beside a content column, used for
-   every major section instead of a centered single column or a
-   symmetric card grid. The label stays in view via position: sticky as
-   you scroll a long section - not an animation, so it needs no
-   reduced-motion guard.
+   Nav. DESIGN.md Components > Nav: "an uppercase Montserrat nav in
+   {colors.ground}, with {colors.text} links." Rendered always-solid
+   (not transparent-over-hero, collapsing to solid on scroll the way
+   the 2020 jQuery build did): that scroll-triggered class swap needed
+   a JS scroll listener this budget-constrained, JS-free-by-default
+   nav does not add. The always-solid state is exactly the "collapsed"
+   state DESIGN.md itself describes owning {colors.overlayMedium}'s
+   border-bottom, so this is that state, permanently, achieved in CSS
+   alone.
    ------------------------------------------------------------------ */
 
-.site-header,
-.section,
-.site-footer {
-  padding: var(--space-4) var(--space-2);
-  border-bottom: 1px solid var(--color-border);
+.site-nav-bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100;
+  height: var(--nav-height);
+  background: var(--color-ground);
+  border-bottom: 1px solid var(--color-overlay-medium);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
 }
 
-.site-footer {
-  border-bottom: none;
-}
-
-.site-header__inner,
-.section__inner,
-.site-footer__inner {
+/*
+   Nowrap + horizontal scroll rather than flex-wrap. A fixed nav has a
+   fixed height (--nav-height, matched by body's padding-top and every
+   .band's scroll-margin-top below); letting its contents wrap to a
+   second line at narrow widths would push that second line out from
+   under the solid background into the hero photo behind it. Scrolling
+   the single row sideways keeps the height promise exactly instead.
+*/
+.site-nav-bar__inner {
+  height: 100%;
   max-width: var(--measure-wide);
   margin: 0 auto;
-}
-
-.section__inner {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-2) var(--space-3);
-}
-
-@media (min-width: 760px) {
-  .section__inner {
-    grid-template-columns: var(--rail-width) 1fr;
-    column-gap: var(--space-4);
-  }
-
-  .section__kicker {
-    position: sticky;
-    top: var(--space-3);
-  }
-}
-
-.section__kicker {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
-  color: var(--color-text-muted);
-}
-
-.section__kicker::before {
-  content: '[';
-  color: var(--color-border);
-}
-
-.section__kicker::after {
-  content: ']';
-  color: var(--color-border);
-}
-
-.section-divider {
-  border: none;
-  border-top: 1px solid var(--color-border);
-}
-
-/* ---------------------------------------------------------------------
-   Header / hero
-   ------------------------------------------------------------------ */
-
-.site-header__top {
+  padding: 0 var(--space-2);
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  margin-bottom: var(--space-4);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.site-nav-bar__brand {
+  flex: none;
+  white-space: nowrap;
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.site-nav-bar__brand:hover,
+.site-nav-bar__brand:focus-visible {
+  color: var(--color-text-muted);
 }
 
 .site-nav {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  font-size: 0.8125rem;
+  flex: none;
+  flex-wrap: nowrap;
+  gap: var(--space-3);
+  font-size: 0.75rem;
 }
 
 .site-nav a {
+  color: var(--color-text);
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 0.25rem;
+  white-space: nowrap;
 }
 
+/* DESIGN.md Nav: "Secondary nav text (a hovered link) drops to
+   {colors.textMuted} rather than changing hue, keeping the rule that
+   hue is reserved for the accent." Nav links never turn mint. */
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  color: var(--color-text-muted);
+}
+
+.topbar__utility {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The one bordered, filled-on-hover button in the nav, matching
+   grayscale.css's .btn-default (border accent, text accent; hover
+   inverts to a solid accent fill with dark text) - the same control
+   the 2020 template used for its own "Download Resume" call to action. */
 .topbar__resume {
   display: inline-flex;
+  flex: none;
   align-items: center;
   min-height: 44px;
-  padding: 0.25rem 0.9rem;
-  border: 1px solid var(--color-border);
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--color-accent);
   border-radius: var(--radius);
-  font-size: 0.8125rem;
-}
-
-.topbar__resume:hover {
-  border-color: var(--color-accent);
-}
-
-.hero__eyebrow {
-  margin: 0 0 var(--space-1);
+  color: var(--color-accent);
   font-size: 0.75rem;
-  letter-spacing: 0.02em;
-  color: var(--color-text-muted);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.topbar__resume:hover,
+.topbar__resume:focus-visible {
+  background: var(--color-accent);
+  color: var(--ink-on-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar__resume {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Photographic bands - hero and contact share this shape: a full-bleed
+   image, a flat dark scrim (not a gradient - DESIGN.md's Don't list
+   names gradients explicitly), and centered content above both.
+   ------------------------------------------------------------------ */
+
+.photo-band {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--color-ground);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.photo-band__media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* A flat scrim, not a gradient: DESIGN.md's Don'ts name gradients
+   explicitly, and a single flat rgba layer is what "a dark overlay"
+   means without introducing one. */
+.photo-band__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.photo-band__inner {
+  position: relative;
+  z-index: 1;
+  width: min(100% - 2 * var(--space-2), var(--measure-wide));
+  padding: var(--space-5) 0;
+}
+
+.hero {
+  min-height: 100svh;
+  padding-top: var(--nav-height); /* keeps hero content clear of the fixed nav */
 }
 
 .hero__name {
-  font-size: clamp(2.25rem, 5vw + 1rem, 3.5rem);
-  font-weight: 800;
+  margin-bottom: var(--space-2);
 }
 
-.hero__tagline {
+/* A large centered Lora line, shared by the hero's role sentence and
+   the contact band's email address - the one place in the system
+   where DESIGN.md's Components > Hero note applies twice: "photography,
+   the display face, and the reading face all appear together." The
+   hero's role text is load-bearing (index.astro's header comment,
+   tests/parity.test.ts): "Apple" has to read here in plain text, not
+   only inside the JSON-LD block. */
+.band__lede {
+  font-family: var(--font-body);
+  font-size: var(--text-body-wide);
   max-width: var(--measure);
-  font-size: 1.0625rem;
-  color: var(--color-text-secondary);
+  margin: 0 auto var(--space-2);
 }
 
-/* The header meta record - role, location, education as field: value
-   rows. dl > div > dt+dd is valid HTML5 (div wrappers are explicitly
-   permitted to group a dt/dd pair), and it is the same "record" idiom
-   the rest of the page uses. */
-.meta-record {
-  display: grid;
-  gap: 0.6rem;
-  margin: var(--space-3) 0;
-  max-width: var(--measure-wide);
+.band__lede strong {
+  font-weight: 700;
 }
 
-.meta-record__row {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr;
-  gap: 0.4rem var(--space-2);
-  align-items: baseline;
-}
-
-.meta-record dt {
-  font-size: 0.75rem;
+/* A secondary meta line under a flat band's kicker/heading (About's
+   location + education row). Education is visible per
+   tests/parity.test.ts (the institution name must render outside
+   <script>), the same "structured data alone is invisible to the
+   agents that matter" reasoning as the hero role line. */
+.band__meta {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
   color: var(--color-text-muted);
-  letter-spacing: 0.02em;
+  max-width: var(--measure);
+  margin: 0 auto var(--space-3);
 }
 
-.meta-record dd {
-  margin: 0;
+.band__meta a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-overlay-medium);
+  text-underline-offset: 0.2em;
 }
 
-.meta-record__employer {
-  color: var(--color-accent-text);
+.band__meta a:hover,
+.band__meta a:focus-visible {
+  color: var(--color-text);
+  text-decoration-color: currentColor;
 }
 
-.meta-record__detail {
-  color: var(--color-text-muted);
-  font-size: 0.9em;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  margin-left: 0.6em;
-  padding: 0.1em 0.6em;
-  border: 1px solid var(--color-accent);
-  border-radius: var(--radius-pill);
-  font-size: 0.6875rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--color-accent-text);
-}
-
-.status-pill::before {
-  content: '';
-  width: 0.4em;
-  height: 0.4em;
-  border-radius: 50%;
-  background: var(--color-accent);
-}
-
-.hero__contact {
-  margin-top: var(--space-3);
-}
-
-.hero__social {
+.contact-links {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  font-size: 0.875rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2) var(--space-3);
+  font-size: 0.9375rem;
+  margin-bottom: var(--space-4);
 }
 
-.hero__social a {
+.contact-links a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
 }
 
+/* Scroll cue. DESIGN.md Shapes/Components: a 70px circle, 2px solid
+   text-colored border, transparent fill; hover washes in
+   --color-overlay-wash and the icon pulses. The one circular element
+   in the system, deliberately so - see DESIGN.md Shapes. */
+.hero__scroll-cue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 70px;
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-circle);
+  color: var(--color-text);
+  transition: background-color 0.3s ease-in-out;
+}
+
+.hero__scroll-cue:hover,
+.hero__scroll-cue:focus-visible {
+  background: var(--color-overlay-wash);
+  color: var(--color-text);
+}
+
+.hero__scroll-cue svg {
+  width: 22px;
+  height: 22px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero__scroll-cue:hover svg,
+  .hero__scroll-cue:focus-visible svg {
+    animation: scroll-cue-pulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes scroll-cue-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll-cue {
+    transition: none;
+  }
+}
+
 /* ---------------------------------------------------------------------
-   About
+   Flat bands - about, projects, experience, the loop. DESIGN.md
+   Layout: "composition inside each band is centered... a single
+   centered column rather than a multi-column grid." The container is
+   centered; running prose inside it stays left-aligned, because Lora
+   at this size is "sized generously... because long-form reading is
+   exactly what it is for" (DESIGN.md Typography) and centered
+   paragraph text works against that on every line longer than a
+   heading.
    ------------------------------------------------------------------ */
 
-.about-body {
-  max-width: var(--measure);
-  color: var(--color-text-secondary);
+.band {
+  padding: var(--space-section-y) 0;
+  scroll-margin-top: var(--nav-height);
 }
 
-.about-body p {
-  margin-bottom: var(--space-3);
+.band__inner {
+  max-width: var(--measure-wide);
+  margin: 0 auto;
+  padding: 0 var(--space-2);
+  text-align: center;
+}
+
+.band__kicker {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+  color: var(--color-text-muted);
+}
+
+.band__prose {
+  max-width: var(--measure);
+  margin: 0 auto;
+  text-align: left;
 }
 
 /* ---------------------------------------------------------------------
-   Projects - featured projects get a wide, prose-forward treatment;
-   everything else is a dense list. The split reads real project data
-   (project.featured), not a decorative grid of equal cards.
+   Projects
    ------------------------------------------------------------------ */
 
 .projects-featured {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-5);
+  max-width: var(--measure);
+  margin: 0 auto;
+  text-align: left;
 }
 
 .project-card {
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-overlay-weak);
 }
 
 .project-card:first-child {
@@ -551,35 +711,32 @@ time {
 }
 
 .project-card__name {
-  font-size: 1.25rem;
+  margin-bottom: var(--space-1);
 }
 
 .project-card__summary {
-  max-width: var(--measure);
-  color: var(--color-text-secondary);
+  color: var(--color-text);
 }
 
+/* No accent tint, no card background - DESIGN.md's Don'ts name "a
+   tinted card" as exactly the kind of accent misuse this design
+   forbids. Emphasis instead comes from a plain border and Lora's own
+   bold weight (already self-hosted), not color. */
 .project-card__outcome {
-  max-width: var(--measure);
-  padding: 0.6rem var(--space-2);
-  margin: var(--space-2) 0;
-  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-  border-left: 3px solid var(--color-accent);
-  border-radius: var(--radius);
-  color: var(--color-text);
-  font-size: 0.9375rem;
+  padding-left: var(--space-2);
+  border-left: 2px solid var(--color-overlay-medium);
+  font-weight: 700;
 }
 
 .project-card__bullets {
-  max-width: var(--measure);
   margin-bottom: var(--space-2);
 }
 
 .project-card__bullets li {
   position: relative;
   padding-left: 1.1em;
-  margin-bottom: 0.4em;
-  color: var(--color-text-secondary);
+  margin-bottom: 0.5em;
+  color: var(--color-text);
 }
 
 .project-card__bullets li::before {
@@ -592,23 +749,26 @@ time {
 .project-card__stack {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-bottom: var(--space-1);
+  gap: 0.5rem;
+  margin-bottom: var(--space-2);
 }
 
 .stack-item {
-  padding: 0.15em 0.5em;
-  border: 1px solid var(--color-border);
+  padding: 0.2em 0.6em;
+  border: 1px solid var(--color-overlay-medium);
   border-radius: var(--radius);
-  font-size: 0.75rem;
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
   color: var(--color-text-muted);
 }
 
 .project-card__links {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  font-size: 0.875rem;
+  gap: var(--space-2) var(--space-3);
+  font-size: 0.9375rem;
 }
 
 .project-card__links a {
@@ -618,70 +778,60 @@ time {
 }
 
 .projects-other {
-  margin-top: var(--space-4);
+  max-width: var(--measure);
+  margin: var(--space-5) auto 0;
+  text-align: left;
 }
 
 .projects-other__label {
   margin: 0 0 var(--space-2);
+  font-family: var(--font-display);
   font-size: 0.75rem;
-  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
   color: var(--color-text-muted);
 }
 
-.projects-other-list {
-  display: grid;
-  gap: 0;
-}
-
 .project-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.35rem 1.5rem;
   padding: var(--space-2) 0;
-  border-top: 1px solid var(--color-border);
-}
-
-@media (min-width: 640px) {
-  .project-row {
-    grid-template-columns: minmax(0, 14rem) 1fr;
-    align-items: baseline;
-  }
+  border-top: 1px solid var(--color-overlay-weak);
 }
 
 .project-row__name {
   font-size: 1rem;
-  margin: 0;
+  margin-bottom: 0.3rem;
 }
 
 .project-row__summary {
-  margin: 0;
-  color: var(--color-text-secondary);
+  margin: 0 0 0.5rem;
+  color: var(--color-text);
   font-size: 0.9375rem;
 }
 
 .project-row__meta {
-  grid-column: 1 / -1;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.5rem;
   align-items: center;
-  margin-top: 0.2rem;
 }
 
 .project-row__links {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 /* ---------------------------------------------------------------------
-   Experience - a status-log treatment: a rail line connecting entries,
-   a filled dot for the current role and a hollow one for past roles,
-   dates set in tabular mono. This mirrors the versioned, append-only
-   log architecture described in the About copy - not a fake terminal,
-   no simulated prompt or command.
+   Experience - a rail-and-marker timeline, kept from v2 because it is
+   a layout device, not a color one: the "current" marker is filled
+   white rather than accent-filled. DESIGN.md's Don'ts are explicit
+   that the accent is reserved for controls ("if it is not a control,
+   it does not get the accent"), and a status marker is not one.
    ------------------------------------------------------------------ */
 
 .timeline {
   position: relative;
+  max-width: var(--measure);
+  margin: 0 auto;
+  text-align: left;
 }
 
 .experience-entry {
@@ -703,7 +853,7 @@ time {
   bottom: 1.5em;
   left: 0.625rem;
   width: 1px;
-  background: var(--color-border);
+  background: var(--color-overlay-medium);
 }
 
 .experience-entry__marker {
@@ -711,43 +861,52 @@ time {
   z-index: 1;
   grid-column: 1;
   justify-self: center;
-  margin-top: 0.45em;
+  margin-top: 0.5em;
   width: 0.6rem;
   height: 0.6rem;
-  border-radius: 50%;
-  background: var(--color-bg);
+  border-radius: var(--radius-circle);
+  background: var(--color-ground);
   border: 2px solid var(--color-text-muted);
 }
 
 .experience-entry--current .experience-entry__marker {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
+  border-color: var(--color-text);
+  background: var(--color-text);
 }
 
 .experience-entry__meta {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.3rem;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
 
+.experience-entry__current-tag {
+  display: inline-block;
+  margin-left: 0.6em;
+  padding: 0.1em 0.5em;
+  border: 1px solid var(--color-overlay-medium);
+  border-radius: var(--radius);
+  font-family: var(--font-display);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
+  color: var(--color-text);
+}
+
 .experience-entry h3 {
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.2rem;
 }
 
 .experience-entry__employer {
   margin: 0 0 0.6rem;
-  color: var(--color-text-secondary);
-}
-
-.experience-entry ul {
-  max-width: var(--measure);
+  color: var(--color-text-muted);
 }
 
 .experience-entry li {
   position: relative;
   padding-left: 1.1em;
-  margin-bottom: 0.4em;
-  color: var(--color-text-secondary);
+  margin-bottom: 0.5em;
+  color: var(--color-text);
   font-size: 0.9375rem;
 }
 
@@ -759,38 +918,30 @@ time {
 }
 
 /* ---------------------------------------------------------------------
-   Footer
+   The loop - LoopExplainer's static record plus the React island
+   (src/components/LoopExplainer.tsx, unmodified). Class names below
+   are consumed directly by that component's JSX, so the selectors stay
+   fixed even though every value inside them is new. No accent tint on
+   any passive readout (the callout rule, the verdict box): the verdict
+   states are told apart by border style and an inline glyph, not
+   color, for the same "not a control" reasoning as the experience
+   timeline above.
    ------------------------------------------------------------------ */
 
-.site-footer {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-}
-
-.site-footer__name {
-  color: var(--color-text-secondary);
-  margin-bottom: 0.2rem;
-}
-
-/* ---------------------------------------------------------------------
-   Loop explainer - the static record (always in the DOM, readable
-   with JavaScript off) plus the LoopExplainer React island that
-   enhances it. Reuses the same bordered-record, muted-label, single-
-   amber-accent vocabulary as the rest of the page rather than
-   introducing a second visual language for the one interactive part
-   of the site.
-   ------------------------------------------------------------------ */
-
-.loop-intro {
+.loop-intro,
+.loop-mode-panel__intro {
   max-width: var(--measure);
-  color: var(--color-text-secondary);
+  margin: 0 auto var(--space-paragraph-bottom);
+  text-align: left;
+  color: var(--color-text);
 }
 
 .loop-weights-static {
   display: grid;
-  gap: 0.5rem;
-  max-width: var(--measure-wide);
-  margin: 0 0 var(--space-3);
+  gap: 0.6rem;
+  max-width: var(--measure);
+  margin: 0 auto var(--space-3);
+  text-align: left;
 }
 
 .loop-weights-static__row {
@@ -802,19 +953,19 @@ time {
 }
 
 .loop-weights-static dt {
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .loop-weights-static dd {
   margin: 0;
-  color: var(--color-text-muted);
+  color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
 
 .loop-changelog {
-  list-style: none;
-  margin: 0 0 var(--space-3);
-  padding: 0;
+  max-width: var(--measure);
+  margin: 0 auto var(--space-3);
+  text-align: left;
   counter-reset: loop-change;
 }
 
@@ -822,7 +973,7 @@ time {
   counter-increment: loop-change;
   position: relative;
   padding: var(--space-2) 0 var(--space-2) 2.75rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-overlay-weak);
 }
 
 .loop-changelog li:first-child {
@@ -834,38 +985,40 @@ time {
   position: absolute;
   top: var(--space-2);
   left: 0;
+  font-family: var(--font-mono);
   font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
 .loop-changelog p {
-  max-width: var(--measure);
   margin: 0.5rem 0 0;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
 }
 
 .loop-kind-badge {
   display: inline-flex;
   align-items: center;
   padding: 0.15em 0.6em;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-overlay-medium);
   border-radius: var(--radius-pill);
+  font-family: var(--font-display);
   font-size: 0.6875rem;
-  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
+  letter-spacing: var(--letter-display);
+  color: var(--color-text-muted);
 }
 
 .loop-reasons {
   max-width: var(--measure);
-  margin: var(--space-2) 0;
+  margin: var(--space-2) auto;
+  text-align: left;
 }
 
 .loop-reasons li {
   position: relative;
   padding-left: 1.1em;
-  margin-bottom: 0.4em;
-  color: var(--color-text-secondary);
+  margin-bottom: 0.5em;
+  color: var(--color-text);
 }
 
 .loop-reasons li::before {
@@ -877,23 +1030,22 @@ time {
 
 .loop-rule {
   max-width: var(--measure);
-  padding: 0.6rem var(--space-2);
-  margin: var(--space-2) 0 var(--space-4);
-  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
-  border-left: 3px solid var(--color-accent);
+  padding: var(--space-2);
+  margin: var(--space-2) auto var(--space-4);
+  border: 1px solid var(--color-overlay-medium);
   border-radius: var(--radius);
   color: var(--color-text);
-  font-size: 0.9375rem;
+  font-weight: 700;
+  text-align: left;
 }
 
-/* The island wrapper. A visible border distinguishes "this part reacts
-   to you" from the static record above it without relying on motion or
-   color alone. */
 .loop-explainer {
-  margin-top: var(--space-2);
+  max-width: var(--measure-wide);
+  margin: 0 auto;
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-overlay-weak);
   border-radius: var(--radius);
+  text-align: left;
 }
 
 .loop-mode-tabs {
@@ -905,14 +1057,7 @@ time {
 
 .loop-mode-tab--active {
   border-color: var(--color-accent);
-  color: var(--color-accent-text);
-}
-
-.loop-mode-panel__intro {
-  max-width: var(--measure);
-  margin: 0 0 var(--space-3);
-  color: var(--color-text-secondary);
-  font-size: 0.9375rem;
+  color: var(--color-accent);
 }
 
 .loop-walkthrough {
@@ -934,9 +1079,8 @@ time {
 }
 
 .loop-walkthrough__summary {
-  max-width: var(--measure);
   margin: 0.6rem 0 var(--space-2);
-  color: var(--color-text-secondary);
+  color: var(--color-text);
 }
 
 .loop-walkthrough__nav {
@@ -947,8 +1091,6 @@ time {
 .loop-bars {
   display: grid;
   gap: 0.6rem;
-  margin: 0;
-  padding: 0;
 }
 
 .loop-bar {
@@ -960,14 +1102,13 @@ time {
 }
 
 .loop-bar__label {
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .loop-bar__track {
   position: relative;
   height: 0.5rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  background: var(--color-overlay-weak);
   border-radius: var(--radius-pill);
   overflow: hidden;
 }
@@ -975,7 +1116,7 @@ time {
 .loop-bar__fill {
   display: block;
   height: 100%;
-  background: var(--color-text-muted);
+  background: var(--color-text);
   transition: width 0.2s ease;
 }
 
@@ -983,10 +1124,6 @@ time {
   background: var(--color-accent);
 }
 
-/* prefers-reduced-motion is implemented alongside this animation, not
-   retrofitted: the fill's width still changes state-to-state, but the
-   transition that would otherwise animate it is removed, so the change
-   is instant. */
 @media (prefers-reduced-motion: reduce) {
   .loop-bar__fill {
     transition: none;
@@ -1014,27 +1151,9 @@ time {
 .loop-control {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.35rem;
   font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-}
-
-.loop-control select,
-.loop-control input[type='range'] {
-  font-family: var(--font-body);
-}
-
-.loop-control--fieldset {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-1) var(--space-2);
-  margin: 0;
-}
-
-.loop-control--fieldset legend {
-  padding: 0 0.3rem;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
+  color: var(--color-text);
 }
 
 .loop-control--fieldset label {
@@ -1043,26 +1162,33 @@ time {
   gap: 0.4rem;
   min-height: 36px;
   font-size: 0.8125rem;
-  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-text);
 }
 
 .loop-verdict {
   margin: var(--space-2) 0 var(--space-3);
   padding: var(--space-2);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-overlay-medium);
   border-radius: var(--radius);
 }
 
+/* Three states, told apart by border weight/style and the label text
+   itself (LoopExplainer.tsx's VERDICT_LABELS: "CHANGE ADMITTED" /
+   "CHANGE DECLINED" / "NO CHANGE PROPOSED") rather than color - a
+   passive readout is not a control, so it does not inherit the accent
+   regardless of which outcome it shows. */
 .loop-verdict--admitted {
-  border-color: var(--color-accent);
-  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  border-style: solid;
+  border-width: 2px;
 }
 
-/* The third verdict state - nothing proposed yet, so nothing to admit or
-   decline. Deliberately the quietest of the three: a dashed border reads
-   as "not yet a real outcome" without borrowing the accent colour (which
-   would misread as ADMITTED) or a solid border (which would misread as
-   an actual DECLINED verdict rather than an absence of one). */
+.loop-verdict--declined {
+  border-style: solid;
+}
+
 .loop-verdict--neutral {
   border-style: dashed;
   border-color: var(--color-text-muted);
@@ -1078,32 +1204,40 @@ time {
 
 .loop-verdict__label {
   margin: 0 0 0.3rem;
+  font-family: var(--font-display);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   font-size: 0.8125rem;
-}
-
-.loop-verdict--admitted .loop-verdict__label {
-  color: var(--color-accent-text);
 }
 
 .loop-verdict__reason {
   margin: 0;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
   font-size: 0.9375rem;
+}
+
+/* ---------------------------------------------------------------------
+   Footer - a minimal flat strip. The visible last-updated line is
+   load-bearing (tests/parity.test.ts): freshness has to be readable as
+   plain text, not only inside JSON-LD's dateModified.
+   ------------------------------------------------------------------ */
+
+.site-footer {
+  padding: var(--space-4) var(--space-2);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.site-footer__name {
+  color: var(--color-text);
+  margin-bottom: 0.2rem;
 }
 
 /* ---------------------------------------------------------------------
    Motion - CSS only, zero animation JS.
    ------------------------------------------------------------------ */
 
-/* View Transitions API. The site has one HTML page today, so this has
-   no visible effect yet, but it is the correct declarative, JS-free way
-   to opt future navigations into the browser's default cross-fade -
-   consistent with the brief's "View Transitions API" requirement
-   without inventing a same-document transition this page has no second
-   state to transition to. Guarded the same way any other motion on
-   this page is guarded. */
 @view-transition {
   navigation: auto;
 }
@@ -1116,20 +1250,6 @@ time {
   }
 }
 
-/* Scroll-driven reveals for section content, project rows, and
-   experience entries, using an element-scoped view-progress timeline
-   (animation-timeline: view()) rather than the document-scoped
-   scroll() timeline: view() ties the animation to when THIS element
-   enters the viewport, which is what "reveal as you scroll to it"
-   means; scroll() reports whole-scroller progress and would need every
-   element to know its own absolute scroll offset to reveal correctly,
-   which defeats the point without JS. Both are part of the same CSS
-   Scroll-Driven Animations spec the brief names.
-   Entirely opt-in behind @supports, and only when the user has not
-   asked for reduced motion, so an unsupported or motion-sensitive
-   browser sees the static, fully-visible default with no animation
-   applied at all - never a hidden state waiting on an animation that
-   will not run. */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
     .reveal {
@@ -1152,49 +1272,31 @@ time {
 }
 
 /* ---------------------------------------------------------------------
-   View toggle - a quiet utility control paired with the resume link,
-   not a second primary action. Both live in .topbar__utility so
-   .site-header__top lays out as two groups (nav, then the utility
-   pair) rather than three evenly spaced items, which keeps the toggle
-   from carrying the same visual weight as the nav and resume button.
-
-   Sized and colored off the page's existing "muted label" tier
-   (.section__kicker / .hero__eyebrow: 0.75rem, text-muted) instead of
-   the nav-link tier, and the state dot reuses the filled/hollow circle
-   already established by .status-pill and .experience-entry__marker
-   for current-vs-not-current - this control has exactly that same
-   binary (showing the human page vs the markdown twin), so it borrows
-   the mark instead of inventing a second one or reaching for an emoji.
-
-   The label is constant, so the box has one width by construction and
-   reserves none. State is conveyed by the dot, the border, and
-   aria-pressed.
+   View toggle - unchanged behavior and selectors from v2 (viewToggle.ts
+   is not modified by this task), recolored to the new tokens. Sized off
+   the page's muted-label tier, same as the section kickers, and using
+   the same filled/hollow-dot idiom as .experience-entry__marker for its
+   binary state.
    ------------------------------------------------------------------ */
-
-.topbar__utility {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-}
 
 .topbar__view-toggle {
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
   gap: 0.45em;
   min-height: 44px;
-  padding: 0.25rem 0.85rem;
-  border: 1px solid var(--color-border);
+  padding: 0.3rem 0.9rem;
+  border: 1px solid var(--color-overlay-medium);
   border-radius: var(--radius-pill);
   color: var(--color-text-muted);
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: var(--letter-display);
   white-space: nowrap;
   text-decoration: none;
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .topbar__view-toggle::before {
@@ -1202,39 +1304,34 @@ time {
   flex: none;
   width: 0.5em;
   height: 0.5em;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   border: 1px solid var(--color-text-muted);
 }
 
-.topbar__view-toggle:hover {
+.topbar__view-toggle:hover,
+.topbar__view-toggle:focus-visible {
   border-color: var(--color-accent);
-  color: var(--color-accent-text);
+  color: var(--color-accent);
 }
 
 .topbar__view-toggle[aria-pressed='true'] {
   border-color: var(--color-accent);
-  color: var(--color-accent-text);
-}
-
-/* Pending - the fetch is outstanding. Dimming the control is enough to
-   say "heard you, working on it"; without it a slow connection makes
-   the click look like it did nothing at all. */
-.topbar__view-toggle.is-pending {
-  opacity: 0.6;
-  cursor: progress;
-}
-
-/* Error - the twin could not be loaded. Paired with a message in the
-   [data-view-status] live region, so the failure is not carried by
-   color alone. */
-.topbar__view-toggle.is-error {
-  border-color: var(--color-text-muted);
-  border-style: dashed;
+  color: var(--color-accent);
 }
 
 .topbar__view-toggle[aria-pressed='true']::before {
   border-color: var(--color-accent);
   background: var(--color-accent);
+}
+
+.topbar__view-toggle.is-pending {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.topbar__view-toggle.is-error {
+  border-color: var(--color-text-muted);
+  border-style: dashed;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1245,22 +1342,11 @@ time {
 
 /* ---------------------------------------------------------------------
    Agent view - the pre.agent-view element viewToggle.ts swaps in as
-   main's sole child. Backed by --color-card rather than --color-surface:
-   card is the page's "elevated" surface token and had no consumer
-   anywhere else in this file yet, which makes it a fitting debut for
-   the one element on the page meant to read as a raised, self-contained
-   document rather than part of the normal section flow.
-
-   Wraps at the same --measure prose width every paragraph on the page
-   already uses (.about-body, .hero__tagline, project summaries), so
-   "readable at length" means the same thing here as everywhere else on
-   the page. overflow-wrap + overflow-x: auto are a defensive second
-   layer, not the primary line-handling strategy - the markdown this
-   page actually serves is prose (single long lines per paragraph, no
-   code fences or tables), so wrapping at measure is what makes it
-   readable; the scroll behavior only engages for a token that cannot
-   wrap at all (an unbroken URL), and it engages on the box itself, so
-   the page body can never be forced wider by it.
+   main's sole child. See --font-mono above: this is a functional
+   utility face, not a DESIGN.md typographic choice, because this
+   view's whole claim is that it shows the raw markdown source an agent
+   receives, and rendering source in Lora would undercut that claim on
+   sight (tests/agentViewStyle.test.ts pins this rule directly).
    ------------------------------------------------------------------ */
 
 pre.agent-view {
@@ -1269,13 +1355,10 @@ pre.agent-view {
   width: min(100% - 2 * var(--space-2), var(--measure));
   margin: var(--space-4) auto;
   padding: calc(var(--space-3) + 1.3em) var(--space-3) var(--space-3);
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
+  background: var(--color-ground);
+  border: 1px solid var(--color-overlay-medium);
   border-radius: var(--radius);
   color: var(--color-text);
-  /* Mono, not the proportional body face. This view's whole claim is
-     that it shows the raw markdown SOURCE an agent receives; rendering
-     source in a proportional face undercuts that claim on sight. */
   font-family: var(--font-mono);
   font-size: 0.875rem;
   line-height: 1.7;
@@ -1289,7 +1372,8 @@ pre.agent-view::before {
   position: absolute;
   top: var(--space-1);
   left: var(--space-3);
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.04em;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
