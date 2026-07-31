@@ -11,3 +11,6 @@ dist/
 # Local Superpowers worktree/skill state. This repo is public; this
 # path must never be committed.
 .superpowers/
+# Git worktrees. This repo is public; a worktree directory that is not
+# ignored would commit an entire second tree into permanent history.
+.worktrees/
