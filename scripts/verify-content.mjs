@@ -151,7 +151,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.warn(`  warn  ${url} returned ${status} (bot-blocked, not verifiable from here)`)
       } else {
         console.error(`  FAIL  ${url} returned ${status}`)
-        failures.push(url)
+        // Same "id: message" shape as checkContent's failures - they
+        // share this array, and only .length is read today, but a bare
+        // URL beside structured strings would print inconsistently if
+        // anything ever dumped the array verbatim.
+        failures.push(`${url}: returned ${status}`)
       }
     }
   }
