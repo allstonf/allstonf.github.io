@@ -650,18 +650,14 @@ time {
   margin: 0 auto var(--space-3);
 }
 
-.band__meta a {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--color-overlay-medium);
-  text-underline-offset: 0.2em;
-}
-
-.band__meta a:hover,
-.band__meta a:focus-visible {
-  color: var(--color-text);
-  text-decoration-color: currentColor;
-}
+/* The education link in this line used to override color to inherit
+   plus an underline, which silently disagreed with DESIGN.md's Link
+   entry (accent at rest, accentHover on hover/focus, no underline).
+   No override is needed: dropping it lets the education link fall
+   through to the base `a` rule above and join the same accent system
+   as every other inline link on the page (contact-links, project
+   card links), instead of carrying a one-off exception the nav's
+   documented carve-out does not extend to. */
 
 .contact-links {
   display: flex;
