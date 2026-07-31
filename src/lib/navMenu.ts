@@ -40,12 +40,17 @@ export function initNavMenu(doc: Document): void {
     toggle.setAttribute('aria-expanded', 'true')
   }
 
-  const close = (): void => {
+  // `focusTarget` lets a link activation send focus to the section the
+  // reader actually asked for. The other three close paths pass nothing
+  // and fall back to the toggle, which is right for them: click-again,
+  // Escape and click-outside all leave the reader oriented at the
+  // header. preventScroll matters - without it, focusing the section
+  // fights the browser's own fragment scroll and can overshoot the
+  // scroll-margin-top offset that keeps the fixed header clear.
+  const close = (focusTarget?: HTMLElement | null): void => {
     panel.classList.remove('is-open')
     toggle.setAttribute('aria-expanded', 'false')
-    // Focus returns to the control the reader operated; otherwise a
-    // keyboard user is left at the top of the document with no anchor.
-    toggle.focus()
+    ;(focusTarget ?? toggle).focus({ preventScroll: true })
   }
 
   toggle.addEventListener('click', (event) => {
@@ -66,9 +71,17 @@ export function initNavMenu(doc: Document): void {
     if (isOpen() && !panel.contains(target) && !toggle.contains(target)) close()
   })
 
-  // Close on navigating to a section. Bound on the panel rather than
-  // each link so links added to the nav later are covered for free.
+  // Close on navigating to a section, sending focus to that section.
+  // Without this the native fragment navigation drops focus on <body>:
+  // it runs after this handler, and the sections are only focusable at
+  // all because of the tabindex="-1" added in index.astro.
+  // Bound on the panel rather than each link so links added later are
+  // covered for free.
   panel.addEventListener('click', (event) => {
-    if ((event.target as HTMLElement).closest('a')) close()
+    const link = (event.target as HTMLElement).closest('a')
+    if (!link) return
+    const href = link.getAttribute('href') ?? ''
+    const target = href.startsWith('#') ? doc.querySelector<HTMLElement>(href) : null
+    close(target)
   })
 }

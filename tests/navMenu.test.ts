@@ -115,6 +115,32 @@ describe('initNavMenu', () => {
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
   })
 
+  it('moves focus to the target section on link activation, not back to the toggle', () => {
+    // A UX review found focus was silently dropped to <body>: the native
+    // fragment navigation runs AFTER this handler, and the target
+    // sections carried no tabindex, so neither the toggle nor the
+    // section ended up holding focus. Worse than the reported symptom.
+    //
+    // Escape and click-outside DO return focus to the toggle - those are
+    // "you are still oriented at the header" cases. A link click is a
+    // deliberate navigation and focus must follow it.
+    const dom = new JSDOM(`
+      <button class="nav-hamburger" id="nav-toggle" type="button" aria-expanded="false"
+              aria-controls="site-nav" aria-label="Toggle navigation menu"></button>
+      <nav class="site-nav" id="site-nav"><a href="#about">About</a></nav>
+      <section id="about" tabindex="-1"></section>
+    `)
+    const doc = dom.window.document
+    initNavMenu(doc)
+    const toggle = doc.getElementById('nav-toggle')!
+
+    click(doc, toggle)
+    click(doc, doc.querySelector('#site-nav a')!)
+
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(doc.activeElement).toBe(doc.getElementById('about'))
+  })
+
   it('no-ops when the markup is absent', () => {
     // The module is imported unconditionally by index.astro; a page
     // without the markup must not throw and take the view toggle with it.

@@ -335,10 +335,17 @@ legend {
   padding: 0 0.3rem;
 }
 
+/* `section` joined this list on 2026-07-31. The four in-page nav
+   targets carry tabindex="-1" so the hamburger's link handler can move
+   focus to them; without a visible ring a keyboard user would be given
+   focus with no landing cue. :focus-visible gates it to keyboard-
+   originated activation, so a mouse click never paints a ring around a
+   whole section. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+section:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
