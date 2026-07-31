@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import profile from '../content/profile.json'
 import { PUBLIC_PERSON_FIELDS, PUBLIC_PROJECT_FIELDS } from '../src/lib/publicProjection'
+import { renderIndexMd } from '../src/lib/agentSurface'
 
 describe('agent surface endpoints build to real files under dist/', () => {
   it('llms.txt follows the llmstxt.org spec: H1 name, blockquote summary, one Docs entry, an Optional section', () => {
@@ -225,5 +226,28 @@ describe('llms-full.txt is mechanically derived from index.md, never hand-author
     const full = readFileSync('dist/llms-full.txt', 'utf8')
     const indexMd = readFileSync('dist/index.md', 'utf8')
     expect(full).toContain(indexMd)
+  })
+})
+
+describe('renderIndexMd renders a project period', () => {
+  // Clones the REAL profile rather than building a minimal synthetic
+  // one: a stub that omits a field renderIndexMd() happens to read
+  // would pass here while the real content model failed, which is the
+  // "verification tests the path you took, not the input space"
+  // failure mode this repo has already hit once.
+  it('emits the period when a project carries one', () => {
+    const withPeriod = structuredClone(profile) as any
+    withPeriod.projects[0].period = 'May 2026'
+    expect(renderIndexMd(withPeriod)).toContain('May 2026')
+  })
+
+  it('omits the period line entirely when a project has none', () => {
+    const withoutPeriod = structuredClone(profile) as any
+    delete withoutPeriod.projects[0].period
+    const md = renderIndexMd(withoutPeriod)
+    expect(md).toContain(`### ${withoutPeriod.projects[0].name}`)
+    // A naive `${project.period}` interpolation would emit the literal
+    // string "undefined" onto a public page.
+    expect(md).not.toContain('undefined')
   })
 })

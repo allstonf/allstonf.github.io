@@ -793,6 +793,18 @@ time {
   margin-bottom: var(--space-1);
 }
 
+/* The date sits between a project's name and its summary. DESIGN.md's
+   type scale is h1/h2/body only - there is no smaller size token - so
+   the period stays at body size and is distinguished by muted color
+   alone. That is also what keeps it above the 4.5:1 text bar instead
+   of shrinking under it: --color-text-muted measures 13.08:1, derived
+   in tests/contrastRatios.test.ts rather than asserted here. */
+.project-card__period,
+.project-row__period {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-2);
+}
+
 .project-card__summary {
   color: var(--color-text);
 }

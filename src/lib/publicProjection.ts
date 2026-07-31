@@ -55,6 +55,7 @@ export const PUBLIC_PROJECT_FIELDS = [
   'slug',
   'name',
   'featured',
+  'period',
   'summary',
   'outcome',
   'bullets',

@@ -76,6 +76,7 @@
       "slug": "south-bay-housing",
       "name": "Automated housing-search decision system",
       "featured": true,
+      "period": "2026",
       "summary": "Scored 531 candidate listings across 26 discovery runs against a deterministic, versioned admission gate. Signed a lease on the top-ranked property.",
       "outcome": "Signed a lease on the property the system ranked first.",
       "bullets": [
@@ -94,6 +95,7 @@
       "slug": "rsi-loop",
       "name": "Execute-and-learn decision loop",
       "featured": true,
+      "period": "2026",
       "summary": "A reusable execute-then-learn loop applied across three unrelated domains: job search, housing search, and content production.",
       "outcome": null,
       "bullets": [
@@ -110,6 +112,7 @@
       "slug": "vault-commit",
       "name": "Concurrency-safe git layer for multi-agent workspaces",
       "featured": false,
+      "period": "2026",
       "summary": "704 lines of Python that let many agents commit to one repository without clobbering each other.",
       "outcome": null,
       "bullets": [
@@ -125,6 +128,7 @@
       "slug": "cpos",
       "name": "Headless content-production pipeline",
       "featured": false,
+      "period": "2026",
       "summary": "Three Python packages, roughly 2,900 lines and 211 tests, that turn a semantic search over raw footage into a rendered cut.",
       "outcome": "Search-driven edit-decision lists reached 9 of 9 top-1 retrieval accuracy on the evaluation set.",
       "bullets": [
@@ -139,6 +143,7 @@
       "slug": "local-ai",
       "name": "Local-first inference lane with a fail-closed privacy guard",
       "featured": false,
+      "period": "2026",
       "summary": "An on-device model lane on 24 GB Apple silicon, with a three-layer guard that fails closed so private corpora do not leave the machine.",
       "outcome": null,
       "bullets": [
@@ -154,6 +159,7 @@
       "slug": "agent-skills",
       "name": "Agent skills library (private)",
       "featured": false,
+      "period": "2026",
       "summary": "A private library of composable agent skills: the operating manual for the systems above.",
       "outcome": null,
       "bullets": [
@@ -167,6 +173,7 @@
       "slug": "research-vault-showcase",
       "name": "Research vault showcase",
       "featured": false,
+      "period": "April 2026",
       "summary": "A public walkthrough of the retrieval architecture behind a personal research corpus.",
       "outcome": null,
       "bullets": [

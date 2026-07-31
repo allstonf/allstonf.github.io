@@ -333,7 +333,16 @@ export function renderIndexMd(profile: any): string {
 
   lines.push('## Projects', '')
   for (const project of projects ?? []) {
-    lines.push(`### ${project.name}`, '', project.summary, '')
+    lines.push(`### ${project.name}`, '')
+    // Rendered identically by renderIndexMd() and renderResumeMd() so
+    // the two markdown surfaces cannot disagree about when a project
+    // happened. Guarded by `if` rather than interpolated directly: a
+    // bare `${project.period}` on a project without one emits the
+    // literal string "undefined" onto a public page.
+    if (project.period) {
+      lines.push(`*${project.period}*`, '')
+    }
+    lines.push(project.summary, '')
     if (project.outcome) {
       lines.push(`Outcome: ${project.outcome}`, '')
     }
@@ -494,7 +503,16 @@ export function renderResumeMd(profile: any): string {
   // rendering decision - so this reconciles nothing and reorders nothing.
   lines.push('## Projects', '')
   for (const project of projects ?? []) {
-    lines.push(`### ${project.name}`, '', project.summary, '')
+    lines.push(`### ${project.name}`, '')
+    // Rendered identically by renderIndexMd() and renderResumeMd() so
+    // the two markdown surfaces cannot disagree about when a project
+    // happened. Guarded by `if` rather than interpolated directly: a
+    // bare `${project.period}` on a project without one emits the
+    // literal string "undefined" onto a public page.
+    if (project.period) {
+      lines.push(`*${project.period}*`, '')
+    }
+    lines.push(project.summary, '')
     if (project.outcome) {
       lines.push(`Outcome: ${project.outcome}`, '')
     }

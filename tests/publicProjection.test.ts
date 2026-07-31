@@ -96,3 +96,32 @@ describe('validateUrl fails closed on the URL-based-XSS scheme class', () => {
     }
   })
 })
+
+describe('project period reaches the public projection', () => {
+  // `period` dates each project so a reader can tell 2019-2020
+  // coursework from current work. Because publicProjection() builds
+  // FROM an allowlist, a field absent from PUBLIC_PROJECT_FIELDS is
+  // dropped silently - it would render on the page and in the markdown
+  // surfaces while vanishing from /api/profile.json, which is exactly
+  // the kind of surface-to-surface disagreement the single content
+  // model exists to prevent.
+  it('carries a project period through to the public projection', () => {
+    const out = publicProjection({
+      person: { email: 'a@b.co' },
+      about: {},
+      projects: [{ slug: 's', name: 'N', period: 'Apr 2020 - Jun 2020' }],
+    })
+    expect((out.projects as Record<string, unknown>[])[0].period).toBe('Apr 2020 - Jun 2020')
+  })
+
+  it('still drops an unrecognized project field (fail-closed preserved)', () => {
+    // Guards the fix itself: adding `period` must not turn the
+    // allowlist into a denylist.
+    const out = publicProjection({
+      person: { email: 'a@b.co' },
+      about: {},
+      projects: [{ slug: 's', name: 'N', internal_note: CANARY }],
+    })
+    expect((out.projects as Record<string, unknown>[])[0]).not.toHaveProperty('internal_note')
+  })
+})

@@ -257,6 +257,7 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
                 <h3 id={`project-${project.slug}-heading`} class="project-card__name">
                   {project.name}
                 </h3>
+                {project.period && <p class="project-card__period">{project.period}</p>}
                 <p class="project-card__summary">{project.summary}</p>
                 {project.outcome && <p class="project-card__outcome">{project.outcome}</p>}
                 <ul class="project-card__bullets">
@@ -295,6 +296,7 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
                     <h3 id={`project-${project.slug}-heading`} class="project-row__name">
                       {project.name}
                     </h3>
+                    {project.period && <p class="project-row__period">{project.period}</p>}
                     <p class="project-row__summary">{project.summary}</p>
                     <div class="project-row__meta">
                       <ul class="project-card__stack" aria-label="Technology stack">
