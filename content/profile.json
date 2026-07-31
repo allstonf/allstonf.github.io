@@ -73,6 +73,25 @@
 
   "projects": [
     {
+      "slug": "waypoint",
+      "name": "Waypoint - agentic trip planner",
+      "featured": true,
+      "period": "Apr 2026 - Jun 2026",
+      "summary": "An orchestrator that dispatches four parallel Claude research agents to produce a costed, sequenced trip itinerary.",
+      "outcome": "248 tests. Built across a five-hackathon cascade and presented at the Andreessen Horowitz office in San Francisco.",
+      "bullets": [
+        "Four parallel Sonnet research agents - points of interest, hotels and flights and restaurants, photography, transit - each a multi-turn web-search loop terminating in a structured submit tool call.",
+        "A provider-abstraction layer that allows swapping the generative-media model without touching the pipeline.",
+        "A prompt-injection input sanitizer, per-session cost telemetry, and graceful partial failure when one agent returns nothing.",
+        "A second documented research path builds a prompt for Perplexity Computer and parses its output back - copy-paste through the UI, not an API integration.",
+        "Presented at the a16z, Overshoot, Fal and Mux Video hackathon, May 2026."
+      ],
+      "stack": ["Python 3.12", "Anthropic SDK", "FastAPI", "Jinja2", "fal", "Mux", "FFmpeg", "SQLite", "pytest", "Playwright"],
+      "links": [
+        { "label": "Product page", "url": "https://waypoint-manifest.butterbase.dev/" }
+      ]
+    },
+    {
       "slug": "south-bay-housing",
       "name": "Automated housing-search decision system",
       "featured": true,
