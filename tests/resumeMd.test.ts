@@ -13,6 +13,7 @@
 import { describe, it, expect } from 'vitest'
 import profile from '../content/profile.json'
 import { renderResumeMd } from '../src/lib/agentSurface'
+import { assertNoPii } from './helpers/piiGuard'
 
 describe('renderResumeMd', () => {
   const md = renderResumeMd(profile)
@@ -99,10 +100,18 @@ describe('renderResumeMd', () => {
 
   it('emits NO phone number or street address, whatever the content model gains later', () => {
     // Fail closed: this file is public and git history is permanent.
-    expect(md).not.toMatch(/\+?\d[\d\s().-]{8,}\d/) // phone-shaped runs
-    expect(md).not.toMatch(
-      /\d+\s+\w+\s+(Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Blvd)\b/i,
-    )
+    //
+    // This was the ORIGINAL guard - the only one of the six public
+    // artifacts that had it, until tests/publicArtifactsPii.test.ts
+    // extended the same check to the other five. The two inline
+    // regexes that used to live here now live in
+    // tests/helpers/piiGuard.ts's PHONE_SHAPED/STREET_ADDRESS_SHAPED,
+    // so this file no longer carries its own private copy - see that
+    // module for why resume.md's assertion still needs no date-range
+    // stripping (RESUME_DATE_SEPARATOR's " to " word separator already
+    // breaks the digit run that trips PHONE_SHAPED, unlike the other
+    // five artifacts' " - " form).
+    assertNoPii(md)
   })
 
   it('ignores unknown top-level fields rather than publishing them', () => {
