@@ -180,10 +180,13 @@ export function renderLlmsTxt(profile: any): string {
  *
  * NOTE: despite the "full" name, this is the same markdown body as
  * /index.md - role, about, projects, experience, and education. It
- * does NOT include the page's interactive Loop section; that block is
- * rendered client-side only and has no markdown equivalent in this
- * file. An agent that needs the Loop content has to read index.html
- * directly. The full-text surface carries the SAME disambiguation
+ * does NOT include the page's Loop section at all. That omission
+ * covers the section's STATIC prose too (the intro paragraph, the
+ * component-weights list, the change log, and the declined-changes
+ * rule), not only the interactive panel: most of that block is
+ * server-rendered into index.html and is simply absent here. An agent
+ * that needs any Loop content has to read index.html directly.
+ * The full-text surface carries the SAME disambiguation
  * paragraph as llms.txt (fix round 1) - it is at least as
  * self-correcting as the lean index, never less.
  *

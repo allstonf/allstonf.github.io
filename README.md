@@ -32,7 +32,7 @@ build emits:
 | File | What it is |
 |---|---|
 | `/llms.txt` | The [llmstxt.org](https://llmstxt.org) convention: an H1, a one-line summary, and links to the other machine-readable surfaces. |
-| `/llms-full.txt` | The same page prose as `/index.md` (role, about, projects, experience, education), mechanically derived from `content/profile.json` so it can never drift from the page. Does **not** include the interactive Loop section, which only exists client-side. |
+| `/llms-full.txt` | The same page prose as `/index.md` (role, about, projects, experience, education), mechanically derived from `content/profile.json` so it can never drift from the page. Does **not** include the Loop section at all, including that section's static prose, which is server-rendered into `index.html` but not mirrored here. |
 | `/index.md` | The page's content as plain markdown. |
 | `/resume.md` | A markdown resume mirroring the PDF's content. |
 | `/api/profile.json` | The raw content model, publicly served. |
