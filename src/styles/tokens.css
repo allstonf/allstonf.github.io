@@ -886,25 +886,45 @@ time {
 /* No accent tint, no card background - DESIGN.md's Don'ts name "a
    tinted card" as exactly the kind of accent misuse this design
    forbids. Emphasis instead comes from a plain border and Lora's own
-   bold weight (already self-hosted), not color. */
-.project-card__outcome {
+   bold weight (already self-hosted), not color.
+
+   The row variant reuses this exact treatment (border, weight, marker)
+   rather than inventing a second visual language, but is sized down to
+   0.9375rem - the same size .project-row__summary already uses - so
+   the nine expanded rows read as denser secondary evidence instead of
+   growing to card-sized weight and flattening the featured/other
+   hierarchy the page depends on to read as ranked, not a flat list. */
+.project-card__outcome,
+.project-row__outcome {
   padding-left: var(--space-2);
   border-left: 2px solid var(--color-overlay-medium);
   font-weight: 700;
 }
 
-.project-card__bullets {
+.project-row__outcome {
+  font-size: 0.9375rem;
+}
+
+.project-card__bullets,
+.project-row__bullets {
   margin-bottom: var(--space-2);
 }
 
-.project-card__bullets li {
+.project-card__bullets li,
+.project-row__bullets li {
   position: relative;
   padding-left: 1.1em;
   margin-bottom: 0.5em;
   color: var(--color-text);
 }
 
-.project-card__bullets li::before {
+.project-row__bullets li {
+  font-size: 0.9375rem;
+  margin-bottom: 0.35em;
+}
+
+.project-card__bullets li::before,
+.project-row__bullets li::before {
   content: '-';
   position: absolute;
   left: 0;

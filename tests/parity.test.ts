@@ -192,3 +192,22 @@ describe('section order parity between the page and its markdown twin', () => {
     expect([...positions]).toEqual([...positions].sort((a, b) => a - b))
   })
 })
+
+describe('every project shows its evidence on the human page', () => {
+  it('renders at least one bullet for every project that has bullets', () => {
+    for (const project of profile.projects) {
+      const bullets = project.bullets ?? []
+      if (!bullets.length) continue
+      expect(html, `expected a bullet for "${project.name}"`).toContain(bullets[0].slice(0, 40))
+    }
+  })
+
+  it('renders the outcome for every project that has one', () => {
+    for (const project of profile.projects) {
+      if (!project.outcome) continue
+      expect(html, `expected the outcome for "${project.name}"`).toContain(
+        project.outcome.slice(0, 40),
+      )
+    }
+  })
+})

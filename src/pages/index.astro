@@ -376,6 +376,16 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
                     </h3>
                     {project.period && <p class="project-row__period">{project.period}</p>}
                     <p class="project-row__summary">{project.summary}</p>
+                    {project.outcome && (
+                      <p class="project-row__outcome">{project.outcome}</p>
+                    )}
+                    {project.bullets && project.bullets.length > 0 && (
+                      <ul class="project-row__bullets">
+                        {project.bullets.map((bullet) => (
+                          <li>{bullet}</li>
+                        ))}
+                      </ul>
+                    )}
                     <div class="project-row__meta">
                       <ul class="project-card__stack" aria-label="Technology stack">
                         {project.stack.map((item) => (
