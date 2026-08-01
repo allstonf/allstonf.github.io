@@ -105,8 +105,8 @@
       ],
       "stack": ["Python", "TypeScript", "Next.js", "Convex", "Leaflet", "OSRM", "Nominatim"],
       "links": [
-        { "label": "Live board", "url": "https://allstoncodes.github.io/south-bay-housing/" },
-        { "label": "Source",     "url": "https://github.com/allstoncodes/south-bay-housing" }
+        { "label": "Live board", "url": "https://allstoncodes.github.io/south-bay-housing-board/" },
+        { "label": "Source",     "url": "https://github.com/allstoncodes/south-bay-housing-board" }
       ]
     },
     {
