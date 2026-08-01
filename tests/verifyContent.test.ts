@@ -181,4 +181,42 @@ describe('retraction gate on about[] prose', () => {
     const fine = { ...profile, about: [...profile.about, 'It ranked them with a commute engine.'] }
     expect(checkContent(fine).ok).toBe(true)
   })
+
+  it('does not fire on an accurate, narrowly-scoped local-inference sentence', () => {
+    // The retracted claim was false because it was UNIVERSAL, not because of
+    // the words. A correct future rewrite must not fail the build.
+    const fine = {
+      ...profile,
+      about: [
+        ...profile.about,
+        'For the journal query path specifically, I keep the inference local; ' +
+          'the broader orchestration calls out to cloud models.',
+      ],
+    }
+    expect(checkContent(fine).ok).toBe(true)
+  })
+
+  it('still fails on the literal withdrawn clause', () => {
+    // The needle must remain wide enough to catch a straight copy-paste of
+    // the original overstated sentence, even after being narrowed to avoid
+    // blocking the accurate rewording above.
+    const poisoned = {
+      ...profile,
+      about: [...profile.about, 'Where the data is personal, I keep the inference local.'],
+    }
+    expect(checkContent(poisoned).ok).toBe(false)
+  })
+
+  it('catches a retracted claim at a sentence boundary regardless of capitalization', () => {
+    // The most natural way a retracted claim reappears is at the START of a
+    // sentence, capitalized. A case-sensitive needle misses exactly that.
+    const poisoned = {
+      ...profile,
+      about: [
+        ...profile.about,
+        'The property it ranked first was later reconsidered after a manual walkthrough.',
+      ],
+    }
+    expect(checkContent(poisoned).ok).toBe(false)
+  })
 })

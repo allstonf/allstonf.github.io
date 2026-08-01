@@ -39,9 +39,18 @@ const RETRACTED_CLAIMS = [
   'the property it ranked first',
   'the top-ranked property',
   'the property the system ranked first',
-  // 2026-07-31: only the journal query path is guarded local-only; the
-  // orchestration ran through cloud models.
-  'I keep the inference local',
+  // 2026-07-31: the original claim was false because it was UNIVERSAL -
+  // only the journal query path is guarded local-only, the broader
+  // orchestration calls out to cloud models. A substring gate cannot
+  // express "universality", so the needle is the FULL withdrawn clause,
+  // not the shorter "I keep the inference local" fragment: that fragment
+  // also matches an accurate, narrowly-scoped rewrite of the same fact
+  // (see the covering test), which would block a correct future
+  // description instead of only a re-paste of the withdrawn sentence.
+  // This needle therefore guards against RE-PASTE of the retracted
+  // wording, not against RE-ASSERTION of the underlying fact in
+  // accurate, scoped language.
+  'Where the data is personal, I keep the inference local',
 ]
 
 // Scoped to waypoint ON PURPOSE, not applied globally.
@@ -105,14 +114,21 @@ export function checkContent(profile) {
   // about[] is included as of 2026-08-01. It was previously unscanned,
   // which is how a retracted paragraph could be edited with all tests
   // green (GAP no-retraction-gate-on-personal-site-prose).
-  const serialized = JSON.stringify({ projects, about: profile.about ?? [] })
+  //
+  // Lowercased once here, and the needles lowercased at the comparison
+  // site below, so a claim reappearing at a sentence boundary ("The
+  // property it ranked first...") is still caught even though its first
+  // letter is capitalized there and lowercase in the needle. The
+  // ORIGINAL-cased needle is kept in the failure message so the report
+  // stays readable - only the comparison is case-insensitive.
+  const serialized = JSON.stringify({ projects, about: profile.about ?? [] }).toLowerCase()
   for (const claim of BANNED_CLAIMS) {
-    if (serialized.includes(claim)) {
+    if (serialized.includes(claim.toLowerCase())) {
       failures.push(`banned claim "${claim}" appears in the content model`)
     }
   }
   for (const claim of RETRACTED_CLAIMS) {
-    if (serialized.includes(claim)) {
+    if (serialized.includes(claim.toLowerCase())) {
       failures.push(
         `retracted claim "${claim}" appears in the content model - ` +
           'it was corrected on review and must not return',
