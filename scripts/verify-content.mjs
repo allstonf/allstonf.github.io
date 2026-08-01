@@ -26,6 +26,24 @@ const PHONE_SHAPED = /\+?\d[\d\s().-]{8,}\d/
 // they cannot come back by copy-paste from an old draft.
 const BANNED_CLAIMS = ['LangChain', 'Perplexity API', 'Perplexity APIs']
 
+// Claims RETRACTED after review, as distinct from BANNED_CLAIMS above
+// (which were never true). Each of these shipped in a draft, was
+// corrected on a specific date, and must not return by copy-paste.
+//
+// Full sentences, not keywords: the shorter the needle the more likely
+// it fails the build on correct content. "ranked" alone is legitimate -
+// the housing system genuinely ranks listings - so the needle is the
+// specific CLAIM, not the verb.
+const RETRACTED_CLAIMS = [
+  // 2026-08-01: the leased property was NOT the top-ranked candidate.
+  'the property it ranked first',
+  'the top-ranked property',
+  'the property the system ranked first',
+  // 2026-07-31: only the journal query path is guarded local-only; the
+  // orchestration ran through cloud models.
+  'I keep the inference local',
+]
+
 // Scoped to waypoint ON PURPOSE, not applied globally.
 //
 // waypoint-manifest.butterbase.dev returns 200 but serves a static
@@ -83,10 +101,22 @@ export function checkContent(profile) {
 
   // Whole-model scan rather than per-field: a banned claim is equally
   // wrong in a summary, a bullet, a stack entry or an outcome.
-  const serialized = JSON.stringify(projects)
+  //
+  // about[] is included as of 2026-08-01. It was previously unscanned,
+  // which is how a retracted paragraph could be edited with all tests
+  // green (GAP no-retraction-gate-on-personal-site-prose).
+  const serialized = JSON.stringify({ projects, about: profile.about ?? [] })
   for (const claim of BANNED_CLAIMS) {
     if (serialized.includes(claim)) {
       failures.push(`banned claim "${claim}" appears in the content model`)
+    }
+  }
+  for (const claim of RETRACTED_CLAIMS) {
+    if (serialized.includes(claim)) {
+      failures.push(
+        `retracted claim "${claim}" appears in the content model - ` +
+          'it was corrected on review and must not return',
+      )
     }
   }
 

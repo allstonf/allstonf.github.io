@@ -145,3 +145,40 @@ describe('classifyUrlStatus', () => {
     expect(classifyUrlStatus(0)).toBe('blocked')
   })
 })
+
+describe('retraction gate on about[] prose', () => {
+  it('fails when a retracted claim reappears in an about paragraph', () => {
+    const poisoned = {
+      ...profile,
+      about: [...profile.about, 'Where the data is personal, I keep the inference local.'],
+    }
+    const result = checkContent(poisoned)
+    expect(result.ok).toBe(false)
+    expect(result.failures.join('\n')).toMatch(/retracted claim/i)
+  })
+
+  it('fails when a retracted claim reappears in a project summary', () => {
+    // Same banned list, both surfaces - a retraction is equally wrong
+    // wherever it lands.
+    const poisoned = {
+      ...profile,
+      projects: profile.projects.map((p, i) =>
+        i === 0 ? { ...p, summary: 'Signed a lease on the property it ranked first.' } : p,
+      ),
+    }
+    expect(checkContent(poisoned).ok).toBe(false)
+  })
+
+  it('passes on the real content model', () => {
+    // The corrections from Task 1 must satisfy the gate they motivated.
+    expect(checkContent(profile).failures).toEqual([])
+  })
+
+  it('does not fire on prose that merely mentions a banned SUBSTRING in context', () => {
+    // Fail-closed is the right default, but a match this broad would fail
+    // the build on correct content. "ranked" alone is legitimate: the
+    // system genuinely does rank listings.
+    const fine = { ...profile, about: [...profile.about, 'It ranked them with a commute engine.'] }
+    expect(checkContent(fine).ok).toBe(true)
+  })
+})
