@@ -108,8 +108,12 @@ export function checkContent(profile) {
     }
   }
 
-  // Whole-model scan rather than per-field: a banned claim is equally
-  // wrong in a summary, a bullet, a stack entry or an outcome.
+  // Whole-model scan, and it genuinely is whole-model: JSON.stringify over
+  // the ENTIRE profile, not a hand-listed subset. An earlier version scanned
+  // only {projects, about} while its comment claimed whole-model reach, so a
+  // retracted claim in an experience bullet or person.tagline passed the gate.
+  // A guard that overstates its coverage is worse than one that admits a gap:
+  // a maintainer trusts it and stops looking.
   //
   // about[] is included as of 2026-08-01. It was previously unscanned,
   // which is how a retracted paragraph could be edited with all tests
@@ -121,7 +125,7 @@ export function checkContent(profile) {
   // letter is capitalized there and lowercase in the needle. The
   // ORIGINAL-cased needle is kept in the failure message so the report
   // stays readable - only the comparison is case-insensitive.
-  const serialized = JSON.stringify({ projects, about: profile.about ?? [] }).toLowerCase()
+  const serialized = JSON.stringify(profile).toLowerCase()
   for (const claim of BANNED_CLAIMS) {
     if (serialized.includes(claim.toLowerCase())) {
       failures.push(`banned claim "${claim}" appears in the content model`)

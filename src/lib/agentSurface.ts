@@ -23,7 +23,6 @@
 // overcome poor retrieval or weak relevance" - so the goal here is a
 // correct, unambiguous index, not an engineered extraction target.
 import { absolutizeUrl, validateUrl } from './url'
-import { SECTION_ORDER } from './sectionOrder'
 
 /**
  * Render a job's date range the same way index.astro's formatDateRange
@@ -282,8 +281,8 @@ export function renderSitemapXml(profile: any): string {
 
 /**
  * Render index.md: a markdown twin of the human index.astro page
- * (name, current role, tagline, education, About, Projects,
- * Experience), for the <link rel="alternate" type="text/markdown">
+ * (name, current role, tagline, location, education, links, About,
+ * Experience, Projects - order pinned by SECTION_ORDER), for the <link rel="alternate" type="text/markdown">
  * affordance. New in v2; v1 has no equivalent.
  *
  * The education line was missing entirely until the review that
@@ -358,9 +357,12 @@ export function renderIndexMd(profile: any): string {
     lines.push('')
   }
 
-  // Section order is pinned by SECTION_ORDER and asserted against BOTH
-  // this file's output and index.astro's by tests/parity.test.ts. Do not
-  // reorder one surface without the other.
+  // Section order is pinned by SECTION_ORDER in ./sectionOrder and asserted
+  // against BOTH this file's output and index.astro's by tests/parity.test.ts.
+  // Deliberately NOT imported here: the headings below are literal strings and
+  // importing the constant without using it would imply a source-level coupling
+  // that does not exist. The test is the enforcement. Do not reorder one surface
+  // without the other.
   lines.push('## About', '')
 
   for (const paragraph of about ?? []) {

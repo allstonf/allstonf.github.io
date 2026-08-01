@@ -220,3 +220,38 @@ describe('retraction gate on about[] prose', () => {
     expect(checkContent(poisoned).ok).toBe(false)
   })
 })
+
+describe('the gate covers every prose surface, not just projects and about', () => {
+  it('catches a retracted claim in an experience bullet', () => {
+    // experience[] bullets are public prose on all six surfaces. The scan
+    // comment claimed a whole-model reach it did not have.
+    const poisoned = {
+      ...profile,
+      experience: profile.experience.map((job, i) =>
+        i === 0 ? { ...job, bullets: [...job.bullets, 'Signed a lease on the property it ranked first.'] } : job,
+      ),
+    }
+    expect(checkContent(poisoned).ok).toBe(false)
+  })
+
+  it('catches a banned claim in an experience bullet', () => {
+    const poisoned = {
+      ...profile,
+      experience: profile.experience.map((job, i) =>
+        i === 0 ? { ...job, bullets: [...job.bullets, 'Built the pipeline on LangChain.'] } : job,
+      ),
+    }
+    expect(checkContent(poisoned).ok).toBe(false)
+  })
+
+  it('catches a retracted claim in person.tagline', () => {
+    const poisoned = { ...profile, person: { ...profile.person, tagline: 'Where the data is personal, I keep the inference local' } }
+    expect(checkContent(poisoned).ok).toBe(false)
+  })
+
+  it('still passes on the real, unmodified content model', () => {
+    // Widening the scan must not fail the build on correct content - the
+    // failure mode this branch already had one fix round for.
+    expect(checkContent(profile).failures).toEqual([])
+  })
+})
