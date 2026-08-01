@@ -176,8 +176,19 @@ describe('section order parity between the page and its markdown twin', () => {
   it('renders llms-full.txt in the same order too', () => {
     // It is mechanically derived from renderIndexMd(), so this pins that
     // the derivation was not bypassed.
+    //
+    // The presence check below is load-bearing, not decorative: without
+    // it, a build that drops renderIndexMd()'s body entirely (every
+    // indexOf() returning -1) produces positions = [-1, -1, -1], which
+    // is already sorted, so the sortedness assertion alone passes on
+    // total content loss. Fix round 1 (code review) proved this by
+    // making renderLlmsFullTxt() return only its header - the suite
+    // stayed green with zero "##" headings in the built file. This
+    // mirrors the presence loop the other two tests in this describe
+    // block already carry.
     const full = readFileSync('dist/llms-full.txt', 'utf8')
     const positions = SECTION_ORDER.map((name) => full.indexOf(`## ${name}`))
+    for (const p of positions) expect(p).toBeGreaterThan(-1)
     expect([...positions]).toEqual([...positions].sort((a, b) => a - b))
   })
 })
