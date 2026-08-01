@@ -63,11 +63,11 @@
   },
 
   "about": [
-    "I am a systems software engineer at Apple on the Core OS Power and Performance team. I led the end-to-end design and implementation of on-device telemetry for a next-generation WiFi and Bluetooth chipset, which made it possible to compare battery performance against prior chipsets quantitatively across large device fleets. It shipped with the chipset, and it turned battery questions that had been argued from intuition into questions answered with fleet data. The implementation is Objective-C and C++ across iOS, macOS, and watchOS. The analysis side is Python, Jupyter, and Spark.",
-    "Getting that built meant driving alignment across the WiFi, Bluetooth, Privacy, logging infrastructure, and analytics teams. The Privacy constraints are the interesting part of the problem, not an obstacle to it: the useful signal has to survive data minimization.",
+    "I am a systems software engineer at Apple on the Core OS Power and Performance team. I led the end-to-end design and implementation of on-device telemetry for a next-generation WiFi and Bluetooth chipset, which made it possible to compare battery performance against prior chipsets quantitatively across large device fleets. The telemetry shipped with the chipset, and it turned battery questions that had been argued from intuition into questions answered with fleet data. The implementation is Objective-C and C++ across iOS, macOS, and watchOS. The analysis side is Python, Jupyter, and Spark.",
+    "Getting that built meant driving alignment across the WiFi, Bluetooth, Privacy, logging infrastructure, and analytics teams.",
     "Outside of work I build decision systems, and the architecture is the same in every domain. A versioned scoring rubric is the single mutable surface, read at call time. Every heuristic change lands in an append-only log. A two-layer model compares what the system predicted against what actually happened, re-scoring is a deterministic tested function rather than a judgment call, and every rubric mutation stops at a hard human-approval gate. I have run it against a housing search and a content production pipeline.",
     "I run a local inference lane on 24 GB of Apple silicon so that agentic coding keeps working with no network and no third party holding the data. It serves open-weight Qwen and Gemma models over OpenAI-compatible and Anthropic-compatible routes, so the same harnesses I use online, Claude Code and pi, drive it unchanged offline. Getting tool calling to work there meant root-causing a failure to a model dropping its sentinel tags, proving it a model fault rather than a harness fault by A/B against a second model, and shipping a parity gate so it cannot regress.",
-    "The housing system is the one with an outcome attached. It scored 531 candidate listings across 26 discovery runs against a deterministic, versioned admission gate, ranked them with a dual-anchor commute engine built on open routing data, and shipped a public board. I signed a lease on the property it ranked first."
+    "The housing system is the one with an outcome attached. It scored 531 candidate listings across 26 discovery runs against a deterministic, versioned admission gate, ranked them with a dual-anchor commute engine built on open routing data, and shipped a public board. I signed a lease on a property the system surfaced and vetted."
   ],
 
   "projects": [
@@ -95,8 +95,8 @@
       "name": "Automated housing-search decision system",
       "featured": true,
       "period": "2026",
-      "summary": "Scored 531 candidate listings across 26 discovery runs against a deterministic, versioned admission gate. Signed a lease on the top-ranked property.",
-      "outcome": "Signed a lease on the property the system ranked first.",
+      "summary": "Scored 531 candidate listings across 26 discovery runs against a deterministic, versioned admission gate. Signed a lease on a property from the board.",
+      "outcome": "Signed a lease on a property the system surfaced.",
       "bullets": [
         "Deterministic, versioned admission gate: hard constraints reject before any scoring runs, so a rejection is always explainable.",
         "Dual-anchor commute engine on Nominatim and OSRM, with no paid routing API.",
