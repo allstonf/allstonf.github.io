@@ -23,6 +23,7 @@
 // overcome poor retrieval or weak relevance" - so the goal here is a
 // correct, unambiguous index, not an engineered extraction target.
 import { absolutizeUrl, validateUrl } from './url'
+import { SECTION_ORDER } from './sectionOrder'
 
 /**
  * Render a job's date range the same way index.astro's formatDateRange
@@ -357,10 +358,27 @@ export function renderIndexMd(profile: any): string {
     lines.push('')
   }
 
+  // Section order is pinned by SECTION_ORDER and asserted against BOTH
+  // this file's output and index.astro's by tests/parity.test.ts. Do not
+  // reorder one surface without the other.
   lines.push('## About', '')
 
   for (const paragraph of about ?? []) {
     lines.push(paragraph, '')
+  }
+
+  lines.push('## Experience', '')
+  for (const job of experience ?? []) {
+    lines.push(
+      `### ${job.employer} - ${job.title}`,
+      '',
+      `${formatDateRange(job.start, job.end)} - ${job.location}`,
+      '',
+    )
+    for (const bullet of job.bullets ?? []) {
+      lines.push(`- ${bullet}`)
+    }
+    lines.push('')
   }
 
   lines.push('## Projects', '')
@@ -394,20 +412,6 @@ export function renderIndexMd(profile: any): string {
       for (const link of links) {
         lines.push(`- [${link.label}](${validateUrl(link.url, 'projects[].links[].url')})`)
       }
-    }
-    lines.push('')
-  }
-
-  lines.push('## Experience', '')
-  for (const job of experience ?? []) {
-    lines.push(
-      `### ${job.employer} - ${job.title}`,
-      '',
-      `${formatDateRange(job.start, job.end)} - ${job.location}`,
-      '',
-    )
-    for (const bullet of job.bullets ?? []) {
-      lines.push(`- ${bullet}`)
     }
     lines.push('')
   }

@@ -3,9 +3,16 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import profile from '../content/profile.json'
 
-describe('static shell parity with v1', () => {
-  const html = readFileSync('dist/index.html', 'utf8')
+// Hoisted to module scope (not declared inside the first describe()
+// callback below) so the second describe() block further down - the
+// section-order parity suite added for the no-parity-gate-page-vs-
+// markdown gap - can also read the built HTML without re-reading the
+// file. A `const` declared inside one describe() callback is scoped to
+// that callback's function body and is invisible to a sibling
+// describe(), so this single top-level read is what both suites share.
+const html = readFileSync('dist/index.html', 'utf8')
 
+describe('static shell parity with v1', () => {
   it('names Apple as the current employer in VISIBLE text', () => {
     // JSON-LD alone provably fails; the visible line is the load-bearing fix.
     const visible = html.replace(/<script[\s\S]*?<\/script>/g, '')
@@ -147,5 +154,30 @@ describe('static shell parity with v1', () => {
     // toggle anchor) survived the rewrite unchanged.
     expect(html).toContain('rel="alternate"')
     expect(html).toMatch(/<a[^>]*data-view-toggle[^>]*href="\/index\.md"/)
+  })
+})
+
+import { SECTION_ORDER } from '../src/lib/sectionOrder'
+
+describe('section order parity between the page and its markdown twin', () => {
+  it('renders the page sections in SECTION_ORDER', () => {
+    const positions = SECTION_ORDER.map((name) => html.indexOf(`>${name}</h2>`))
+    for (const p of positions) expect(p).toBeGreaterThan(-1)
+    expect([...positions]).toEqual([...positions].sort((a, b) => a - b))
+  })
+
+  it('renders index.md sections in the SAME order as the page', () => {
+    const md = readFileSync('dist/index.md', 'utf8')
+    const positions = SECTION_ORDER.map((name) => md.indexOf(`## ${name}`))
+    for (const p of positions) expect(p).toBeGreaterThan(-1)
+    expect([...positions]).toEqual([...positions].sort((a, b) => a - b))
+  })
+
+  it('renders llms-full.txt in the same order too', () => {
+    // It is mechanically derived from renderIndexMd(), so this pins that
+    // the derivation was not bypassed.
+    const full = readFileSync('dist/llms-full.txt', 'utf8')
+    const positions = SECTION_ORDER.map((name) => full.indexOf(`## ${name}`))
+    expect([...positions]).toEqual([...positions].sort((a, b) => a - b))
   })
 })
