@@ -251,3 +251,40 @@ describe('renderIndexMd renders a project period', () => {
     expect(md).not.toContain('undefined')
   })
 })
+
+describe('renderIndexMd carries the links and location the page advertises', () => {
+  const md = renderIndexMd(profile)
+
+  it('renders person.location', () => {
+    expect(md).toContain(profile.person.location)
+  })
+
+  it('renders every profile link as an absolute url', () => {
+    for (const p of profile.person.profiles) {
+      expect(md).toContain(p.url)
+    }
+  })
+
+  it('renders the resume link absolutized against site.url', () => {
+    // index.md is fetched directly with no base to resolve against, the
+    // same reason llms.txt absolutizes it (agentSurface.ts:167).
+    expect(md).toMatch(/https:\/\/[^\s)]*Allston_Fojas_Resume\.pdf/)
+  })
+
+  it('renders stack and links for every project that has them', () => {
+    for (const project of profile.projects) {
+      if (project.stack?.length) {
+        expect(md).toContain(project.stack[0])
+      }
+      for (const link of project.links ?? []) {
+        expect(md).toContain(link.url)
+      }
+    }
+  })
+
+  it('emits at least one absolute url, the thing the file entirely lacked', () => {
+    // Regression pin for the P1 itself: dist/index.md shipped with zero
+    // http occurrences while advertising itself as the page's twin.
+    expect((md.match(/https?:\/\//g) ?? []).length).toBeGreaterThan(5)
+  })
+})

@@ -309,6 +309,14 @@ export function renderIndexMd(profile: any): string {
     '',
   ]
 
+  // person.location is on the human page's header record; index.md
+  // carried role, tagline and contact but never location, so the two
+  // surfaces disagreed about where he is. Guarded, like education below,
+  // because the content model is hand-authored.
+  if (person.location) {
+    lines.push(`Location: ${person.location}`, '')
+  }
+
   // Mirror index.astro's own "only if the content model actually
   // carries one" guard (that page's `{person.education && (...)}`
   // block) - never fabricate an education line for a profile that
@@ -322,6 +330,31 @@ export function renderIndexMd(profile: any): string {
       `Education: ${person.education.credential}, ${person.education.institution}${detailSuffix}`,
       '',
     )
+  }
+
+  // The links block. index.md previously carried ZERO urls while the
+  // page advertised it as its markdown twin via rel="alternate", so an
+  // agent reading it concluded there were no contactable profiles and no
+  // evidence behind any project. Every sink runs through validateUrl(),
+  // the same guarantee each href on index.astro gets.
+  const profileLinks = person.profiles ?? []
+  if (profileLinks.length || person.resume?.url) {
+    lines.push('## Links', '')
+    for (const profileLink of profileLinks) {
+      lines.push(
+        `- [${profileLink.label}](${validateUrl(profileLink.url, 'person.profiles[].url')})`,
+      )
+    }
+    if (person.resume?.url) {
+      // absolutize, not validate: the content model stores a same-origin
+      // path and index.md is fetched directly, so a relative link here
+      // reaches a reader with no base to resolve it against.
+      const siteUrl = validateUrl(profile.site.url, 'site.url').replace(/\/+$/, '')
+      lines.push(
+        `- [${person.resume.label}](${absolutizeUrl(person.resume.url, siteUrl, 'person.resume.url')})`,
+      )
+    }
+    lines.push('')
   }
 
   lines.push('## About', '')
@@ -347,6 +380,20 @@ export function renderIndexMd(profile: any): string {
     }
     for (const bullet of project.bullets ?? []) {
       lines.push(`- ${bullet}`)
+    }
+    if (project.stack?.length) {
+      lines.push('', `Stack: ${project.stack.join(', ')}`)
+    }
+    // Blank line first, then one LIST ITEM per link. Both halves matter:
+    // CommonMark fuses consecutive non-blank lines into a single
+    // paragraph, and a list item is its own block so links cannot fuse
+    // into each other either. Same shape renderResumeMd() uses.
+    const links = project.links ?? []
+    if (links.length) {
+      lines.push('', 'Links:', '')
+      for (const link of links) {
+        lines.push(`- [${link.label}](${validateUrl(link.url, 'projects[].links[].url')})`)
+      }
     }
     lines.push('')
   }
