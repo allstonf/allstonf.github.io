@@ -4,10 +4,11 @@
 // / render_sitemap_xml(). index.md is new in v2: a markdown twin of the
 // human page (src/pages/index.astro), referenced from that page's
 // <head> via <link rel="alternate" type="text/markdown" href="/index.md">.
-// A markdown page costs roughly 80% fewer tokens for an agent to read
-// than the rendered HTML page and outperforms llms.txt alone for
-// "answer a question found on this specific page" queries, since
-// llms.txt is a summary/index rather than the full page content.
+// Measured with cl100k_base on 2026-08-01: root.html is 7,698 tokens and
+// index.md is 2,565 tokens, 66.7% fewer for an agent to read - and it
+// outperforms llms.txt alone for "answer a question found on this
+// specific page" queries, since llms.txt is a summary/index rather than
+// the full page content.
 //
 // Every function here reads only from the same content/profile.json
 // content model that src/pages/index.astro renders, so the human and

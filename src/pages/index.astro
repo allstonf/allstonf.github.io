@@ -161,10 +161,11 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
     <link rel="canonical" href={siteUrl} />
     <!--
       The markdown twin of this page (src/pages/index.md.ts), built
-      from the same content/profile.json content model. A markdown page
-      costs roughly 80% fewer tokens for an agent to read than this
-      rendered HTML page, and outperforms llms.txt alone for a question
-      answered by this specific page's content.
+      from the same content/profile.json content model. Measured with
+      cl100k_base on 2026-08-01: this page is 7,698 tokens and the
+      markdown twin is 2,565 tokens, 66.7% fewer - and outperforms
+      llms.txt alone for a question answered by this specific page's
+      content.
     -->
     <link rel="alternate" type="text/markdown" href="/index.md" />
     <!--

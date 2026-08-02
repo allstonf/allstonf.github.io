@@ -66,6 +66,23 @@ describe('static shell parity with v1', () => {
     }
   })
 
+  it('states the markdown-twin token savings as a measured, checkable figure, not a bare adjective', () => {
+    // Task: false-token-claim fix (2026-08-01). The markdown-twin comment
+    // in index.astro's <head> said "roughly 80% fewer tokens" - a claim
+    // that shipped straight into dist/index.html. Measured against the
+    // real build with cl100k_base on 2026-08-01: root.html 7,698 tokens
+    // -> index.md 2,565 tokens = 66.7% fewer, not 80% - an overstatement
+    // of 13.3 points. The fix states the measured figure, names the
+    // tokenizer, gives both counts, and dates the measurement, so the
+    // claim can be re-verified rather than taken on faith.
+    expect(html).not.toContain('80%')
+    expect(html).toContain('66.7%')
+    expect(html).toContain('cl100k_base')
+    expect(html).toContain('7,698')
+    expect(html).toContain('2,565')
+    expect(html).toContain('2026-08-01')
+  })
+
   it('ships no em-dash', () => {
     // Built from its char code (U+2014 = 8212) rather than typed as a
     // literal character, so this test file itself contains zero
