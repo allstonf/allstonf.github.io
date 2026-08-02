@@ -21,6 +21,7 @@ import { validateUrl } from '../lib/url'
 import { buildJsonLd } from '../lib/jsonLd'
 import { validateProfile } from '../lib/validateProfile'
 import { resolveLastUpdated } from '../lib/lastUpdated'
+import { SKILL_GROUPS } from '../lib/agentSurface'
 
 // Whole-document invariants that no single-value render call can
 // catch (duplicate project slugs, a malformed email) - ported from
@@ -30,8 +31,20 @@ import { resolveLastUpdated } from '../lib/lastUpdated'
 // poisoned mailto: link. See src/lib/validateProfile.ts.
 validateProfile(profile)
 
-const { site, person, about, projects, experience } = profile
+const { site, person, about, projects, experience, skills } = profile
 const currentRole = person.current_role
+
+// Skills, filtered to the SAME SKILL_GROUPS allowlist src/lib/agentSurface.ts
+// exports and renderIndexMd()/renderResumeMd() both read - never
+// Object.entries(skills), which would publish whatever key the content
+// model gains next (see SKILL_GROUPS's own docstring for why that is the
+// exact v1 leak class this design exists to avoid). Swift, Java,
+// OpenCode, LangGraph, Codex and Gemini previously reached zero public
+// surfaces except /resume.md; this is the human page's half of that fix.
+const skillGroups = SKILL_GROUPS.filter((group) => skills?.[group.key]?.length).map((group) => ({
+  label: group.label,
+  members: skills[group.key] as string[],
+}))
 
 // Every URL sink on this page runs through validateUrl() before it
 // reaches an href or a JSON-LD block - ported from build.py's
@@ -303,6 +316,26 @@ const jsonLdScript = JSON.stringify(jsonLd, null, 2).replace(/<\//g, '<\\/')
           </div>
         </div>
       </section>
+
+      {skillGroups.length > 0 && (
+        <section id="skills" tabindex="-1" class="band" aria-labelledby="skills-heading">
+          <div class="band__inner reveal">
+            <h2 id="skills-heading">Skills</h2>
+            <div class="skills-groups">
+              {skillGroups.map((group) => (
+                <div class="skills-group">
+                  <h3>{group.label}</h3>
+                  <ul class="project-card__stack" aria-label={group.label}>
+                    {group.members.map((item) => (
+                      <li class="stack-item">{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section id="experience" tabindex="-1" class="band" aria-labelledby="experience-heading">
         <div class="band__inner reveal">

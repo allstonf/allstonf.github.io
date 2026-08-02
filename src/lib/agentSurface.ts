@@ -303,7 +303,7 @@ export function renderSitemapXml(profile: any, lastUpdated: string = profile._me
  * tests/agentSurface.test.ts.
  */
 export function renderIndexMd(profile: any): string {
-  const { person, about, projects, experience } = profile
+  const { person, about, projects, experience, skills } = profile
   const currentRole = person.current_role
 
   const lines: string[] = [
@@ -368,6 +368,25 @@ export function renderIndexMd(profile: any): string {
 
   for (const paragraph of about ?? []) {
     lines.push(paragraph, '')
+  }
+
+  // Skills - placed here (after About, before Experience), not per
+  // SECTION_ORDER: SECTION_ORDER exists to keep the page and index.md
+  // from disagreeing about the order of About/Experience/Projects (the
+  // three sections that predate this task), and adding a fourth entry
+  // there would also pull the section-order parity tests into the scope
+  // of this task. Reads the SAME SKILL_GROUPS allowlist renderResumeMd()
+  // uses (see that constant's own docstring for why iterating
+  // Object.entries(profile.skills) instead would be the exact v1 leak
+  // class this whole file's fail-closed design exists to avoid) - a
+  // scannable keyword block belongs high on the page, per the
+  // retrieval-layer evidence that early, self-contained content is
+  // likelier to be selected.
+  const skillGroupLines = SKILL_GROUPS.filter((group) => skills?.[group.key]?.length).map(
+    (group) => `- **${group.label}:** ${skills[group.key].join(', ')}`,
+  )
+  if (skillGroupLines.length) {
+    lines.push('## Skills', '', ...skillGroupLines, '')
   }
 
   lines.push('## Experience', '')
@@ -446,20 +465,31 @@ export function renderIndexMd(profile: any): string {
 const RESUME_DATE_SEPARATOR = ' to '
 
 /**
- * The ONLY skill groups /resume.md will publish, in publication order,
- * each an explicit `content/profile.json` key paired with its heading.
+ * The ONLY skill groups any public surface will publish, in publication
+ * order, each an explicit `content/profile.json` key paired with its
+ * heading.
  *
  * This is the fail-closed half of the skills section. Iterating
  * Object.entries(profile.skills) would publish whatever key the content
  * model gains next, which is precisely how v1's render_api_profile()
  * put an internal editorial note on a public URL. Naming the keys here
  * means a fourth group added to profile.json is structurally incapable
- * of reaching the page until someone adds it to this list on purpose.
+ * of reaching any page until someone adds it to this list on purpose.
  *
  * The group names and their members come from the resume PDF, which is
  * canonical for this surface - they are not a taxonomy invented here.
+ *
+ * Originally named RESUME_SKILL_GROUPS and consumed only by
+ * renderResumeMd(). Promoted to this shared, exported name (Task:
+ * skills-visibility fix, 2026-08-01) so renderIndexMd() - and, through
+ * index.astro's frontmatter, the human page itself - can drive the same
+ * Skills section from the ONE list, rather than a second copy that could
+ * drift. person.knows_about is a DIFFERENT, deliberately separate field
+ * (schema.org shaping for jsonLd.ts's knowsAbout) and is not part of
+ * this allowlist - see renderResumeMd()'s own comment on why the two
+ * must not be merged.
  */
-const RESUME_SKILL_GROUPS = [
+export const SKILL_GROUPS = [
   { key: 'programming_languages', label: 'Programming Languages' },
   { key: 'development_tools', label: 'Development Tools' },
   { key: 'ai_agent_tools', label: 'AI Agent Tools' },
@@ -481,7 +511,7 @@ const RESUME_SKILL_GROUPS = [
  * set. Concretely: an experience entry contributes exactly employer,
  * title, start, end, location and bullets; a project contributes exactly
  * name, summary, outcome, bullets, stack and links; skills come only from
- * RESUME_SKILL_GROUPS above. Email may appear (it is already published on
+ * SKILL_GROUPS above. Email may appear (it is already published on
  * this site and on the human page); person.location, a phone number, a
  * street address or any other contact detail must not, which is why the
  * contact line names person.email alone rather than assembling whatever
@@ -509,7 +539,7 @@ export function renderResumeMd(profile: any): string {
     '',
   ]
 
-  for (const group of RESUME_SKILL_GROUPS) {
+  for (const group of SKILL_GROUPS) {
     const members = skills?.[group.key]
     // Skip a group the content model does not carry rather than emitting
     // an empty heading, the same "only if it actually exists" guard

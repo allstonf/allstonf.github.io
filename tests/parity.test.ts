@@ -19,6 +19,24 @@ describe('static shell parity with v1', () => {
     expect(visible).toContain(profile.person.current_role.employer)
   })
 
+  it('shows Swift, OpenCode and LangGraph as VISIBLE text, not only inside the JSON-LD block', () => {
+    // Task: skills-visibility fix (2026-08-01). Swift, Java, OpenCode,
+    // LangGraph, Codex and Gemini exist in content/profile.json under
+    // `skills` and occurred ZERO times in dist/index.html, /index.md,
+    // /llms-full.txt or /api/profile.json before this fix - they
+    // published only to /resume.md. Same class of bug the visible-
+    // current-role-line rule above guards against for the employer
+    // field: person.knows_about DOES already reach JSON-LD's
+    // knowsAbout, but a controlled test found five major AI agents all
+    // missed data that existed only inside a JSON-LD block, so the
+    // skills groups have to be visible prose too, not just structured
+    // data alongside it.
+    const visible = html.replace(/<script[\s\S]*?<\/script>/g, '')
+    for (const canary of ['Swift', 'OpenCode', 'LangGraph']) {
+      expect(visible).toContain(canary)
+    }
+  })
+
   it('names the education institution in VISIBLE text', () => {
     // Mirrors the employer test above: person.education is rendered as
     // a visible <dd> in the header meta record (index.astro:180-195),

@@ -300,6 +300,45 @@ describe('renderIndexMd carries the links and location the page advertises', () 
   })
 })
 
+describe('renderIndexMd publishes the Skills section', () => {
+  // Task: skills-visibility fix (2026-08-01). Swift, Java, OpenCode,
+  // LangGraph, Codex and Gemini exist in content/profile.json under
+  // `skills` and occurred ZERO times in dist/index.html, /index.md,
+  // /llms-full.txt or /api/profile.json - they published only to
+  // /resume.md, via RESUME_SKILL_GROUPS. This section drives /index.md
+  // (and, by mechanical derivation, /llms-full.txt) from the same
+  // allowlist, now exported as SKILL_GROUPS and shared with
+  // renderResumeMd() rather than defining a second list that could drift.
+  it('contains a ## Skills heading with all three group labels', () => {
+    const md = renderIndexMd(profile)
+    expect(md).toContain('## Skills')
+    expect(md).toContain('Programming Languages')
+    expect(md).toContain('Development Tools')
+    expect(md).toContain('AI Agent Tools')
+  })
+
+  it('contains Swift, OpenCode and LangGraph as canaries proving group MEMBERS actually publish, not just labels', () => {
+    const md = renderIndexMd(profile)
+    for (const canary of ['Swift', 'OpenCode', 'LangGraph']) {
+      expect(md).toContain(canary)
+    }
+  })
+
+  it('fails closed: an unlisted skills group injected into the content model does not publish', () => {
+    // Mirrors the fail-closed canary pattern tests/resumeMd.test.ts
+    // already runs against renderResumeMd() - SKILL_GROUPS names exactly
+    // three keys, so a fourth group (however it got into the content
+    // model) is structurally incapable of reaching this surface without
+    // someone adding it to the list on purpose. This is the exact bug
+    // class v1's render_api_profile() shipped: an internal editorial note
+    // reaching a public URL because the renderer iterated an unknown key
+    // set instead of a named allowlist.
+    const poisoned = structuredClone(profile) as any
+    poisoned.skills.internal_notes = ['CANARY_MUST_NOT_PUBLISH']
+    expect(renderIndexMd(poisoned)).not.toContain('CANARY_MUST_NOT_PUBLISH')
+  })
+})
+
 describe('renderSitemapXml takes an optional lastUpdated argument', () => {
   // Task: freshness-signal fix (2026-08-01). renderSitemapXml() used to
   // read lastmod straight from profile._meta.last_updated. It now takes

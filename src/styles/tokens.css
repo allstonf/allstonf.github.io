@@ -846,6 +846,27 @@ time {
 }
 
 /* ---------------------------------------------------------------------
+   Skills - a scannable keyword block, placed between About and
+   Experience (index.astro). Reuses .project-card__stack and .stack-item
+   verbatim rather than inventing a second chip style, the same
+   left-aligned-within-a-centered-band layout .timeline already
+   establishes for Experience below it.
+   ------------------------------------------------------------------ */
+
+.skills-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: var(--measure);
+  margin: 0 auto;
+  text-align: left;
+}
+
+.skills-group h3 {
+  margin-bottom: var(--space-2);
+}
+
+/* ---------------------------------------------------------------------
    Projects
    ------------------------------------------------------------------ */
 
