@@ -45,7 +45,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Must satisfy Astro's own engine floor, NOT just "some LTS". Astro 7
       # declares engines.node ">=22.12.0" and hard-EXITS on a lower version
@@ -60,7 +60,7 @@ jobs:
       # and update here; package.json declares no `engines` field, so nothing
       # else in the repo pins this.
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
 
@@ -73,7 +73,9 @@ jobs:
       # error OR warning severity (verified locally, not assumed), and
       # this job has no continue-on-error anywhere, so this is a real
       # gate rather than a report. Scope is set by biome.jsonc's
-      # allowlist - the legacy v1 tree at the repo root is not linted.
+      # allowlist (src/ scripts/ tests/ plus two config files), which
+      # also excludes *.astro - Biome 2.5 parses only the frontmatter
+      # fence, so it reports template-consumed consts as unused.
       - name: Lint (biome check)
         run: npx biome check .
 
@@ -85,7 +87,7 @@ jobs:
       # from a branch" to "GitHub Actions" - instead of failing much
       # later at the actual deploy step with a less obvious error.
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       # No `continue-on-error` and no `if: always()` guard anywhere
       # below this step, deliberately. A GitHub Actions job stops at
@@ -120,7 +122,7 @@ jobs:
         run: npx vitest run
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
