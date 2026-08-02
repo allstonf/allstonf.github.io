@@ -11,7 +11,7 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "verify:content": "node scripts/verify-content.mjs",
-    "verify:all": "npm run lint && npm run build && npm test && node scripts/verify-content.mjs --check-urls && node scripts/check-js-budget.mjs"
+    "verify:all": "npm run lint && npm run build && npm test && node scripts/verify-content.mjs --check-urls && node scripts/check-js-budget.mjs && node scripts/check-css-budget.mjs"
   },
   "dependencies": {
     "astro": "^7.1.3"

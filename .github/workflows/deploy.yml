@@ -103,6 +103,14 @@ jobs:
       - name: Check JS budget
         run: node scripts/check-js-budget.mjs
 
+      # Reference-aware gzipped-CSS budget gate, the counterpart to the
+      # JS one above. Same reason it cannot be a glob over
+      # dist/**/*.css: a build can emit a stylesheet no page links.
+      # Its unreferenced-selector list is informational and never
+      # changes the exit code - see the script header for why.
+      - name: Check CSS budget
+        run: node scripts/check-css-budget.mjs
+
       - name: Run tests
         run: npx vitest run
 
