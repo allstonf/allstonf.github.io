@@ -132,7 +132,7 @@ export function checkContent(profile) {
   for (const claim of RETRACTED_CLAIMS) {
     if (serialized.includes(claim.toLowerCase())) {
       failures.push(
-        `retracted claim "${claim}" appears in the content model - ` + 'it was corrected on review and must not return',
+        `retracted claim "${claim}" appears in the content model - it was corrected on review and must not return`,
       )
     }
   }

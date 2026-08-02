@@ -152,7 +152,20 @@ export function buildReachableSet(distDir, rootFiles) {
       // URL is an external stylesheet, which this site emits none of
       // and does not budget.
       if (spec.startsWith('http') || spec.startsWith('//')) continue
-      const resolved = spec.startsWith('/') ? join(distDir, spec.slice(1)) : resolve(dirname(file), spec)
+      // Strip a cache-busting query string and any fragment before
+      // resolving. A browser fetches "./base.css?v=1" from the file
+      // base.css; the filesystem has no such entry as written. Left
+      // attached, the resolved path existed on no disk AND did not end
+      // in ".css", so the real file was dropped from the reachable set
+      // (under-counting the budget) and then listed under "emitted but
+      // UNREACHABLE" - telling a reader that a stylesheet every visitor
+      // downloads is dead weight. That false-positive-deletion risk is
+      // the specific thing this gate exists to avoid, so the fix is
+      // load-bearing rather than cosmetic. Found by code review
+      // 2026-08-01; pinned by two tests in tests/checkCssBudget.test.ts.
+      const specPath = spec.split(/[?#]/)[0]
+      if (specPath === '') continue
+      const resolved = specPath.startsWith('/') ? join(distDir, specPath.slice(1)) : resolve(dirname(file), specPath)
       if (!reachable.has(resolved)) queue.push(resolved)
     }
   }
@@ -209,9 +222,19 @@ export function extractClassAndIdSelectors(cssSource) {
       continue
     }
     current += char
-    // Inside a block, a `;` ends a declaration; reset so declaration
-    // text can never accumulate into the next prelude.
-    if (depth > 0 && char === ';') current = ''
+    // A `;` ends a statement at EVERY depth, so the prelude buffer
+    // resets at every depth. Inside a block that statement is a
+    // declaration (`color: red;`). At depth 0 it is a statement at-rule
+    // (`@import "./b.css";`, `@charset "utf-8";`) - and that case is why
+    // this is not guarded by `depth > 0`, as it was until a code review
+    // on 2026-08-01. With the guard, a top-level @import stayed glued to
+    // whatever selector followed it, the merged prelude then began with
+    // "@", and the at-rule filter below discarded the selector along
+    // with it. Every selector between the last @import and the first `{`
+    // vanished from extraction, which meant it could never be reported
+    // as unreferenced either - an under-count that looks like a clean
+    // report.
+    if (char === ';') current = ''
   }
   for (const prelude of preludes) {
     // An at-rule prelude (@media (max-width: 600px), @supports (...))
