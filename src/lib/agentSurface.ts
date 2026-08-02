@@ -40,11 +40,7 @@ import { absolutizeUrl, validateUrl } from './url'
  * therefore byte-identical output. One helper with one optional argument,
  * rather than a second near-identical date formatter that could drift.
  */
-function formatDateRange(
-  start: string,
-  end: string | null | undefined,
-  separator = ' - ',
-): string {
+function formatDateRange(start: string, end: string | null | undefined, separator = ' - '): string {
   return `${start}${separator}${end ? end : 'Present'}`
 }
 
@@ -168,7 +164,7 @@ export function renderLlmsTxt(profile: any): string {
     lines.push(`- [${person.resume.label}](${resumeUrl})`)
   }
 
-  return lines.join('\n') + '\n'
+  return `${lines.join('\n')}\n`
 }
 
 /**
@@ -235,7 +231,7 @@ export function renderRobotsTxt(profile: any): string {
     `# Agent surface (full page prose): ${siteUrl}/llms-full.txt`,
   )
 
-  return lines.join('\n') + '\n'
+  return `${lines.join('\n')}\n`
 }
 
 /** Escape the characters that are structurally significant in XML text content. */
@@ -326,10 +322,7 @@ export function renderIndexMd(profile: any): string {
   // new heading convention for a single field.
   if (person.education) {
     const detailSuffix = person.education.detail ? ` (${person.education.detail})` : ''
-    lines.push(
-      `Education: ${person.education.credential}, ${person.education.institution}${detailSuffix}`,
-      '',
-    )
+    lines.push(`Education: ${person.education.credential}, ${person.education.institution}${detailSuffix}`, '')
   }
 
   // The links block. index.md previously carried ZERO urls while the
@@ -341,18 +334,14 @@ export function renderIndexMd(profile: any): string {
   if (profileLinks.length || person.resume?.url) {
     lines.push('## Links', '')
     for (const profileLink of profileLinks) {
-      lines.push(
-        `- [${profileLink.label}](${validateUrl(profileLink.url, 'person.profiles[].url')})`,
-      )
+      lines.push(`- [${profileLink.label}](${validateUrl(profileLink.url, 'person.profiles[].url')})`)
     }
     if (person.resume?.url) {
       // absolutize, not validate: the content model stores a same-origin
       // path and index.md is fetched directly, so a relative link here
       // reaches a reader with no base to resolve it against.
       const siteUrl = validateUrl(profile.site.url, 'site.url').replace(/\/+$/, '')
-      lines.push(
-        `- [${person.resume.label}](${absolutizeUrl(person.resume.url, siteUrl, 'person.resume.url')})`,
-      )
+      lines.push(`- [${person.resume.label}](${absolutizeUrl(person.resume.url, siteUrl, 'person.resume.url')})`)
     }
     lines.push('')
   }
@@ -371,12 +360,7 @@ export function renderIndexMd(profile: any): string {
 
   lines.push('## Experience', '')
   for (const job of experience ?? []) {
-    lines.push(
-      `### ${job.employer} - ${job.title}`,
-      '',
-      `${formatDateRange(job.start, job.end)} - ${job.location}`,
-      '',
-    )
+    lines.push(`### ${job.employer} - ${job.title}`, '', `${formatDateRange(job.start, job.end)} - ${job.location}`, '')
     for (const bullet of job.bullets ?? []) {
       lines.push(`- ${bullet}`)
     }
@@ -423,12 +407,10 @@ export function renderIndexMd(profile: any): string {
   // trailing content still pushes one blank line, and the next section
   // header adds another) down to a single blank line, then trim the
   // final trailing blank before adding exactly one closing newline.
-  return (
-    lines
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trimEnd() + '\n'
-  )
+  return `${lines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trimEnd()}\n`
 }
 
 // -- /resume.md: the machine-readable resume surface (Task 5). --
@@ -594,21 +576,14 @@ export function renderResumeMd(profile: any): string {
 
   if (person.education) {
     const detailSuffix = person.education.detail ? ` (${person.education.detail})` : ''
-    lines.push(
-      '## Education',
-      '',
-      `${person.education.credential}, ${person.education.institution}${detailSuffix}`,
-      '',
-    )
+    lines.push('## Education', '', `${person.education.credential}, ${person.education.institution}${detailSuffix}`, '')
   }
 
   // Same blank-line normalization renderIndexMd() ends with: collapse
   // the runs left by per-section trailing pushes, then exactly one
   // closing newline.
-  return (
-    lines
-      .join('\n')
-      .replace(/\n{3,}/g, '\n\n')
-      .trimEnd() + '\n'
-  )
+  return `${lines
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trimEnd()}\n`
 }

@@ -32,20 +32,9 @@ export const PUBLIC_PERSON_FIELDS = [
   'resume',
 ] as const
 
-export const PUBLIC_CURRENT_ROLE_FIELDS = [
-  'title',
-  'employer',
-  'employer_url',
-  'start',
-  'location',
-] as const
+export const PUBLIC_CURRENT_ROLE_FIELDS = ['title', 'employer', 'employer_url', 'start', 'location'] as const
 
-export const PUBLIC_EDUCATION_FIELDS = [
-  'institution',
-  'institution_url',
-  'credential',
-  'detail',
-] as const
+export const PUBLIC_EDUCATION_FIELDS = ['institution', 'institution_url', 'credential', 'detail'] as const
 
 export const PUBLIC_SOCIAL_PROFILE_FIELDS = ['label', 'url', 'handle'] as const
 
@@ -65,14 +54,7 @@ export const PUBLIC_PROJECT_FIELDS = [
 
 export const PUBLIC_LINK_FIELDS = ['label', 'url'] as const
 
-export const PUBLIC_EXPERIENCE_FIELDS = [
-  'employer',
-  'title',
-  'start',
-  'end',
-  'location',
-  'bullets',
-] as const
+export const PUBLIC_EXPERIENCE_FIELDS = ['employer', 'title', 'start', 'end', 'location', 'bullets'] as const
 
 /**
  * Return a new object containing only `fields`, in allowlist order.
@@ -85,10 +67,7 @@ export const PUBLIC_EXPERIENCE_FIELDS = [
  * optional field (e.g. a project with no outcome yet) stays optional in
  * the output instead of appearing as an explicit null.
  */
-export function pick(
-  source: Record<string, unknown>,
-  fields: readonly string[],
-): Record<string, unknown> {
+export function pick(source: Record<string, unknown>, fields: readonly string[]): Record<string, unknown> {
   const result: Record<string, unknown> = {}
   for (const field of fields) {
     if (field in source) {
@@ -119,10 +98,7 @@ export function publicProjection(profile: {
 }): Record<string, unknown> {
   const person = pick(profile.person, PUBLIC_PERSON_FIELDS)
   if ('current_role' in person) {
-    person.current_role = pick(
-      person.current_role as Record<string, unknown>,
-      PUBLIC_CURRENT_ROLE_FIELDS,
-    )
+    person.current_role = pick(person.current_role as Record<string, unknown>, PUBLIC_CURRENT_ROLE_FIELDS)
   }
   if ('education' in person) {
     person.education = pick(person.education as Record<string, unknown>, PUBLIC_EDUCATION_FIELDS)

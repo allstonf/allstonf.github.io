@@ -48,11 +48,7 @@ const MARKDOWN_SCROLL_MARGIN_PX = 24
  *                  hung-fetch recovery can be tested without waiting
  *                  the real timeout.
  */
-export function initViewToggle(
-  doc: Document,
-  fetchImpl?: typeof fetch,
-  options: { timeoutMs?: number } = {},
-): void {
+export function initViewToggle(doc: Document, fetchImpl?: typeof fetch, options: { timeoutMs?: number } = {}): void {
   const toggle = doc.querySelector<HTMLAnchorElement>(TOGGLE_SELECTOR)
   const target = doc.querySelector<HTMLElement>(TARGET_SELECTOR)
   if (!toggle || !target) return

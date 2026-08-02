@@ -8,13 +8,16 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run",
+    "lint": "biome check .",
+    "format": "biome check --write .",
     "verify:content": "node scripts/verify-content.mjs",
-    "verify:all": "npm run build && npm test && node scripts/verify-content.mjs --check-urls && node scripts/check-js-budget.mjs"
+    "verify:all": "npm run lint && npm run build && npm test && node scripts/verify-content.mjs --check-urls && node scripts/check-js-budget.mjs"
   },
   "dependencies": {
     "astro": "^7.1.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.6",
     "jsdom": "^29.1.1",
     "vitest": "^4.1.10"
   }

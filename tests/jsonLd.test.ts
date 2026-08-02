@@ -11,10 +11,10 @@
 // same way tests/publicProjection.test.ts already tests the others:
 // inject a hostile value into a structuredClone of the real profile
 // and assert the build throws.
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import profile from '../content/profile.json'
 import { buildJsonLd } from '../src/lib/jsonLd'
 import { UnpublishableUrlError } from '../src/lib/url'
-import profile from '../content/profile.json'
 
 describe('buildJsonLd fails closed on every URL sink it emits', () => {
   it('rejects a disallowed scheme in person.education.institution_url', () => {

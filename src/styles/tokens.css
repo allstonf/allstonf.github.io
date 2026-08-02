@@ -32,27 +32,27 @@
    ------------------------------------------------------------------ */
 
 @font-face {
-  font-family: 'Montserrat';
+  font-family: "Montserrat";
   font-style: normal;
   font-display: swap;
   font-weight: 700;
-  src: url('/fonts/montserrat-latin-700-normal.woff2') format('woff2');
+  src: url("/fonts/montserrat-latin-700-normal.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: 'Lora';
+  font-family: "Lora";
   font-style: normal;
   font-display: swap;
   font-weight: 400;
-  src: url('/fonts/lora-latin-400-normal.woff2') format('woff2');
+  src: url("/fonts/lora-latin-400-normal.woff2") format("woff2");
 }
 
 @font-face {
-  font-family: 'Lora';
+  font-family: "Lora";
   font-style: normal;
   font-display: swap;
   font-weight: 700;
-  src: url('/fonts/lora-latin-700-normal.woff2') format('woff2');
+  src: url("/fonts/lora-latin-700-normal.woff2") format("woff2");
 }
 
 /* ---------------------------------------------------------------------
@@ -108,15 +108,15 @@
      --color-ground is 21:1, the sRGB maximum. */
   --ink-on-accent: #0b0c0e; /* dark text placed ON an accent fill (skip link, hover-inverted buttons) */
 
-  --font-display: 'Montserrat', ui-sans-serif, sans-serif;
-  --font-body: 'Lora', ui-serif, Georgia, serif;
+  --font-display: "Montserrat", ui-sans-serif, sans-serif;
+  --font-body: "Lora", ui-serif, Georgia, serif;
   /* Not a DESIGN.md token: pre.agent-view (the raw-markdown "source"
      view the agent-view toggle swaps in) is a functional utility
      surface, not part of the photographic/editorial visual language
      DESIGN.md governs, and needs a monospace face on the same "show
      literal characters" grounds v2 had. A system stack costs nothing
      over the network and adds no new self-hosted font. */
-  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* Typography.scale + typography.body, DESIGN.md verbatim for the
      base values. DESIGN.md's prose ties two breakpoint bumps together
@@ -293,11 +293,13 @@ button {
   cursor: pointer;
   min-height: 44px;
   padding: 0.5rem 1rem;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 button:hover:not(:disabled),
-button[aria-pressed='true'] {
+button[aria-pressed="true"] {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
@@ -314,7 +316,7 @@ button:disabled {
 }
 
 select,
-input[type='range'] {
+input[type="range"] {
   font-family: var(--font-body);
   accent-color: var(--color-accent);
 }
@@ -457,7 +459,7 @@ time {
    room. A real flex item the same width as the padding keeps that
    space reachable regardless of that inconsistency. */
 .site-nav-bar__inner::after {
-  content: '';
+  content: "";
   flex: 0 0 var(--space-2);
 }
 
@@ -640,7 +642,9 @@ time {
   text-transform: uppercase;
   letter-spacing: var(--letter-display);
   white-space: nowrap;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .topbar__resume:hover,
@@ -925,7 +929,7 @@ time {
 
 .project-card__bullets li::before,
 .project-row__bullets li::before {
-  content: '-';
+  content: "-";
   position: absolute;
   left: 0;
   color: var(--color-text-muted);
@@ -1032,7 +1036,7 @@ time {
 }
 
 .timeline::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0.6em;
   bottom: 1.5em;
@@ -1096,7 +1100,7 @@ time {
 }
 
 .experience-entry li::before {
-  content: '-';
+  content: "-";
   position: absolute;
   left: 0;
   color: var(--color-text-muted);
@@ -1180,6 +1184,12 @@ time {
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {
+    /* biome-ignore lint/complexity/noImportantStyles: a reduced-motion override has to
+       beat every animation declaration on the page, including ones the browser applies
+       to view-transition pseudo-elements by default. Without !important this rule loses
+       to a more specific animation shorthand and the user's stated accessibility
+       preference is silently ignored. This is the one case the WCAG 2.3.3 / prefers-
+       reduced-motion pattern is written with !important on purpose. */
     animation: none !important;
   }
 }
@@ -1233,11 +1243,13 @@ time {
   letter-spacing: var(--letter-display);
   white-space: nowrap;
   text-decoration: none;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .topbar__view-toggle::before {
-  content: '';
+  content: "";
   flex: none;
   width: 0.5em;
   height: 0.5em;
@@ -1251,12 +1263,12 @@ time {
   color: var(--color-accent);
 }
 
-.topbar__view-toggle[aria-pressed='true'] {
+.topbar__view-toggle[aria-pressed="true"] {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
 
-.topbar__view-toggle[aria-pressed='true']::before {
+.topbar__view-toggle[aria-pressed="true"]::before {
   border-color: var(--color-accent);
   background: var(--color-accent);
 }
@@ -1305,7 +1317,7 @@ pre.agent-view {
 }
 
 pre.agent-view::before {
-  content: '[ markdown source ]';
+  content: "[ markdown source ]";
   position: absolute;
   top: var(--space-1);
   left: var(--space-3);

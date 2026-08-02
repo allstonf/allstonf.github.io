@@ -12,22 +12,13 @@
 // tests/helpers/piiGuard.ts's assertNoPii(), so none of these six
 // artifacts carries a copy-pasted pair of phone/address regexes - a
 // single tested helper, used six times, is the point.
-import { describe, it, expect } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
+
+import { existsSync, readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
-import {
-  renderIndexMd,
-  renderLlmsTxt,
-  renderLlmsFullTxt,
-  renderResumeMd,
-} from '../src/lib/agentSurface'
+import { renderIndexMd, renderLlmsFullTxt, renderLlmsTxt, renderResumeMd } from '../src/lib/agentSurface'
 import { publicProjection } from '../src/lib/publicProjection'
-import {
-  PHONE_SHAPED,
-  STREET_ADDRESS_SHAPED,
-  stripKnownPhoneShapedCollisions,
-  assertNoPii,
-} from './helpers/piiGuard'
+import { assertNoPii, PHONE_SHAPED, STREET_ADDRESS_SHAPED, stripKnownPhoneShapedCollisions } from './helpers/piiGuard'
 
 // A synthetic, obviously-fake phone number, never a real one - the
 // same "canary, not withheld editorial content" rule

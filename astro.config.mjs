@@ -12,9 +12,9 @@
 // mounted - unreachable, so no visitor downloaded it, but deployed on
 // every build. If a future island is wanted, re-add the integration and
 // the three dependencies together; the removal is one commit to revert.
-import { defineConfig } from 'astro/config';
+import { defineConfig } from 'astro/config'
 
 export default defineConfig({
   site: 'https://allstonf.github.io',
   base: '/',
-});
+})

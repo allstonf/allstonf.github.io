@@ -25,15 +25,9 @@
 // nearly monochrome and deliberately restrained - see the task report
 // filed alongside this commit for the full per-use audit.
 
-import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import {
-  parseColor,
-  compositeOver,
-  contrastRatio,
-  readToken,
-  readSelectorBorderToken,
-} from './helpers/contrast'
+import { describe, expect, it } from 'vitest'
+import { compositeOver, contrastRatio, parseColor, readSelectorBorderToken, readToken } from './helpers/contrast'
 
 const css = readFileSync('src/styles/tokens.css', 'utf8')
 

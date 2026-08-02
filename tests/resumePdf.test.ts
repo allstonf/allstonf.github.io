@@ -13,16 +13,16 @@
 // hash - it is a reason to re-run the PII scan BEFORE updating the hash:
 //   pdftotext -layout public/Allston_Fojas_Resume.pdf - | grep -E '\(?[0-9]{3}\)?[ .-]?[0-9]{3}[.-][0-9]{4}'
 // Fails closed: an unreviewed PDF cannot reach a public commit silently.
-import { describe, it, expect } from 'vitest'
+
 import { createHash } from 'node:crypto'
-import { readFileSync, existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
 
 const PDF_PATH = 'public/Allston_Fojas_Resume.pdf'
 
 // Established 2026-07-31 after the PII scan described above.
-const REVIEWED_SHA256 =
-  'a68a760a9589ce1841bafbcd55ecfacc708a27134c4e43b4ecb3af3464135f77'
+const REVIEWED_SHA256 = 'a68a760a9589ce1841bafbcd55ecfacc708a27134c4e43b4ecb3af3464135f77'
 
 describe('the published resume PDF', () => {
   it('is tracked in public/ so Astro copies it to the site root', () => {

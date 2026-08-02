@@ -30,9 +30,9 @@
 // interactive control boundaries; both share the same parsing and contrast
 // math via tests/helpers/contrast.ts rather than each hand-rolling it.
 
-import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { readToken as readTokenFrom, parseColor, compositeOver, contrastRatio } from './helpers/contrast'
+import { describe, expect, it } from 'vitest'
+import { compositeOver, contrastRatio, parseColor, readToken as readTokenFrom } from './helpers/contrast'
 
 const css = readFileSync('src/styles/tokens.css', 'utf8')
 

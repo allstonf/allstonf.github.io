@@ -21,17 +21,18 @@
 // same "tests read dist/ directly" convention tests/parity.test.ts
 // already uses - so `npx astro build` must run before this test file,
 // exactly as the CI workflow orders it.
-import { describe, it, expect } from 'vitest'
+
 import { existsSync, readFileSync } from 'node:fs'
 import { gzipSync } from 'node:zlib'
+import { describe, expect, it } from 'vitest'
 import {
-  hasAstroIsland,
-  extractReferences,
-  extractInlineExecutableScripts,
   assertNotSilentZero,
-  SilentZeroBudgetError,
   computeBudgetReport,
   DEFAULT_BUDGET_BYTES,
+  extractInlineExecutableScripts,
+  extractReferences,
+  hasAstroIsland,
+  SilentZeroBudgetError,
 } from '../scripts/check-js-budget.mjs'
 
 // A fixture shaped like real Astro output: one astro-island (the ONLY
@@ -148,9 +149,7 @@ describe('assertNotSilentZero catches the silent-zero failure mode', () => {
   // guard rejects that exact zero.
   function naiveScriptSrcOnlyExtractor(html: string): string[] {
     const refs: string[] = []
-    const re = /<script\b[^>]*\bsrc=["']([^"']+)["']/gi
-    let match: RegExpExecArray | null
-    while ((match = re.exec(html))) refs.push(match[1])
+    for (const match of html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)) refs.push(match[1])
     return refs
   }
 
@@ -217,9 +216,7 @@ describe('computeBudgetReport against the real dist/ build', () => {
     // returns with it.
     const html = readFileSync(`${distDir}/index.html`, 'utf8')
     expect(hasAstroIsland(html)).toBe(false)
-    expect(() => computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })).not.toThrow(
-      SilentZeroBudgetError,
-    )
+    expect(() => computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })).not.toThrow(SilentZeroBudgetError)
   })
 
   it('every reachable file is also counted in total emitted bytes (reachable is a subset)', () => {
@@ -247,8 +244,7 @@ describe('computeBudgetReport against the real dist/ build', () => {
     const html = readFileSync(`${distDir}/index.html`, 'utf8')
     const scriptTagRe = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
     const expectedBodies: string[] = []
-    let match: RegExpExecArray | null
-    while ((match = scriptTagRe.exec(html))) {
+    for (const match of html.matchAll(scriptTagRe)) {
       const openAttrs = match[1]
       const hasSrc = /\bsrc\s*=/i.test(openAttrs)
       const typeMatch = /\btype\s*=\s*"([^"]*)"/i.exec(openAttrs)
@@ -264,16 +260,10 @@ describe('computeBudgetReport against the real dist/ build', () => {
     // not only type="module" - and one module script still exercises it.
     expect(expectedBodies.length).toBeGreaterThanOrEqual(1)
 
-    const inlineBytes = expectedBodies.reduce(
-      (sum, body) => sum + gzipSync(Buffer.from(body, 'utf8')).length,
-      0,
-    )
+    const inlineBytes = expectedBodies.reduce((sum, body) => sum + gzipSync(Buffer.from(body, 'utf8')).length, 0)
 
     const report = computeBudgetReport({ distDir, budgetBytes: DEFAULT_BUDGET_BYTES })
-    const externalReachableBytes = report.reachableFiles.reduce(
-      (sum: number, f: { bytes: number }) => sum + f.bytes,
-      0,
-    )
+    const externalReachableBytes = report.reachableFiles.reduce((sum: number, f: { bytes: number }) => sum + f.bytes, 0)
     // reachableBytes must keep meaning "external file reachable set only"
     // (the task requires the existing external-file logic not be silently
     // redefined), so it should still equal the external sum exactly.

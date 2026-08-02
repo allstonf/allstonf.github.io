@@ -5,9 +5,9 @@
 // them, or read past them. These tests are what make the encoding
 // trustworthy: each one pins a rule to a concrete failing input, so the
 // gate cannot quietly stop enforcing something.
-import { describe, it, expect } from 'vitest'
-import { checkContent, classifyUrlStatus } from '../scripts/verify-content.mjs'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
+import { checkContent, classifyUrlStatus } from '../scripts/verify-content.mjs'
 
 describe('checkContent', () => {
   it('passes the real content model', () => {
@@ -212,10 +212,7 @@ describe('retraction gate on about[] prose', () => {
     // sentence, capitalized. A case-sensitive needle misses exactly that.
     const poisoned = {
       ...profile,
-      about: [
-        ...profile.about,
-        'The property it ranked first was later reconsidered after a manual walkthrough.',
-      ],
+      about: [...profile.about, 'The property it ranked first was later reconsidered after a manual walkthrough.'],
     }
     expect(checkContent(poisoned).ok).toBe(false)
   })
@@ -245,7 +242,10 @@ describe('the gate covers every prose surface, not just projects and about', () 
   })
 
   it('catches a retracted claim in person.tagline', () => {
-    const poisoned = { ...profile, person: { ...profile.person, tagline: 'Where the data is personal, I keep the inference local' } }
+    const poisoned = {
+      ...profile,
+      person: { ...profile.person, tagline: 'Where the data is personal, I keep the inference local' },
+    }
     expect(checkContent(poisoned).ok).toBe(false)
   })
 

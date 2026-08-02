@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
 import { JSDOM } from 'jsdom'
+import { describe, expect, it, vi } from 'vitest'
 import { initViewToggle } from '../src/lib/viewToggle'
 
 /**
@@ -314,9 +314,7 @@ describe('initViewToggle', () => {
     expect(doc.getElementById('about'), 'precondition: target is gone').toBeNull()
 
     const navLink = doc.querySelector('.site-nav a[href="#about"]') as HTMLAnchorElement
-    navLink.dispatchEvent(
-      new doc.defaultView!.MouseEvent('click', { button: 0, cancelable: true, bubbles: true }),
-    )
+    navLink.dispatchEvent(new doc.defaultView!.MouseEvent('click', { button: 0, cancelable: true, bubbles: true }))
 
     // Synchronously restored, so the browser's default hash scroll
     // finds a real element. Not awaited on purpose: an async restore
@@ -334,9 +332,7 @@ describe('initViewToggle', () => {
     const replaceSpy = vi.spyOn(target, 'replaceChildren')
 
     const navLink = doc.querySelector('.site-nav a[href="#about"]') as HTMLAnchorElement
-    navLink.dispatchEvent(
-      new doc.defaultView!.MouseEvent('click', { button: 0, cancelable: true, bubbles: true }),
-    )
+    navLink.dispatchEvent(new doc.defaultView!.MouseEvent('click', { button: 0, cancelable: true, bubbles: true }))
 
     expect(replaceSpy).not.toHaveBeenCalled()
   })

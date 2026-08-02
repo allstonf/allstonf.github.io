@@ -5,8 +5,9 @@
 // custom property that was never defined resolves to nothing and the
 // declaration is simply dropped, so the page still looks fine at a
 // glance while the element silently inherits the wrong face.
-import { describe, it, expect } from 'vitest'
+
 import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
 
 const css = readFileSync('src/styles/tokens.css', 'utf8')
 
@@ -34,9 +35,7 @@ describe('agent view typography', () => {
     const referenced = [...css.matchAll(/var\((--font-[\w-]+)\)/g)].map((m) => m[1])
     expect(referenced.length).toBeGreaterThan(0)
     for (const token of new Set(referenced)) {
-      expect(css, `${token} is used but never defined`).toMatch(
-        new RegExp(`\\s${token}:\\s*[^;]+;`),
-      )
+      expect(css, `${token} is used but never defined`).toMatch(new RegExp(`\\s${token}:\\s*[^;]+;`))
     }
   })
 })

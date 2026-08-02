@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
 
 // DESIGN.md is the published spec for this site's visual language. If the
 // stylesheet drifts from it, anyone who reuses the file gets a design that
@@ -30,9 +30,7 @@ describe('DESIGN.md agrees with the stylesheet', () => {
   // actually uses rather than reaching for an undeclared package.
   function parseFrontmatter(text: string): Record<string, unknown> {
     const root: Record<string, unknown> = {}
-    const stack: { indent: number; node: Record<string, unknown> }[] = [
-      { indent: -1, node: root },
-    ]
+    const stack: { indent: number; node: Record<string, unknown> }[] = [{ indent: -1, node: root }]
 
     for (const line of text.split('\n')) {
       const match = line.match(/^(\s*)([A-Za-z0-9_]+):\s*(.*)$/)
@@ -102,8 +100,16 @@ describe('DESIGN.md agrees with the stylesheet', () => {
   })
 
   it('carries all eight spec sections', () => {
-    for (const section of ['## Overview', '## Colors', '## Typography', '## Layout',
-                           '## Elevation', '## Shapes', '## Components', '## Do']) {
+    for (const section of [
+      '## Overview',
+      '## Colors',
+      '## Typography',
+      '## Layout',
+      '## Elevation',
+      '## Shapes',
+      '## Components',
+      '## Do',
+    ]) {
       expect(design).toContain(section)
     }
   })
@@ -129,9 +135,7 @@ describe('DESIGN.md agrees with the stylesheet', () => {
     const cssCompact = css.toLowerCase().replace(/\s+/g, '')
     for (const [key, rawValue] of colorEntries) {
       const valueCompact = rawValue.toLowerCase().replace(/\s+/g, '')
-      expect(cssCompact, `expected colors.${key} (${rawValue}) to appear in tokens.css`).toContain(
-        valueCompact,
-      )
+      expect(cssCompact, `expected colors.${key} (${rawValue}) to appear in tokens.css`).toContain(valueCompact)
     }
   })
 
@@ -147,9 +151,7 @@ describe('DESIGN.md agrees with the stylesheet', () => {
 
     for (const ref of refs) {
       const resolved = ref.split('.').reduce<unknown>((node, segment) => {
-        return node && typeof node === 'object'
-          ? (node as Record<string, unknown>)[segment]
-          : undefined
+        return node && typeof node === 'object' ? (node as Record<string, unknown>)[segment] : undefined
       }, frontmatter)
       expect(resolved, `dangling reference {${ref}} has no matching frontmatter key`).not.toBeUndefined()
     }

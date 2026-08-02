@@ -62,6 +62,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Lint and format gate (Biome). Runs before the build for the same
+      # reason it runs first in verify:all: it needs no build output and
+      # fails fastest. `biome check` exits non-zero on any finding at
+      # error OR warning severity (verified locally, not assumed), and
+      # this job has no continue-on-error anywhere, so this is a real
+      # gate rather than a report. Scope is set by biome.jsonc's
+      # allowlist - the legacy v1 tree at the repo root is not linted.
+      - name: Lint (biome check)
+        run: npx biome check .
+
       # Not strictly required by deploy-pages@v5 (it can resolve the
       # Pages environment on its own), but this is GitHub's own
       # recommended pattern: it fails the job here, immediately and

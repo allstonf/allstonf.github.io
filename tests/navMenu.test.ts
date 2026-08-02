@@ -9,8 +9,9 @@
 // Builds its own JSDOM per test, matching viewToggle.test.ts - this repo
 // runs vitest in the default node environment, so there is no ambient
 // `document` and every DOM fixture is explicit.
-import { describe, it, expect } from 'vitest'
+
 import { JSDOM } from 'jsdom'
+import { describe, expect, it } from 'vitest'
 import { initNavMenu } from '../src/lib/navMenu'
 
 function makeDoc(): Document {
@@ -51,9 +52,7 @@ describe('initNavMenu', () => {
     const toggle = doc.getElementById('nav-toggle')!
 
     click(doc, toggle)
-    doc.dispatchEvent(
-      new doc.defaultView!.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
-    )
+    doc.dispatchEvent(new doc.defaultView!.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
 
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
     expect(doc.activeElement).toBe(toggle)

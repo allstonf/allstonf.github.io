@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
 
 // Hoisted to module scope (not declared inside the first describe()
@@ -205,9 +205,7 @@ describe('every project shows its evidence on the human page', () => {
   it('renders the outcome for every project that has one', () => {
     for (const project of profile.projects) {
       if (!project.outcome) continue
-      expect(html, `expected the outcome for "${project.name}"`).toContain(
-        project.outcome.slice(0, 40),
-      )
+      expect(html, `expected the outcome for "${project.name}"`).toContain(project.outcome.slice(0, 40))
     }
   })
 })

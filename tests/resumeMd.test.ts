@@ -10,7 +10,7 @@
 // commit. They must pass BY CONSTRUCTION (the renderer builds output
 // from a named-field allowlist) rather than by the poisoned field
 // happening to be absent today.
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
 import { renderResumeMd } from '../src/lib/agentSurface'
 import { assertNoPii } from './helpers/piiGuard'

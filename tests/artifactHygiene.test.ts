@@ -10,9 +10,10 @@
 // Reads real build output under dist/, the same pattern
 // parity.test.ts and agentSurface.test.ts already use: run
 // `npx astro build` before running this suite.
-import { describe, expect, it } from 'vitest'
+
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
 
 const EM_DASH = String.fromCharCode(8212)
 
@@ -115,9 +116,7 @@ describe('zero external network requests - built artifacts never fetch off-origi
     const htmlFiles = listFilesRecursive('dist', '.html')
     expect(htmlFiles.length).toBeGreaterThan(0)
     for (const file of htmlFiles) {
-      const offenders = findFetchingContextUrls(readFileSync(file, 'utf8')).filter(
-        (url) => !isAllowedNamespaceUrl(url),
-      )
+      const offenders = findFetchingContextUrls(readFileSync(file, 'utf8')).filter((url) => !isAllowedNamespaceUrl(url))
       expect(offenders, `${file} fetches external URL(s): ${offenders.join(', ')}`).toEqual([])
     }
   })
@@ -126,9 +125,7 @@ describe('zero external network requests - built artifacts never fetch off-origi
     const cssFiles = listFilesRecursive('dist', '.css')
     expect(cssFiles.length).toBeGreaterThan(0)
     for (const file of cssFiles) {
-      const offenders = findCssUrls(readFileSync(file, 'utf8')).filter(
-        (url) => !isAllowedNamespaceUrl(url),
-      )
+      const offenders = findCssUrls(readFileSync(file, 'utf8')).filter((url) => !isAllowedNamespaceUrl(url))
       expect(offenders, `${file} references external url(): ${offenders.join(', ')}`).toEqual([])
     }
   })

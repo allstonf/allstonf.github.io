@@ -21,8 +21,9 @@
 // The human page deliberately keeps the RELATIVE href: a browser resolves it
 // against the document, and a same-origin relative link is the correct form
 // there. This test does not touch index.html.
-import { describe, it, expect } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
+
+import { existsSync, readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
 import { renderLlmsTxt } from '../src/lib/agentSurface'
 
@@ -65,7 +66,9 @@ describe('the resume URL is absolute wherever a machine reads it', () => {
       if (typeof node === 'string') {
         if (path.endsWith('url') && node.startsWith('/')) relatives.push(`${path}=${node}`)
       } else if (Array.isArray(node)) {
-        node.forEach((v, i) => walk(v, `${path}[${i}]`))
+        node.forEach((v, i) => {
+          walk(v, `${path}[${i}]`)
+        })
       } else if (node && typeof node === 'object') {
         for (const [k, v] of Object.entries(node)) walk(v, path ? `${path}.${k}` : k)
       }

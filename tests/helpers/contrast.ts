@@ -49,9 +49,7 @@ export function parseColor(value: string): RgbaColor {
     }
   }
 
-  const rgbaMatch = value.match(
-    /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/,
-  )
+  const rgbaMatch = value.match(/^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/)
   if (rgbaMatch) {
     const [, r, g, b, a] = rgbaMatch
     return {
@@ -95,16 +93,12 @@ export function compositeOver(fg: RgbaColor, bg: RgbaColor): RgbaColor {
  */
 export function linearizeChannel(channel255: number): number {
   const c = channel255 / 255
-  return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
 }
 
 /** WCAG 2.x relative luminance: the 0.2126/0.7152/0.0722 weighted sum. */
 export function relativeLuminance(color: RgbaColor): number {
-  return (
-    0.2126 * linearizeChannel(color.r) +
-    0.7152 * linearizeChannel(color.g) +
-    0.0722 * linearizeChannel(color.b)
-  )
+  return 0.2126 * linearizeChannel(color.r) + 0.7152 * linearizeChannel(color.g) + 0.0722 * linearizeChannel(color.b)
 }
 
 /**
@@ -147,9 +141,7 @@ export function readSelectorBorderToken(css: string, selector: string): string {
   const block = blockMatch[1]
   const borderMatch = block.match(/border(?:-color)?:\s*[^;]*var\(--([a-zA-Z0-9-]+)\)/)
   if (!borderMatch) {
-    throw new Error(
-      `expected a border declaration referencing a var(--token) inside "${selector} { }"`,
-    )
+    throw new Error(`expected a border declaration referencing a var(--token) inside "${selector} { }"`)
   }
   return borderMatch[1]
 }

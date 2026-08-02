@@ -5,11 +5,12 @@
 // this suite, since these endpoints are static-prerendered files under
 // Astro's default "static" output mode, not something vitest renders
 // itself.
-import { describe, it, expect } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
+
+import { existsSync, readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
-import { PUBLIC_PERSON_FIELDS, PUBLIC_PROJECT_FIELDS } from '../src/lib/publicProjection'
 import { renderIndexMd } from '../src/lib/agentSurface'
+import { PUBLIC_PERSON_FIELDS, PUBLIC_PROJECT_FIELDS } from '../src/lib/publicProjection'
 
 describe('agent surface endpoints build to real files under dist/', () => {
   it('llms.txt follows the llmstxt.org spec: H1 name, blockquote summary, one Docs entry, an Optional section', () => {
@@ -165,9 +166,7 @@ describe('agent surface endpoints build to real files under dist/', () => {
     // robots.txt concepts.
     const text = readFileSync('dist/robots.txt', 'utf8')
     expect(text).toContain(`# Agent-readable profile: ${profile.site.url}/llms.txt`)
-    expect(text).toContain(
-      `# Agent surface (full page prose): ${profile.site.url}/llms-full.txt`,
-    )
+    expect(text).toContain(`# Agent surface (full page prose): ${profile.site.url}/llms-full.txt`)
   })
 
   it('index.md exists and contains the about text', () => {

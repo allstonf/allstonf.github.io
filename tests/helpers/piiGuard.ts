@@ -34,8 +34,7 @@ export const PHONE_SHAPED = /\+?\d[\d\s().-]{8,}\d/
  * Street-address-shaped: "123 Main Street" and its common abbreviated
  * forms. Unchanged from the original guard in resumeMd.test.ts.
  */
-export const STREET_ADDRESS_SHAPED =
-  /\d+\s+\w+\s+(Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Blvd)\b/i
+export const STREET_ADDRESS_SHAPED = /\d+\s+\w+\s+(Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Blvd)\b/i
 
 /**
  * Strip every KNOWN, NAMED legitimate collision with PHONE_SHAPED out of

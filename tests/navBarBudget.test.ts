@@ -9,8 +9,9 @@
 // A UX review measured the button at x = -25.4px, 19 of 44px visible.
 //
 // A comment cannot fail a build. This test can.
-import { describe, it, expect } from 'vitest'
+
 import { readFileSync } from 'node:fs'
+import { describe, expect, it } from 'vitest'
 
 // Intrinsic content widths, from the tokens.css budget comment. These
 // only change if the labels themselves change.
@@ -39,8 +40,7 @@ describe('header row fits without clipping the hamburger', () => {
   })
 
   it('fits at 480px with the brand shown', () => {
-    const total =
-      gap * 2 + BRAND + gap + HAMBURGER + gap + RESUME + gap + AGENT_TOGGLE
+    const total = gap * 2 + BRAND + gap + HAMBURGER + gap + RESUME + gap + AGENT_TOGGLE
     expect(total).toBeLessThanOrEqual(480)
   })
 

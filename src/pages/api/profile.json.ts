@@ -32,7 +32,7 @@ export const GET: APIRoute = () => {
       },
     },
   }
-  const body = JSON.stringify(publicProjection(withAbsoluteUrls), null, 2) + '\n'
+  const body = `${JSON.stringify(publicProjection(withAbsoluteUrls), null, 2)}\n`
   return new Response(body, {
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
   })

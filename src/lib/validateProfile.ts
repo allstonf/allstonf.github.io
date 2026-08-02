@@ -43,10 +43,7 @@ export class ProfileValidationError extends Error {}
  * success (validation is a gate, not a transform - it never mutates or
  * returns a modified profile).
  */
-export function validateProfile(profile: {
-  person: { email: unknown }
-  projects?: { slug?: unknown }[]
-}): void {
+export function validateProfile(profile: { person: { email: unknown }; projects?: { slug?: unknown }[] }): void {
   const slugs = (profile.projects ?? []).map((project) => project.slug)
   // A slug is a duplicate if it appears more than once anywhere in the
   // array; dedupe + sort the OFFENDING slugs (not every project) so the

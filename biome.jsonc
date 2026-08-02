@@ -1,0 +1,94 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    // ALLOWLIST, not a denylist, on purpose. The repo root still tracks a complete v1
+    // artifact set plus the original 2020 Start Bootstrap template (bootstrap/, jquery/,
+    // vendor/, font-awesome/, css/, js/, less/, sass/, build/, templates/, assets/,
+    // grayscale.*, gulpfile.js, and v1's committed build output). That is third-party and
+    // superseded code scheduled for deletion at publish time; linting it would bury every
+    // real finding under thousands it makes no sense to fix. A denylist would fail OPEN -
+    // a new legacy directory would silently start being linted.
+    //
+    // "!**/*.astro": Biome 2.5's .astro support parses the frontmatter fence ONLY, never
+    // the template below it. Every frontmatter const in src/pages/index.astro is consumed
+    // by that template, so Biome reports 11 noUnusedVariables findings on correct code -
+    // and marks 9 of them FIXABLE, meaning `biome check --write` would DELETE variables
+    // the page renders with (verified 2026-08-01: siteUrl is referenced 3 times in the
+    // template, validatedProjects 4 times, jsonLd 6 times). An autofix that breaks the
+    // build is worse than no coverage. Revisit when Biome's Astro support leaves
+    // experimental.
+    "includes": [
+      "src/**",
+      "!**/*.astro",
+      "scripts/**",
+      "tests/**",
+      "astro.config.mjs",
+      "vitest.config.ts",
+      "biome.jsonc",
+      "package.json"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    // Matches the style already written by hand across this repo (2-space indent, single
+    // quotes, no semicolons). Biome's `init` defaults are tabs and double quotes, which
+    // would have reformatted every file in the tree and buried the actual lint findings
+    // in whitespace noise.
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 120
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        // OFF, with a concrete blocker rather than a preference. This repo has NO
+        // TypeScript typechecker: `typescript` is not a dependency and `astro build`
+        // transpiles without checking, so a type annotation here is policed by nothing.
+        // The 10 src findings are all `profile: any` on functions that take the untyped
+        // content/profile.json document; replacing that with a real type would be an
+        // unverifiable edit today. Re-enable this rule as part of adding a typechecker,
+        // not before. Measured blocker for that work, 2026-08-01: there is no
+        // tsconfig.json, and @astrojs/check cannot run against TypeScript 7.x (its
+        // language server needs the programmatic API that only 6.x still exposes).
+        "noExplicitAny": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded"
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["tests/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            // OFF for tests only, ON everywhere else. All 46 findings were in tests, where
+            // `doc.querySelector('#known-element')!` asserts on a node the test itself just
+            // rendered - the assertion IS the test's precondition, and softening it to an
+            // optional chain would make a missing element pass silently instead of throwing.
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    }
+  ]
+}

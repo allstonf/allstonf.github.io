@@ -8,10 +8,10 @@
 // any URL scheme that is not https/http/mailto or a same-origin
 // relative form, since HTML/JSON escaping alone does not stop a
 // javascript: or data: URL from executing on click.
-import { describe, it, expect } from 'vitest'
-import { publicProjection } from '../src/lib/publicProjection'
-import { validateUrl, UnpublishableUrlError } from '../src/lib/url'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
+import { publicProjection } from '../src/lib/publicProjection'
+import { UnpublishableUrlError, validateUrl } from '../src/lib/url'
 
 const CANARY = 'CANARY-INTERNAL-DO-NOT-PUBLISH'
 
@@ -47,15 +47,11 @@ describe('validateUrl fails closed on the URL-based-XSS scheme class', () => {
   // intact and executes on click.
 
   it('rejects a javascript: scheme', () => {
-    expect(() => validateUrl('javascript:alert(document.cookie)', 'test')).toThrow(
-      UnpublishableUrlError,
-    )
+    expect(() => validateUrl('javascript:alert(document.cookie)', 'test')).toThrow(UnpublishableUrlError)
   })
 
   it('rejects a data:text/html scheme', () => {
-    expect(() => validateUrl('data:text/html;base64,PHNjcmlwdD4=', 'test')).toThrow(
-      UnpublishableUrlError,
-    )
+    expect(() => validateUrl('data:text/html;base64,PHNjcmlwdD4=', 'test')).toThrow(UnpublishableUrlError)
   })
 
   it('rejects obfuscated variants (case, tabs, newlines, leading control chars)', () => {

@@ -71,10 +71,10 @@
 //      orphan chunk can never quietly start counting against the
 //      budget without someone noticing the report change.
 
-import { readFileSync, readdirSync, existsSync } from 'node:fs'
-import { gzipSync } from 'node:zlib'
-import { join, dirname, relative, resolve, sep } from 'node:path'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { gzipSync } from 'node:zlib'
 
 // 150 KB gzipped, per the plan's Global Constraints. "KB" is treated
 // as 1024 bytes (KiB), the conventional unit for a web-perf budget.
@@ -106,9 +106,7 @@ export function hasAstroIsland(html) {
 // attribute parser.
 function parseAttrs(tag) {
   const attrs = {}
-  const re = /([\w-]+)\s*=\s*"([^"]*)"/g
-  let match
-  while ((match = re.exec(tag))) {
+  for (const match of tag.matchAll(/([\w-]+)\s*=\s*"([^"]*)"/g)) {
     attrs[match[1].toLowerCase()] = match[2]
   }
   return attrs
@@ -197,9 +195,7 @@ const NON_EXECUTABLE_SCRIPT_TYPE_RE = /json|importmap/i
  */
 export function extractInlineExecutableScripts(html) {
   const bodies = []
-  const re = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi
-  let match
-  while ((match = re.exec(html))) {
+  for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
     const attrs = parseAttrs(`<script${match[1]}>`)
     if (attrs.src) continue
     const type = attrs.type ?? ''
@@ -258,10 +254,11 @@ const IMPORT_FROM_RE = /\b(?:import|export)\b[^'"()]*?\bfrom\s*["']([^"']+)["']/
 
 /** Return every static import/export specifier found in `jsSource`. */
 export function extractImportSpecifiers(jsSource) {
+  // matchAll() rather than a re.exec() loop: it needs no shared `lastIndex`
+  // state, so the module-level IMPORT_FROM_RE can be used directly instead of
+  // being defensively re-constructed on every call.
   const specifiers = []
-  const re = new RegExp(IMPORT_FROM_RE)
-  let match
-  while ((match = re.exec(jsSource))) {
+  for (const match of jsSource.matchAll(IMPORT_FROM_RE)) {
     specifiers.push(match[1])
   }
   return specifiers

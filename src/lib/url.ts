@@ -32,6 +32,12 @@ const RELATIVE_URL_PREFIXES = ['/', '#', './', '../']
 // links, and the check has to normalize them away before comparing -
 // otherwise a naive startsWith('javascript:') misses every obfuscated
 // variant.
+//
+// The lint suppression below is not a preference. noControlCharactersInRegex exists to
+// catch a control character that reached a pattern BY ACCIDENT (a stray \x00 pasted into
+// a literal). Here the C0 range IS the security check, and narrowing it to printable
+// characters would reopen the exact "java\tscript:" bypass this constant closes.
+// biome-ignore lint/suspicious/noControlCharactersInRegex: the C0 range is the check itself, see above
 const URL_IGNORED_CHARS = /[\x00-\x20]/g
 
 /**

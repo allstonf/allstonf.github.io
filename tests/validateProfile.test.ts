@@ -13,9 +13,9 @@
 // just fail silently at render time - so validateProfile() throws
 // rather than returning a boolean, and index.astro calls it before any
 // other processing.
-import { describe, it, expect } from 'vitest'
-import { validateProfile, ProfileValidationError } from '../src/lib/validateProfile'
+import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
+import { ProfileValidationError, validateProfile } from '../src/lib/validateProfile'
 
 describe('validateProfile fails closed on content-model invariants', () => {
   it('accepts the real profile unchanged', () => {

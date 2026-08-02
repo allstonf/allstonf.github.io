@@ -101,9 +101,7 @@ export function checkContent(profile) {
     const banned = OVERSTATED_LABELS_BY_SLUG[project.slug] ?? []
     for (const link of project.links ?? []) {
       if (banned.includes(link.label)) {
-        failures.push(
-          `${id}: link label "${link.label}" overstates a static landing page`,
-        )
+        failures.push(`${id}: link label "${link.label}" overstates a static landing page`)
       }
     }
   }
@@ -134,8 +132,7 @@ export function checkContent(profile) {
   for (const claim of RETRACTED_CLAIMS) {
     if (serialized.includes(claim.toLowerCase())) {
       failures.push(
-        `retracted claim "${claim}" appears in the content model - ` +
-          'it was corrected on review and must not return',
+        `retracted claim "${claim}" appears in the content model - ` + 'it was corrected on review and must not return',
       )
     }
   }
@@ -185,9 +182,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   for (const failure of failures) console.error(`  FAIL  ${failure}`)
 
   if (process.argv.includes('--check-urls')) {
-    const urls = [
-      ...new Set([...JSON.stringify(profile).matchAll(/https:\/\/[^"]+/g)].map((m) => m[0])),
-    ].sort()
+    const urls = [...new Set([...JSON.stringify(profile).matchAll(/https:\/\/[^"]+/g)].map((m) => m[0]))].sort()
     for (const url of urls) {
       const status = await fetch(url, { redirect: 'follow' })
         .then((r) => r.status)
