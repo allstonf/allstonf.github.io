@@ -70,10 +70,26 @@ describe('buildJsonLd emits a disambiguation-hardened @graph', () => {
     expect(websiteNode.about).toEqual({ '@id': `${profile.site.url}/#person` })
   })
 
-  it('sources dateModified on the WebSite node from _meta.last_updated, never the wall clock', () => {
-    // Mirrors renderSitemapXml's existing lastmod rule (src/lib/agentSurface.ts)
-    // - using the current date instead would make a rebuild of unchanged
-    // content produce different JSON-LD bytes.
+  it('sources dateModified from the injected lastUpdated argument, never the wall clock', () => {
+    // Task: freshness-signal fix (2026-08-01). dateModified used to read
+    // straight from _meta.last_updated (a hand-edited field measured 7
+    // days stale against the live republish date). buildJsonLd() now
+    // takes an OPTIONAL second `lastUpdated` argument - the caller
+    // (index.astro) resolves it via resolveLastUpdated() (git commit date
+    // of HEAD, src/lib/lastUpdated.ts) and passes it in, keeping this
+    // renderer itself pure and still directly testable. Asserting an
+    // EXPLICITLY INJECTED value here, rather than the profile's default,
+    // is what proves the wall clock (or any other undocumented source)
+    // cannot leak in - dateModified only ever changes via this argument.
+    const jsonLd = buildJsonLd(profile, '2026-08-01') as any
+    const websiteNode = jsonLd['@graph'].find((node: any) => node['@type'] === 'WebSite')
+    expect(websiteNode.dateModified).toBe('2026-08-01')
+  })
+
+  it('defaults dateModified to _meta.last_updated when no lastUpdated argument is given', () => {
+    // Keeps buildJsonLd(profile) - the call shape every OTHER test in this
+    // file already uses - meaningful without threading a second argument
+    // through them all.
     const jsonLd = buildJsonLd(profile) as any
     const websiteNode = jsonLd['@graph'].find((node: any) => node['@type'] === 'WebSite')
     expect(websiteNode.dateModified).toBe(profile._meta.last_updated)

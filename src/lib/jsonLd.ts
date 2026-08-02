@@ -39,8 +39,8 @@
 // in prose, per index.astro's own header comment.
 import { validateUrl } from './url'
 
-export function buildJsonLd(profile: any): Record<string, unknown> {
-  const { person, site, _meta } = profile
+export function buildJsonLd(profile: any, lastUpdated: string = profile._meta.last_updated): Record<string, unknown> {
+  const { person, site } = profile
   const currentRole = person.current_role
   const education = person.education
 
@@ -89,12 +89,16 @@ export function buildJsonLd(profile: any): Record<string, unknown> {
     name: site.title,
     publisher: { '@id': personId },
     about: { '@id': personId },
-    // Sourced from _meta.last_updated (a hand-edited content-model
-    // field), NEVER the wall clock - the same reproducible-build
-    // property renderSitemapXml()'s lastmod already locks in. Using the
-    // wall clock would make a rebuild of unchanged content produce
-    // different JSON-LD bytes.
-    dateModified: _meta.last_updated,
+    // Sourced from the injected `lastUpdated` argument, NEVER the wall
+    // clock - the same reproducible-build property renderSitemapXml()'s
+    // lastmod already locks in. The default falls back to
+    // profile._meta.last_updated (a hand-edited content-model field) so
+    // this function stays pure and callable with just `profile`, but the
+    // real caller (index.astro) passes resolveLastUpdated()'s git-derived
+    // date instead - see src/lib/lastUpdated.ts for why that source beats
+    // both the wall clock (breaks reproducible builds) and the hand-edited
+    // field alone (silently rots).
+    dateModified: lastUpdated,
   }
 
   return {

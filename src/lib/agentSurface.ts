@@ -240,22 +240,33 @@ function escapeXmlText(value: string): string {
 }
 
 /**
- * Render sitemap.xml as a urlset for /, /llms.txt, /resume.md, and
- * /api/profile.json.
+ * Render sitemap.xml as a urlset for /, /llms.txt, /resume.md,
+ * /api/profile.json, /index.md, and /llms-full.txt - every surface this
+ * site actually publishes. /index.md and /llms-full.txt were both
+ * missing from this list until the 2026-08-01 fix even though both are
+ * published, static-prerendered files (src/pages/index.md.ts,
+ * src/pages/llms-full.txt.ts) - a crawler reading only the sitemap never
+ * discovered them.
  *
- * lastmod comes from _meta.last_updated in the content model, NOT from
- * the current wall clock - using the wall clock would make a rebuild of
+ * lastmod comes from the injected `lastUpdated` argument, NOT from the
+ * current wall clock - using the wall clock would make a rebuild of
  * unchanged content produce different bytes, breaking the reproducible-
- * build property build.py's own test suite locks in. Built as a plain
- * template rather than with an XML DOM library: the only values in play
- * are the site URL and a hand-authored date string, both from the
- * trusted, hand-edited content model, and escapeXmlText() still guards
- * the text content in case that ever changes.
+ * build property build.py's own test suite locks in. The default falls
+ * back to _meta.last_updated (the hand-edited content-model field) so
+ * this function stays pure and callable with just `profile`, but the real
+ * caller (src/pages/sitemap.xml.ts) passes resolveLastUpdated()'s
+ * git-derived date instead - see src/lib/lastUpdated.ts for why that
+ * source beats both the wall clock and the hand-edited field alone
+ * (which silently rots - it was measured 7 days stale against the live
+ * republish date on 2026-08-01). Built as a plain template rather than
+ * with an XML DOM library: the only values in play are the site URL and
+ * a date string, both from the trusted content model or a validated git
+ * read, and escapeXmlText() still guards the text content in case that
+ * ever changes.
  */
-export function renderSitemapXml(profile: any): string {
+export function renderSitemapXml(profile: any, lastUpdated: string = profile._meta.last_updated): string {
   const siteUrl = String(profile.site.url).replace(/\/+$/, '')
-  const lastUpdated = profile._meta.last_updated
-  const paths = ['/', '/llms.txt', '/resume.md', '/api/profile.json']
+  const paths = ['/', '/llms.txt', '/resume.md', '/api/profile.json', '/index.md', '/llms-full.txt']
 
   const urlEntries = paths
     .map(

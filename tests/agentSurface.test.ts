@@ -9,7 +9,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import profile from '../content/profile.json'
-import { renderIndexMd } from '../src/lib/agentSurface'
+import { renderIndexMd, renderSitemapXml } from '../src/lib/agentSurface'
 import { PUBLIC_PERSON_FIELDS, PUBLIC_PROJECT_FIELDS } from '../src/lib/publicProjection'
 
 describe('agent surface endpoints build to real files under dist/', () => {
@@ -151,6 +151,18 @@ describe('agent surface endpoints build to real files under dist/', () => {
     expect(opens.length).toBe(closes.length)
   })
 
+  it('sitemap.xml lists every published surface, including index.md and llms-full.txt', () => {
+    // Task: sitemap-omission fix (2026-08-01). /index.md and
+    // /llms-full.txt are both published, static-prerendered files (see
+    // src/pages/index.md.ts and src/pages/llms-full.txt.ts) but were
+    // absent from renderSitemapXml()'s paths list, so a crawler reading
+    // only the sitemap never discovered them.
+    const xml = readFileSync('dist/sitemap.xml', 'utf8')
+    for (const path of ['/', '/llms.txt', '/resume.md', '/api/profile.json', '/index.md', '/llms-full.txt']) {
+      expect(xml, `expected sitemap.xml to list ${path}`).toContain(`<loc>${profile.site.url}${path}</loc>`)
+    }
+  })
+
   it('robots.txt exists and names every agent crawler with Allow: /', () => {
     expect(existsSync('dist/robots.txt')).toBe(true)
     const text = readFileSync('dist/robots.txt', 'utf8')
@@ -285,5 +297,31 @@ describe('renderIndexMd carries the links and location the page advertises', () 
     // Regression pin for the P1 itself: dist/index.md shipped with zero
     // http occurrences while advertising itself as the page's twin.
     expect((md.match(/https?:\/\//g) ?? []).length).toBeGreaterThan(5)
+  })
+})
+
+describe('renderSitemapXml takes an optional lastUpdated argument', () => {
+  // Task: freshness-signal fix (2026-08-01). renderSitemapXml() used to
+  // read lastmod straight from profile._meta.last_updated. It now takes
+  // an OPTIONAL second `lastUpdated` argument - the caller
+  // (src/pages/sitemap.xml.ts) resolves it via resolveLastUpdated() (git
+  // commit date of HEAD, src/lib/lastUpdated.ts) and passes it in, so
+  // this renderer stays pure and directly testable without shelling out
+  // to git.
+  it('uses the injected lastUpdated value for every entry when given one', () => {
+    const xml = renderSitemapXml(profile, '2026-08-01')
+    const lastmods = xml.match(/<lastmod>([^<]+)<\/lastmod>/g) ?? []
+    expect(lastmods.length).toBeGreaterThan(0)
+    for (const entry of lastmods) {
+      expect(entry).toBe('<lastmod>2026-08-01</lastmod>')
+    }
+  })
+
+  it('defaults to profile._meta.last_updated when no lastUpdated argument is given', () => {
+    // Keeps renderSitemapXml(profile) - the call shape the "well-formed
+    // XML" and "lists every published surface" tests above already use -
+    // meaningful without threading a second argument through them too.
+    const xml = renderSitemapXml(profile)
+    expect(xml).toContain(`<lastmod>${profile._meta.last_updated}</lastmod>`)
   })
 })

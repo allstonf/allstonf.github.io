@@ -20,6 +20,7 @@ import profile from '../../content/profile.json'
 import { validateUrl } from '../lib/url'
 import { buildJsonLd } from '../lib/jsonLd'
 import { validateProfile } from '../lib/validateProfile'
+import { resolveLastUpdated } from '../lib/lastUpdated'
 
 // Whole-document invariants that no single-value render call can
 // catch (duplicate project slugs, a malformed email) - ported from
@@ -116,6 +117,15 @@ function formatDateRange(start: string, end: string | null): string {
   return `${start} - ${end ? end : 'Present'}`
 }
 
+// The freshness signal shared by JSON-LD's dateModified and
+// sitemap.xml's lastmod: the git commit date of HEAD, falling back to
+// profile._meta.last_updated when no git history is available (a
+// shallow CI clone or a tarball build). Resolved once here, at the
+// human page's build time, rather than inside buildJsonLd() itself, so
+// that function stays pure and unit-testable with an injected value -
+// see src/lib/lastUpdated.ts.
+const lastUpdated = resolveLastUpdated(profile)
+
 // Built by src/lib/jsonLd.ts's buildJsonLd() - a schema.org Person
 // object built directly from the same content model, so the
 // agent-legible structured data and the visible page can never
@@ -126,7 +136,7 @@ function formatDateRange(start: string, end: string | null): string {
 // is not importable by a test at all, which is how a missing
 // validateUrl() call on person.education.institution_url went
 // undetected in the first pass of this port.
-const jsonLd = buildJsonLd(profile)
+const jsonLd = buildJsonLd(profile, lastUpdated)
 
 // Serialize, then guard against a </script> breakout the same way
 // build.py's render_json_ld_script() does: any "</" sequence (which can
