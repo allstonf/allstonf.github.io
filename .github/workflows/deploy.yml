@@ -54,10 +54,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Must satisfy Astro's own engine floor, NOT just "some LTS". Astro 7
+      # declares engines.node ">=22.12.0" and hard-EXITS on a lower version
+      # rather than warning:
+      #   "Node.js v20.20.2 is not supported by Astro!"
+      # This pin was 20 and the first real deploy run failed on it (run
+      # 30728264252, 2026-08-01). It passed locally the whole time because
+      # local dev is on Node 24, so the gap was invisible until CI ran.
+      #
+      # Keep this at or above the local dev major. If you bump Astro, re-read
+      # `node -p "require('./node_modules/astro/package.json').engines.node"`
+      # and update here; package.json declares no `engines` field, so nothing
+      # else in the repo pins this.
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install dependencies
         run: npm ci
