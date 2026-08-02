@@ -1,79 +1,87 @@
 # allstonf.github.io
 
 Personal site: bio, projects, work experience, resume, and contact info.
-This is the v3 rebuild, an Astro static site replacing the 2020
-Bootstrap/jQuery build (still present in `vendor/`, `bootstrap/`,
-`jquery/`, `less/`, `sass/`, `css/`, `js/`, `img/`, and `grayscale.*` at
-the repo root, kept only until GitHub Pages is switched over so the
-live site does not 404 in the meantime).
+
+An Astro static site, deployed to GitHub Pages by the workflow in
+`.github/workflows/deploy.yml`. It replaced a 2020 Bootstrap/jQuery
+build, whose files were removed from the repo once the Actions
+deployment was verified live.
 
 ## Stack
 
-- **Astro**, static output, one page.
-- **One React island** (`src/components/LoopExplainer.tsx`), hydrated
-  client-side only for the interactive "try it yourself" panel under
-  the Loop section; everything else on the page ships with no
-  JavaScript at all.
+- **Astro**, static output, one page. It is the only runtime dependency.
+- **Effectively zero JavaScript.** The build ships 1.2 KB gzipped, all
+  of it inline (a nav toggle and a view toggle). Nothing hydrates, and
+  every piece of content renders as static HTML with JS disabled. The
+  gate is 150 KB gzipped, enforced by `scripts/check-js-budget.mjs`.
 - **Self-hosted fonts**: Montserrat 700 and Lora 400/700, subset to
   woff2 and served from `public/fonts/` (licence in
   `public/fonts/OFL.txt`). No font CDN.
 - **Zero external network requests.** No analytics, no CDN assets, no
   third-party scripts. Verified by `tests/artifactHygiene.test.ts`.
-- A single content model, `content/profile.json`, drives every
-  rendered surface (the HTML page, the machine-readable files below,
-  and `build/build.py`'s older v1 renderer, kept for parity checks).
+- **One content model.** `content/profile.json` drives every rendered
+  surface, so the human page and the machine-readable files cannot
+  disagree about a fact.
 
 ## Agent surface
 
-The site's whole thesis is that it should be as legible to an AI agent
-reading it as to a person looking at it. Alongside `index.html`, the
-build emits:
+The site's thesis is that it should be as legible to an AI agent reading
+it as to a person looking at it. Alongside the page, the build emits:
 
 | File | What it is |
 |---|---|
 | `/llms.txt` | The [llmstxt.org](https://llmstxt.org) convention: an H1, a one-line summary, and links to the other machine-readable surfaces. |
-| `/llms-full.txt` | The same page prose as `/index.md` (role, about, projects, experience, education), mechanically derived from `content/profile.json` so it can never drift from the page. Does **not** include the Loop section at all, including that section's static prose, which is server-rendered into `index.html` but not mirrored here. |
+| `/llms-full.txt` | The same page prose as `/index.md`, mechanically derived from it so the two cannot drift. |
 | `/index.md` | The page's content as plain markdown. |
-| `/resume.md` | A markdown resume mirroring the PDF's content. |
-| `/api/profile.json` | The raw content model, publicly served. |
+| `/resume.md` | A markdown resume mirroring the PDF. |
+| `/api/profile.json` | The public projection of the content model, built from a per-field allowlist so an unrecognised field cannot publish itself. |
 | `/sitemap.xml` | Standard sitemap covering the routes above. |
-| `robots.txt` | Explicitly allows the named AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended) in addition to `*`. |
+| `/robots.txt` | Explicitly allows the named AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended) in addition to `*`. |
 
-All of these are generated from `content/profile.json` by
-`src/lib/agentSurface.ts` at build time. They are not hand-maintained
-copies; edit the JSON and rebuild.
+All are generated from `content/profile.json` by `src/lib/agentSurface.ts`
+at build time. They are not hand-maintained copies: edit the JSON and
+rebuild.
 
-The page also carries a visible agent-view toggle (`data-view-toggle`)
-that swaps the rendered page for its raw markdown source in place,
-without a page navigation, so a person can see exactly what an agent
-sees.
+The page also carries a visible agent-view toggle that swaps the
+rendered page for its markdown source in place, without a navigation, so
+a person can see exactly what an agent sees.
 
 ## DESIGN.md
 
-[`DESIGN.md`](./DESIGN.md) at the repo root is a standalone, reusable
-design spec: a black-canvas, full-bleed grayscale-photography aesthetic
-with one mint accent carrying every interactive state. It documents
-colors, typography, spacing, and component patterns as tokens, cross-
-referenced against `src/styles/tokens.css`, so the spec and the
-stylesheet cannot silently drift apart (`tests/designTokens.test.ts`
-pins that invariant). It is written to be handed to someone building a
-different project, not just as internal documentation for this one.
+[`DESIGN.md`](./DESIGN.md) is a standalone, reusable design spec: a
+black-canvas, full-bleed grayscale-photography aesthetic with one mint
+accent carrying every interactive state. It documents colours,
+typography, spacing, and component patterns as tokens, cross-referenced
+against `src/styles/tokens.css`, so the spec and the stylesheet cannot
+silently drift apart. `tests/designTokens.test.ts` pins that invariant by
+parsing both. It is written to be handed to someone building a different
+project, not only as internal documentation for this one.
 
 ## Build and test
 
 ```sh
 npm install
-npm run dev          # local dev server
-npm run build         # static build to dist/
-npm run preview       # serve the built dist/ locally
-npm test              # vitest, full suite
-node scripts/check-js-budget.mjs   # gate: gzipped JS under 150 KB
+npm run dev            # local dev server
+npm run build          # static build to dist/
+npm run preview        # serve the built dist/ locally
+npm run lint           # biome check (lint + format)
+npm test               # vitest, 229 tests
+npm run verify:all     # everything below, in order
 ```
 
-`build/build.py` is the older v1 renderer for the same
-`content/profile.json` content model, kept for reference; `npm run
-build` does not invoke it. `tests/parity.test.ts` instead reads the
-Astro build's own `dist/index.html` and checks it against
-`content/profile.json` directly, so facts that matter to an agent
-(current employer, education) are confirmed to render as visible text,
-not only inside a JSON-LD block.
+`verify:all` is the gate, and it is the same set of steps CI runs:
+
+1. `biome check` - lint and format, no build needed, fails fastest
+2. `astro build`
+3. `vitest run` - includes an axe-core structural accessibility check
+   against the real built HTML
+4. `verify-content.mjs --check-urls` - content rules plus link liveness
+5. `check-js-budget.mjs` - reference-aware gzipped JS budget
+6. `check-css-budget.mjs` - the same for CSS, plus an informational
+   unreferenced-selector report
+
+It builds first on purpose: several suites read real artifacts from
+`dist/`, and `dist/` is gitignored, so `npm test` alone fails on a cold
+checkout.
+
+Node 22.12 or newer is required (Astro's engine floor). CI pins 24.
